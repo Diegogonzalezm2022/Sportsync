@@ -1,0 +1,9 @@
+{
+  "default": {
+    "paths": ["src/javascript/tests/bdd/Features/"],
+    "formatOptions": {
+      "snippetInterface": "synchronous"
+    }
+  },
+  "features": "src/javascript/tests/bdd/features"
+}
