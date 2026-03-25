@@ -1,0 +1,58 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    height: 100vh;
+    background-color: #e6e6e6;
+}
+
+/* Contenedor */
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Título */
+h1 {
+    margin-bottom: 60px;
+    font-size: 2rem;
+    color: #333;
+}
+
+/* Opciones */
+.options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px 80px;
+    max-width: 500px;
+}
+
+/* Botones */
+.option {
+    padding: 15px 30px;
+    border-radius: 20px;
+    border: none;
+    background-color: #cfcfcf;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+}
+
+/* Hover */
+.option:hover {
+    background-color: #bfbfbf;
+}
+
+/* Botón inferior centrado */
+.center {
+    width: 150px;
+}
