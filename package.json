@@ -9,5 +9,8 @@
   "private": true,
   "devDependencies": {
     "@cucumber/cucumber": "^12.7.0"
+  },
+  "dependencies": {
+    "assert": "^2.1.0"
   }
 }
