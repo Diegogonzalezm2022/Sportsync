@@ -7,33 +7,34 @@
 </head>
 <body>
 
-<main class="login-container">
+<main class="container">
 
-    <h1 class="tagline">
-        From the screen to the court in a flash
-    </h1>
+    <!-- Lado izquierdo -->
+    <section class="left">
+        <h2>Login</h2>
 
-    <form class="login-form">
-        <input
-                type="email"
-                placeholder="Email"
-                required
-        >
+        <form class="form">
+            <label for="user">User:</label>
+            <input id="user" type="text" placeholder="example">
 
-        <input
-                type="password"
-                placeholder="Password"
-                required
-        >
+            <label for="password">Password:</label>
+            <input id="password" type="password" placeholder="********">
 
-        <button type="submit" class="btn primary">
-            Login
-        </button>
+            <button type="submit" class="btn">Login</button>
 
-        <button type="button" class="btn secondary">
-            Create an Account
-        </button>
-    </form>
+            <div class="links">
+                <a href="#">Forgot your password?</a>
+                <a href="#">Register</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Lado derecho -->
+    <section class="right">
+        <div class="photo-box">
+            <span>Add Photo</span>
+        </div>
+    </section>
 
 </main>
 

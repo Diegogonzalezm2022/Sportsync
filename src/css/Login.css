@@ -1,4 +1,4 @@
-/* Reset básico */
+/* Reset */
 * {
     margin: 0;
     padding: 0;
@@ -8,71 +8,118 @@
 
 body {
     height: 100vh;
+    background-color: #e6e6e6;
+}
+
+/* Layout principal */
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Mitades */
+.left, .right {
+    width: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f2f2f2;
 }
 
-/* Contenedor principal */
-.login-container {
-    text-align: center;
-    width: 100%;
-    max-width: 400px;
-    padding: 20px;
+/* Lado izquierdo */
+.left {
+    background-color: #dcdcdc;
+    flex-direction: column;
 }
 
-/* Texto destacado */
-.tagline {
-    font-size: 1.2rem;
-    margin-bottom: 40px;
-    display: inline-block;
-    padding: 5px 10px;
-    border: 2px solid #ff4da6; /* rosa como en mockup */
-    color: #333;
+.left h2 {
+    margin-bottom: 20px;
 }
 
 /* Formulario */
-.login-form {
+.form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    width: 250px;
 }
 
-/* Inputs */
-.login-form input {
-    padding: 12px 15px;
-    border-radius: 25px;
-    border: none;
-    background-color: #e6e6e6;
+.form label {
+    font-size: 0.8rem;
+    margin-top: 10px;
+}
+
+.form input {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #000;
+    margin-top: 5px;
     outline: none;
-    font-size: 0.95rem;
 }
 
-/* Botones */
+/* Botón */
 .btn {
-    padding: 12px;
-    border-radius: 25px;
+    margin-top: 20px;
+    padding: 8px;
+    border-radius: 20px;
     border: none;
+    background-color: #cfcfcf;
     cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
 }
 
-/* Botón principal */
-.primary {
-    background-color: #d9d9d9;
+.btn:hover {
+    background-color: #bfbfbf;
 }
 
-.primary:hover {
-    background-color: #c9c9c9;
+/* Links */
+.links {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Botón secundario */
-.secondary {
+.links a {
+    text-decoration: none;
+    color: #555;
+    margin-top: 3px;
+}
+
+/* Lado derecho */
+.right {
     background-color: #efefef;
 }
 
-.secondary:hover {
-    background-color: #dddddd;
+/* Caja de imagen */
+.photo-box {
+    width: 70%;
+    height: 70%;
+    border: 1px solid #aaa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Cruz estilo mockup */
+.photo-box::before,
+.photo-box::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: #aaa;
+}
+
+.photo-box::before {
+    transform: rotate(45deg);
+}
+
+.photo-box::after {
+    transform: rotate(-45deg);
+}
+
+.photo-box span {
+    position: relative;
+    background: transparent;
+    color: #555;
 }
