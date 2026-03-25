@@ -1,0 +1,171 @@
+.header-body {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+    background-color: lightblue;
+    border: 1px solid #000;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+    background-color: #bbb;
+    border-bottom: 1px solid #000;
+}
+
+.logo-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+}
+
+.app-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.menu-icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+
+/*Pop-up del header*/
+.header-body {
+    position: relative;
+}
+
+
+.header-popup-menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    width: 220px;
+    z-index: 9999;
+    padding: 15px;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
+.header-popup-menu.active {
+    display: flex;
+}
+
+
+.popup-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.popup-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-size: cover;
+    background: url('../assets/dummy_picture.jpeg');
+}
+
+
+.popup-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.popup-nav button {
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 12px 10px;
+    font-size: 15px;
+    color: #555;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    font-family: inherit;
+}
+
+.popup-nav button:hover {
+    background-color: #f2f2f2;
+    color: #000;
+}
+
+.popup-nav .logout-btn {
+    color: #d9534f;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.popup-nav .logout-btn:hover {
+    background-color: #ffeeee;
+}
+
+@media (max-width: 1024px) {
+    .header-body, .main-header {
+        justify-content: space-between;
+        padding: 15px 40px;
+    }
+}
+
+
+
+
+@media (max-width: 768px) {
+    .header-body, .main-header {
+        padding: 15px 20px;
+    }
+    .app-name {
+        font-size: 1.1rem;
+    }
+    .logo, .logo-circle {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+
+@media (max-width: 480px) {
+    .header-body, .main-header {
+        padding: 10px 15px;
+    }
+    .app-name {
+        font-size: 1rem;
+    }
+    .logo, .logo-circle {
+        width: 40px;
+        height: 40px;
+    }
+    .menu-icon {
+        font-size: 1.3rem;
+    }
+}

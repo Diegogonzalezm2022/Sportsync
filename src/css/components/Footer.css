@@ -1,0 +1,98 @@
+
+.main-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+    background-color: lightblue;
+    border: 1px solid #000;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+
+.footer-links,
+.footer-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+
+.footer-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+}
+
+
+.team-link {
+    width: 100%;
+    text-align: center;
+}
+
+
+a {
+    text-decoration: none;
+    color: #333;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+
+/* 1. TABLETS (Pantallas medianas, hasta 1024px) */
+@media (max-width: 1024px) {
+    .main-footer {
+        padding: 20px 10px;
+    }
+    .footer-links,
+    .footer-contact {
+        gap: 20px;
+    }
+
+}
+
+/* 2. MÓVILES GRANDES / TABLETS PEQUEÑAS (hasta 768px)*/
+@media (max-width: 768px) {
+    .main-footer {
+        flex-direction: column;
+        gap: 30px;
+        text-align: center;
+    }
+    .footer-logo {
+        order: -1;
+    }
+
+    .footer_links,
+    .footer-contact {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .team-link{
+        margin-top: 10px;
+    }
+}
+
+/* 3. TELÉFONOS MÓVILES PEQUEÑOS (hasta 480px)*/
+@media (max-width: 480px) {
+    .footer_links,
+    .footer-contact {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .footer-logo{
+        width: 65px;
+        height: 65px;
+    }
+}

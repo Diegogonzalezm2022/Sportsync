@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header</title>
+    <link type="text/css" rel="stylesheet" href="../../css/components/Header.css">
+
+</head>
+<body>
+
+<header class="header-body">
+    <div class="logo">
+        <strong>Logo</strong>
+    </div>
+
+    <div class="app-name">APP NAME</div>
+
+    <div class="menu-icon" onclick="document.getElementById('mobile-menu-popup').classList.toggle('active')">&#9776;</div>
+
+    <div id="mobile-menu-popup" class="header-popup-menu">
+        <div class="popup-user-profile">
+            <div class="popup-avatar"></div>
+            <span>User</span>
+        </div>
+
+        <nav class="popup-nav">
+            <button onclick="window.location.href='Notifications.html'">Notifications</button>
+            <button onclick="window.location.href='Favorites.html'">Favorites</button>
+            <button onclick="window.location.href='Settings.html'">Settings</button>
+            <button class="logout-btn" onclick="window.location.href='index.html'">Logout</button>
+        </nav>
+    </div>
+</header>
+
+</body>
+</html>
