@@ -1,0 +1,78 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f2f2f2;
+}
+
+/* Contenedor principal */
+.login-container {
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+/* Texto destacado */
+.tagline {
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+    display: inline-block;
+    padding: 5px 10px;
+    border: 2px solid #ff4da6; /* rosa como en mockup */
+    color: #333;
+}
+
+/* Formulario */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Inputs */
+.login-form input {
+    padding: 12px 15px;
+    border-radius: 25px;
+    border: none;
+    background-color: #e6e6e6;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+/* Botones */
+.btn {
+    padding: 12px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+/* Botón principal */
+.primary {
+    background-color: #d9d9d9;
+}
+
+.primary:hover {
+    background-color: #c9c9c9;
+}
+
+/* Botón secundario */
+.secondary {
+    background-color: #efefef;
+}
+
+.secondary:hover {
+    background-color: #dddddd;
+}
