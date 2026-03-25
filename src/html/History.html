@@ -1,10 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>View-My-History-SportSync</title>
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History</title>
+<link rel="stylesheet" href="../css/History.css">
+<link rel="stylesheet" href="../css/components/Header.css">
+<link rel="stylesheet" href="../css/components/Footer.css">
+<script src="../javascript/scripts/xlu-include-file.js"></script>
 <body>
+<header xlu-include-file="components/Header.html"></header>
+<main class="reservations-main">
 
+    <div class="section-header">
+        <button class="back-btn" aria-label="Volver">&#8592;</button>
+        <h2>Active reservations:</h2>
+    </div>
+
+    <div class="cards-container">
+        <article class="reservation-card">
+            <div class="card-info">
+                <p><strong>Gym name:</strong></p>
+                <p><strong>Activity name:</strong></p>
+                <p><strong>Activity schedule:</strong></p>
+            </div>
+            <div class="card-status">
+                <p>Paid:</p>
+            </div>
+            <div class="card-actions">
+                <button class="icon-btn share-icon" aria-label="Compartir">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </button>
+                <button class="action-btn cancel-btn">Cancel</button>
+            </div>
+        </article>
+
+        <article class="reservation-card">
+            <div class="card-info">
+                <p><strong>Gym name:</strong></p>
+                <p><strong>Activity name:</strong></p>
+                <p><strong>Activity schedule:</strong></p>
+            </div>
+            <div class="card-status">
+                <p>Paid:</p>
+            </div>
+            <div class="card-actions">
+                <button class="icon-btn share-icon" aria-label="Compartir">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </button>
+                <button class="action-btn cancel-btn">Cancel</button>
+            </div>
+        </article>
+    </div>
+
+    <div class="section-header past-header">
+        <h2>Past reservations:</h2>
+    </div>
+
+    <div class="cards-container">
+        <article class="reservation-card past-card">
+            <div class="card-info">
+                <p><strong>Gym name:</strong></p>
+                <p><strong>Activity name:</strong></p>
+                <p><strong>Activity schedule:</strong></p>
+            </div>
+            <div class="card-status">
+                <p>Paid:</p>
+            </div>
+            <div class="card-actions past-actions">
+                <div class="stars">
+                    <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+                </div>
+                <div class="action-row">
+                    <button class="action-btn signup-btn">Sign up again</button>
+                    <button class="icon-btn share-icon" aria-label="Compartir">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </button>
+                    <span class="status-text">Done</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="reservation-card past-card">
+            <div class="card-info">
+                <p><strong>Professional name:</strong></p>
+                <p><strong>Activity name:</strong></p>
+                <p><strong>Activity schedule:</strong></p>
+            </div>
+            <div class="card-status"></div>
+            <div class="card-actions past-actions">
+                <div class="stars empty-stars"></div>
+                <div class="action-row">
+                    <button class="action-btn signup-btn">Sign up again</button>
+                    <button class="icon-btn share-icon" aria-label="Compartir">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </button>
+                    <span class="status-text">Cancelled</span>
+                </div>
+            </div>
+        </article>
+    </div>
+
+</main>
 </body>
+<footer xlu-include-file="components/Footer.html"></footer>
+<script>
+    xLuIncludeFile()
+</script>
 </html>
