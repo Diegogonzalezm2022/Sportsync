@@ -1,19 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homepage</title>
+    <title>About Us</title>
+    <link rel="stylesheet" href="../css/AboutUs.css">
+    <link rel="stylesheet" href="../css/components/Header.css">
+    <link rel="stylesheet" href="../css/components/Footer.css">
+    <link rel="stylesheet" href="../css/components/dark_mode.css">
+    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
-<main class="main-container">
-    <div class="login-content">
-        <h1>From the screen to the court in a flash</h1>
-        <div class="button-group">
-            <button class="btn btn-login" onclick="window.location.href='Login.html'">Login</button>
-            <button class="btn btn-create" onclick="window.location.href='CreateAnAccount.html'">Create An Account</button>
+<header xlu-include-file="components/Header.html"></header>
+<main class="about-section">
+    <div class="content-row">
+        <div class="col">
+            <div class="image-placeholder"></div>
+        </div>
+        <div class="col">
+            <h2 class="about-title">About Us</h2>
+            <p class="about-text">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </p>
         </div>
     </div>
-    </main>
+
+    <div class="content-row">
+        <div class="col">
+            <p class="about-text">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </p>
+        </div>
+        <div class="col">
+            <div class="image-placeholder"></div>
+        </div>
+    </div>
+</main>
+<footer xlu-include-file="components/Footer.html"></footer>
+<script>
+    xLuIncludeFile()
+</script>
 </body>
 </html>
