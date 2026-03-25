@@ -1,0 +1,125 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    height: 100vh;
+    background-color: #e6e6e6;
+}
+
+/* Layout principal */
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Mitades */
+.left, .right {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Lado izquierdo */
+.left {
+    background-color: #dcdcdc;
+    flex-direction: column;
+}
+
+.left h2 {
+    margin-bottom: 20px;
+}
+
+/* Formulario */
+.form {
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+}
+
+.form label {
+    font-size: 0.8rem;
+    margin-top: 10px;
+}
+
+.form input {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #000;
+    margin-top: 5px;
+    outline: none;
+}
+
+/* Botón */
+.btn {
+    margin-top: 20px;
+    padding: 8px;
+    border-radius: 20px;
+    border: none;
+    background-color: #cfcfcf;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #bfbfbf;
+}
+
+/* Links */
+.links {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.links a {
+    text-decoration: none;
+    color: #555;
+    margin-top: 3px;
+}
+
+/* Lado derecho */
+.right {
+    background-color: #efefef;
+}
+
+/* Caja de imagen */
+.photo-box {
+    width: 70%;
+    height: 70%;
+    border: 1px solid #aaa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Cruz estilo mockup */
+.photo-box::before,
+.photo-box::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: #aaa;
+}
+
+.photo-box::before {
+    transform: rotate(45deg);
+}
+
+.photo-box::after {
+    transform: rotate(-45deg);
+}
+
+.photo-box span {
+    position: relative;
+    background: transparent;
+    color: #555;
+}

@@ -1,10 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login-SportSync</title>
+    <title>Login</title>
+    <link rel="stylesheet" href="../css/Login.css">
 </head>
 <body>
+
+<main class="container">
+
+    <!-- Lado izquierdo -->
+    <section class="left">
+        <h2>Login</h2>
+
+        <form class="form">
+            <label for="user">User:</label>
+            <input id="user" type="text" placeholder="example">
+
+            <label for="password">Password:</label>
+            <input id="password" type="password" placeholder="********">
+
+            <button class="btn btn-login" onclick="window.location.href='RegisterAs.html'">Login</button>
+
+            <div class="links">
+                <a href="#">Forgot your password?</a>
+                <a href="#">Register</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Lado derecho -->
+    <section class="right">
+        <div class="photo-box">
+            <span>Add Photo</span>
+        </div>
+    </section>
+
+</main>
 
 </body>
 </html>
