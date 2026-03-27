@@ -1,5 +1,5 @@
 const { describe, expect, test } = require('@jest/globals')
 
 test("testTitle", ()=> {
-    expect(3).toBe(3)
+    expect(1+2).toBe(3)
 })
