@@ -5,6 +5,14 @@ html, body {
     flex-direction: column;
 }
 
+body {
+    background-image: url('../assets/imagenes/imagen_principal_index.jpeg');
+    background-size: cover;          /* Hace que la imagen cubra toda la pantalla */
+    background-position: center;    /* Centra la imagen */
+    background-repeat: no-repeat;   /* Evita que la imagen se repita como mosaico */
+    background-attachment: fixed;   /* Opcional: la imagen se queda quieta al hacer scroll */
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -17,56 +25,16 @@ html, body {
     display: flex;
 }
 
-.hero-section {
-    flex: 2;
-    background-color: #e0e0e0;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: 2px solid #333;
-}
-
-
-.hero-placeholder {
-    width: 100%;
-    height: 100%;
-    background-image:
-            linear-gradient(to top right, transparent calc(50% - 1px), #999, transparent calc(50% + 1px)),
-            linear-gradient(to top left, transparent calc(50% - 1px), #999, transparent calc(50% + 1px));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.text-overlay {
-    background-color: white;
-    padding: 30px;
-    width: 60%;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    text-align: center;
-    color: #888;
-    line-height: 1.5;
-    z-index: 1;
-}
-
-
-.login-sidebar {
-    flex: 1;
-    background-color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .login-content {
     text-align: center;
     width: 100%;
+
 }
 
 .login-content h1 {
-    color: #666;
-    margin-bottom: 30px;
+    color: white;
+    margin-bottom: 10px;
+    margin-top: 200px;
     font-size: 2rem;
 }
 
@@ -75,6 +43,10 @@ html, body {
     flex-direction: column;
     gap: 15px;
     align-items: center;
+    justify-content: center;
+    margin-top: 90px;
+    width: 100%;
+    scale: 1.5;
 }
 
 .btn {
@@ -88,6 +60,7 @@ html, body {
     color: #444;
     background-color: #e0e0e0;
     transition: background 0.3s;
+    margin-top: 20px;
 }
 
 .btn:hover {
