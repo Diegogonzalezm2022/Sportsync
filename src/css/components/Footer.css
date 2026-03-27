@@ -1,24 +1,22 @@
 .main-footer {
-    flex-shrink: 0; /* Importante: evita que el footer se encoja */
+    width: 100%;
+    background-color: rgba(211, 211, 211, 0.95); /* Gris claro con ligera transparencia */
+    border-top: 1px solid #333;
     display: flex;
     justify-content: space-around;
     align-items: center;
     padding: 20px;
-    background-color: lightgray;
-    border-top: 1px solid #000;
-    width: 100%;
+    flex-shrink: 0; /* Evita que el footer se aplaste si hay mucho contenido arriba */
 }
 
-.footer-links,
-.footer-contact {
+.footer-links, .footer-contact {
     display: flex;
-    flex-wrap: wrap;
-    gap: 40px;
+    gap: 30px;
 }
 
 .footer-logo {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     border: 1px solid #333;
     display: flex;
@@ -27,58 +25,11 @@
     background-color: #ccc;
 }
 
-.team-link {
-    width: 100%;
-    text-align: center;
-}
-
-a {
-    text-decoration: none;
-    color: #333;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* --- RESPONSIVE --- */
-
-@media (max-width: 1024px) {
-    .main-footer {
-        padding: 20px 10px;
-    }
-    .footer-links,
-    .footer-contact {
-        gap: 20px;
-    }
-}
-
+/* Responsive sencillo */
 @media (max-width: 768px) {
     .main-footer {
         flex-direction: column;
-        gap: 30px;
+        gap: 20px;
         text-align: center;
-    }
-    .footer-logo {
-        order: -1;
-    }
-    .footer-links, .footer-contact { /* Corregido guion bajo por medio */
-        justify-content: center;
-        width: 100%;
-    }
-    .team-link {
-        margin-top: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .footer-links, .footer-contact {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-    }
-    .footer-logo {
-        width: 65px;
-        height: 65px;
     }
 }
