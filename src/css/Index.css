@@ -1,24 +1,96 @@
-.login-content{
-    max-width: 500px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: auto;
-}
-
-.login-content img{
-    max-width: 100%;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.button-group{
+html, body {
+    height: 100%;
+    margin: 0;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.main-container {
+    flex: 1;
+    display: flex;
+}
+
+.hero-section {
+    flex: 2;
+    background-color: #e0e0e0;
+    position: relative;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    border-right: 2px solid #333;
+}
+
+
+.hero-placeholder {
     width: 100%;
+    height: 100%;
+    background-image:
+            linear-gradient(to top right, transparent calc(50% - 1px), #999, transparent calc(50% + 1px)),
+            linear-gradient(to top left, transparent calc(50% - 1px), #999, transparent calc(50% + 1px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-overlay {
+    background-color: white;
+    padding: 30px;
+    width: 60%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    color: #888;
+    line-height: 1.5;
+    z-index: 1;
+}
+
+
+.login-sidebar {
+    flex: 1;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-content {
+    text-align: center;
+    width: 100%;
+}
+
+.login-content h1 {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn {
+    width: 100%;
+    max-width: 200px;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #444;
+    background-color: #e0e0e0;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background-color: #d0d0d0;
 }
 

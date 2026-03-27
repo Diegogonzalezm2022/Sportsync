@@ -3,8 +3,9 @@
     justify-content: space-around;
     align-items: center;
     padding: 20px;
-    background-color: lightblue;
+    background-color: lightgrey;
     border: 1px solid #000;
+    margin: 0;
 }
 
 .logo {
