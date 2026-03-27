@@ -1,0 +1,120 @@
+.profile-main {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 40px;
+    color: #000;
+}
+
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.back-btn {
+    position: absolute;
+    left: 0;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.avatar-circle {
+    background-color: #f0f0f0;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.profile-form {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    background-color: #dcdcdc;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    color: #333;
+    box-sizing: border-box;
+}
+
+.form-group input::placeholder {
+    color: #888;
+    font-weight: bold;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: 2px solid #a0a0a0;
+}
+
+
+.inline-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+
+.inline-group label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+
+.select-wrapper {
+    flex-grow: 1;
+    max-width: 300px;
+}
+
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.save-btn {
+    background-color: #dcdcdc;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-size: 1rem;
+    color: #555;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.save-btn:hover {
+    background-color: #c0c0c0;
+}
