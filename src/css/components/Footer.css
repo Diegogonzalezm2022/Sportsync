@@ -1,17 +1,13 @@
-
 .main-footer {
+    flex-shrink: 0; /* Importante: evita que el footer se encoja */
     display: flex;
     justify-content: space-around;
     align-items: center;
     padding: 20px;
     background-color: lightgray;
-    border: 1px solid #000;
-    position: fixed;
-    bottom: 0;
-    left: 0;
+    border-top: 1px solid #000;
     width: 100%;
 }
-
 
 .footer-links,
 .footer-contact {
@@ -19,7 +15,6 @@
     flex-wrap: wrap;
     gap: 40px;
 }
-
 
 .footer-logo {
     width: 80px;
@@ -32,12 +27,10 @@
     background-color: #ccc;
 }
 
-
 .team-link {
     width: 100%;
     text-align: center;
 }
-
 
 a {
     text-decoration: none;
@@ -48,8 +41,8 @@ a:hover {
     text-decoration: underline;
 }
 
+/* --- RESPONSIVE --- */
 
-/* 1. TABLETS (Pantallas medianas, hasta 1024px) */
 @media (max-width: 1024px) {
     .main-footer {
         padding: 20px 10px;
@@ -58,10 +51,8 @@ a:hover {
     .footer-contact {
         gap: 20px;
     }
-
 }
 
-/* 2. MÓVILES GRANDES / TABLETS PEQUEÑAS (hasta 768px)*/
 @media (max-width: 768px) {
     .main-footer {
         flex-direction: column;
@@ -71,28 +62,22 @@ a:hover {
     .footer-logo {
         order: -1;
     }
-
-    .footer_links,
-    .footer-contact {
+    .footer-links, .footer-contact { /* Corregido guion bajo por medio */
         justify-content: center;
         width: 100%;
     }
-
-    .team-link{
+    .team-link {
         margin-top: 10px;
     }
 }
 
-/* 3. TELÉFONOS MÓVILES PEQUEÑOS (hasta 480px)*/
 @media (max-width: 480px) {
-    .footer_links,
-    .footer-contact {
+    .footer-links, .footer-contact {
         flex-direction: column;
         align-items: center;
         gap: 15px;
     }
-
-    .footer-logo{
+    .footer-logo {
         width: 65px;
         height: 65px;
     }

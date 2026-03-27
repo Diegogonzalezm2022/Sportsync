@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cucumber-js --config src/javascript/tests/bdd/cucumber.json"
+    "test": "jest && cucumber-js --config src/javascript/tests/bdd/cucumber.json"
   },
   "private": true,
   "devDependencies": {
-    "@cucumber/cucumber": "^12.7.0"
+    "@cucumber/cucumber": "^12.7.0",
+    "firebase": "^12.11.0",
+    "jest": "^30.3.0"
   },
   "dependencies": {
     "assert": "^2.1.0"
