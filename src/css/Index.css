@@ -1,96 +1,75 @@
-html, body {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-}
-
+/* RESET GENERAL */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
     font-family: Arial, sans-serif;
 }
 
+/* CONFIGURACIÓN DEL BODY */
+html, body {
+    height: 100%; /* Necesario para que el 100vh funcione bien en móviles */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ocupa siempre el 100% de la ventana */
+
+    /* Imagen de Fondo */
+    background-image: url('../assets/imagenes/imagen_principal_index.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* EL CONTENEDOR MAESTRO */
 .main-container {
-    flex: 1;
+    flex: 1; /* ESTO EMPUJA AL FOOTER AL FINAL */
     display: flex;
-}
-
-.hero-section {
-    flex: 2;
-    background-color: #e0e0e0;
-    position: relative;
-    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centra el contenido verticalmente */
     align-items: center;
-    justify-content: center;
-    border-right: 2px solid #333;
-}
-
-
-.hero-placeholder {
     width: 100%;
-    height: 100%;
-    background-image:
-            linear-gradient(to top right, transparent calc(50% - 1px), #999, transparent calc(50% + 1px)),
-            linear-gradient(to top left, transparent calc(50% - 1px), #999, transparent calc(50% + 1px));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.text-overlay {
-    background-color: white;
-    padding: 30px;
-    width: 60%;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    text-align: center;
-    color: #888;
-    line-height: 1.5;
-    z-index: 1;
-}
-
-
-.login-sidebar {
-    flex: 1;
-    background-color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .login-content {
     text-align: center;
     width: 100%;
+    padding: 20px;
 }
 
 .login-content h1 {
-    color: #666;
-    margin-bottom: 30px;
-    font-size: 2rem;
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7); /* Para que resalte sobre la foto */
 }
 
+/* GRUPO DE BOTONES */
 .button-group {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     align-items: center;
+    width: 100%;
 }
 
 .btn {
-    width: 100%;
-    max-width: 200px;
-    padding: 10px;
+    width: 250px; /* Tamaño fijo para que se vean iguales */
+    padding: 15px;
     border: none;
-    border-radius: 20px;
+    border-radius: 30px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 1.1rem;
     color: #444;
-    background-color: #e0e0e0;
-    transition: background 0.3s;
+    background-color: rgba(224, 224, 224, 0.9); /* Un poco de transparencia queda elegante */
+    transition: all 0.3s ease;
 }
 
 .btn:hover {
-    background-color: #d0d0d0;
+    background-color: #fff;
+    transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
 }
-
