@@ -1,6 +1,6 @@
 .main-footer {
     width: 100%;
-    background-color: rgba(211, 211, 211, 0.95); /* Gris claro con ligera transparencia */
+    background-color: lightgrey; /* Gris claro con ligera transparencia */
     border-top: 1px solid #333;
     display: flex;
     justify-content: space-around;
