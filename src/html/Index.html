@@ -10,6 +10,8 @@
     <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
+<header xlu-include-file="components/Header.html"></header>
+
 <div class="login-content">
     <h1>From the screen to the court in a flash</h1>
     <div class="button-group">
@@ -17,5 +19,10 @@
         <button class="btn btn-create" onclick="window.location.href='CreateAnAccount.html'">Create An Account</button>
     </div>
 </div>
+
+<footer xlu-include-file="components/Footer.html"></footer>
+<script>
+    xLuIncludeFile()
+</script>
 </body>
 </html>
