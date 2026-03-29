@@ -1,10 +1,248 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Professional-Profile-Page-SportSync</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Profile</title>
+    <link rel="stylesheet" href="../css/ProfesionalPage.css">
+    <link rel="stylesheet" href="../css/components/Header.css">
+    <link rel="stylesheet" href="../css/components/Footer.css">
+    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
 
+<header xlu-include-file="components/Header.html"></header>
+
+<main class="profile-page-main">
+
+    <!-- Back -->
+    <button class="back-btn" onclick="history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+    </button>
+
+    <!-- ===== TOP: photo + info ===== -->
+    <section class="top-section">
+
+        <!-- Left: profile photo -->
+        <div class="profile-photo-block">
+            <div class="profile-photo">
+                <svg class="photo-x" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="0" y1="0" x2="200" y2="160" stroke="#ccc" stroke-width="1.2"/>
+                    <line x1="200" y1="0" x2="0" y2="160" stroke="#ccc" stroke-width="1.2"/>
+                </svg>
+                <span class="photo-caption">Professional Profile</span>
+            </div>
+
+            <!-- Schedule -->
+            <div class="schedule-block">
+                <span class="schedule-label">Schedule:</span>
+                <div class="schedule-box">
+                    <span class="schedule-days">Monday–Sunday</span>
+                    <span class="schedule-hours">7:00–23:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: text info -->
+        <div class="info-block">
+
+            <div class="info-row info-row--top">
+                <div class="info-field">
+                    <span class="info-label">Professional name:</span>
+                    <div class="info-value info-value--name">Carlos López</div>
+                </div>
+                <div class="rating-block">
+                    <span class="info-label">Average score:</span>
+                    <div class="stars" id="starsContainer" data-rating="0">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <span class="rating-hint" id="ratingHint">Valora este profesional</span>
+                </div>
+            </div>
+
+            <div class="info-field">
+                <span class="info-label">Professional description:</span>
+                <div class="info-value info-value--desc">
+                    Entrenador personal certificado con más de 8 años de experiencia en pérdida de peso, musculación y entrenamiento funcional. Clases individuales y grupales adaptadas a tu nivel.
+                </div>
+            </div>
+
+            <div class="info-field">
+                <span class="info-label">Contact info:</span>
+                <div class="contact-lines">
+                    <span class="contact-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        +34 600 123 456
+                    </span>
+                    <span class="contact-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        carlos.lopez@fitpro.es
+                    </span>
+                    <span class="contact-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                        Madrid, Chamberí
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ===== GALLERY ===== -->
+    <section class="gallery-section">
+        <div class="gallery-carousel-wrapper">
+            <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>
+            <div class="gallery-carousel" id="galleryCarousel">
+                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Professional Photo</span></div>
+                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Professional Photo</span></div>
+                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Professional Photo</span></div>
+                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Professional Photo</span></div>
+            </div>
+            <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- ===== DATE FILTER ===== -->
+    <section class="date-filter-section">
+        <div class="date-btn-group">
+            <button class="date-btn" id="dateFromBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="dateFromLabel">Date from</span>
+            </button>
+            <input type="date" id="dateFromInput" class="date-input-hidden">
+            <button class="date-btn" id="dateToBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="dateToLabel">Date to</span>
+            </button>
+            <input type="date" id="dateToInput" class="date-input-hidden">
+        </div>
+    </section>
+
+    <!-- ===== ACTIVITIES ===== -->
+    <section class="activities-section">
+
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity name:</span>
+                    <span class="activity-value">Entrenamiento funcional</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity schedule:</span>
+                    <span class="activity-value">Lun/Mié/Vie · 10:00–11:00</span>
+                </div>
+            </div>
+            <div class="activity-right">
+                <div class="activity-row">
+                    <span class="activity-field-label">Price:</span>
+                    <span class="activity-value activity-value--price">25€</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Available slots:</span>
+                    <span class="activity-value">8 / 12</span>
+                </div>
+            </div>
+            <button class="signup-btn" onclick="handleSignup(this)">Sign up</button>
+        </div>
+
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity name:</span>
+                    <span class="activity-value">Pérdida de peso intensiva</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity schedule:</span>
+                    <span class="activity-value">Mar/Jue · 18:00–19:30</span>
+                </div>
+            </div>
+            <div class="activity-right">
+                <div class="activity-row">
+                    <span class="activity-field-label">Price:</span>
+                    <span class="activity-value activity-value--price">30€</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Available slots:</span>
+                    <span class="activity-value">3 / 8</span>
+                </div>
+            </div>
+            <button class="signup-btn" onclick="handleSignup(this)">Sign up</button>
+        </div>
+
+    </section>
+
+</main>
+
+<footer xlu-include-file="components/Footer.html"></footer>
+
+<script>
+    xLuIncludeFile();
+
+    /* ---- Stars rating ---- */
+    const starsContainer = document.getElementById('starsContainer');
+    const stars = starsContainer.querySelectorAll('.star');
+    const ratingHint = document.getElementById('ratingHint');
+    let currentRating = 0;
+
+    stars.forEach(star => {
+        star.addEventListener('mouseover', () => highlightStars(+star.dataset.value));
+        star.addEventListener('mouseout', () => highlightStars(currentRating));
+        star.addEventListener('click', () => {
+            currentRating = +star.dataset.value;
+            highlightStars(currentRating);
+            ratingHint.textContent = ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][currentRating];
+            ratingHint.style.color = 'var(--accent)';
+        });
+    });
+
+    function highlightStars(n) {
+        stars.forEach(s => s.classList.toggle('star--active', +s.dataset.value <= n));
+    }
+
+    /* ---- Date filter ---- */
+    document.getElementById('dateFromBtn').addEventListener('click', () => document.getElementById('dateFromInput').showPicker?.() || document.getElementById('dateFromInput').click());
+    document.getElementById('dateToBtn').addEventListener('click', () => document.getElementById('dateToInput').showPicker?.() || document.getElementById('dateToInput').click());
+
+    document.getElementById('dateFromInput').addEventListener('change', function () {
+        document.getElementById('dateFromLabel').textContent = this.value ? formatDate(this.value) : 'Date from';
+        document.getElementById('dateFromBtn').classList.toggle('date-btn--active', !!this.value);
+    });
+    document.getElementById('dateToInput').addEventListener('change', function () {
+        document.getElementById('dateToLabel').textContent = this.value ? formatDate(this.value) : 'Date to';
+        document.getElementById('dateToBtn').classList.toggle('date-btn--active', !!this.value);
+    });
+
+    function formatDate(val) {
+        const [y, m, d] = val.split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    /* ---- Carousel ---- */
+    document.getElementById('carouselLeft').addEventListener('click', () =>
+        document.getElementById('galleryCarousel').scrollBy({ left: -140, behavior: 'smooth' }));
+    document.getElementById('carouselRight').addEventListener('click', () =>
+        document.getElementById('galleryCarousel').scrollBy({ left: 140, behavior: 'smooth' }));
+
+    /* ---- Sign up ---- */
+    function handleSignup(btn) {
+        btn.textContent = '✓ Apuntado';
+        btn.classList.add('signup-btn--done');
+        btn.disabled = true;
+    }
+</script>
 </body>
 </html>
