@@ -1,0 +1,512 @@
+/* ---------- Reset & Variables ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #f4f4f2;
+    --surface: #ffffff;
+    --surface-2: #ebebeb;
+    --border: #d6d6d6;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555;
+    --text-muted: #999;
+    --accent: #2d6a4f;
+    --accent-light: #d8f3dc;
+    --accent-gym: #1d3557;
+    --accent-gym-light: #d6e4f0;
+    --star-on: #c08000;
+    --star-off: #d6d6d6;
+    --danger: #c0392b;
+    --danger-light: #fdecea;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 18px rgba(0,0,0,0.10);
+}
+
+/* Gym variant: swap accent to navy */
+.page--gym {
+    --accent: var(--accent-gym);
+    --accent-light: var(--accent-gym-light);
+}
+
+body {
+    background-color: var(--bg);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Main ---------- */
+.profile-page-main {
+    max-width: 760px;
+    width: 100%;
+    margin: 24px auto 40px;
+    padding: 0 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ---------- Back button ---------- */
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    width: fit-content;
+    transition: color 0.2s;
+}
+
+.back-btn:hover { color: var(--text-primary); }
+.back-btn svg { width: 18px; height: 18px; }
+
+/* ========================================
+   TOP SECTION
+   ======================================== */
+.top-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 22px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* --- Profile photo --- */
+.profile-photo-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.profile-photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-x {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.photo-caption {
+    position: relative;
+    z-index: 1;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* --- Schedule --- */
+.schedule-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.schedule-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.schedule-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.schedule-days {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.schedule-hours {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+/* --- Info block --- */
+.info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.info-row--top {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.info-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.info-value--name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    min-width: 140px;
+}
+
+.info-value--desc {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+}
+
+/* --- Rating --- */
+.rating-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stars {
+    display: flex;
+    gap: 3px;
+}
+
+.star {
+    font-size: 1.4rem;
+    color: var(--star-off);
+    cursor: pointer;
+    transition: color 0.15s, transform 0.1s;
+    line-height: 1;
+    user-select: none;
+}
+
+.star:hover,
+.star--active {
+    color: var(--star-on);
+    transform: scale(1.15);
+}
+
+.rating-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* --- Contact --- */
+.contact-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.contact-item svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+/* ========================================
+   GALLERY
+   ======================================== */
+.gallery-section {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.gallery-carousel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.carousel-arrow {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.2s, color 0.2s;
+}
+
+.carousel-arrow:hover {
+    background: var(--text-primary);
+    color: #fff;
+    border-color: var(--text-primary);
+}
+
+.carousel-arrow svg { width: 16px; height: 16px; }
+
+.gallery-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    flex: 1;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.gallery-carousel::-webkit-scrollbar { display: none; }
+
+.gallery-slot {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot-x {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.slot-caption {
+    position: relative;
+    z-index: 1;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ========================================
+   DATE FILTER
+   ======================================== */
+.date-filter-section {
+    display: flex;
+}
+
+.date-btn-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.date-input-hidden {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.date-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.date-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.date-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--text-secondary);
+}
+
+.date-btn--active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ========================================
+   ACTIVITIES
+   ======================================== */
+.activities-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+    transition: box-shadow 0.15s;
+}
+
+.activity-card:hover { box-shadow: var(--shadow-md); }
+
+.activity-info,
+.activity-right {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.activity-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.activity-field-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.activity-value {
+    font-size: 0.84rem;
+    color: var(--text-primary);
+}
+
+.activity-value--price {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* --- Sign up button --- */
+.signup-btn {
+    padding: 9px 20px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.83rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.signup-btn:hover { background: var(--accent); }
+
+.signup-btn:active { transform: scale(0.97); }
+
+.signup-btn--done {
+    background: var(--accent) !important;
+    cursor: default;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+@media (max-width: 600px) {
+    .top-section {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-photo {
+        max-width: 260px;
+    }
+
+    .info-row--top {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .activity-card {
+        flex-wrap: wrap;
+    }
+
+    .signup-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 400px) {
+    .gallery-slot { width: 100px; height: 100px; }
+    .date-btn { min-width: 120px; padding: 9px 14px; }
+}
