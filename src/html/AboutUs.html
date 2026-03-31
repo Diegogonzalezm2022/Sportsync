@@ -3,41 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us</title>
-    <link rel="stylesheet" href="../css/AboutUs.css">
+    <title>Activity Search</title>
+    <link rel="stylesheet" href="../css/ActivitySearch.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
-<header xlu-include-file="components/Header.html"></header>
-<main class="about-section">
-    <div class="content-row">
-        <div class="col">
-            <div class="image-placeholder"></div>
-        </div>
-        <div class="col">
-            <h2 class="about-title">About Us</h2>
-            <p class="about-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </p>
-        </div>
-    </div>
 
-    <div class="content-row">
-        <div class="col">
-            <p class="about-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </p>
+<header xlu-include-file="components/Header.html"></header>
+
+<main class="activity-search-main">
+
+    <!-- Left Column -->
+    <aside class="left-panel">
+
+        <!-- User Card -->
+        <div class="user-card">
+            <div class="user-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <div class="user-info">
+                <span class="user-name">Name Surname</span>
+                <span class="user-role">User</span>
+                <button class="go-to-profile-btn" onclick="window.location.href='Profile.html'">Go to Profile</button>
+            </div>
         </div>
-        <div class="col">
-            <div class="image-placeholder"></div>
+
+        <!-- Map -->
+        <div class="map-container">
+            <iframe id="mapFrame"
+                    title="Nearby map"
+                    loading="lazy"
+                    allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d50000!2d-122.4194!3d37.7749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2ses!4v1"
+            ></iframe>
+            <button class="use-location-btn" id="useLocationBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                </svg>
+                Usar mi ubicación
+            </button>
         </div>
-    </div>
+
+    </aside>
+
+    <!-- Right Column -->
+    <section class="right-panel">
+
+        <!-- Search Bar -->
+        <div class="search-bar-wrapper">
+            <div class="search-bar">
+                <button class="search-filter-btn" title="Filtros">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="7" y1="12" x2="17" y2="12"/>
+                        <line x1="10" y1="18" x2="14" y2="18"/>
+                    </svg>
+                </button>
+                <input type="text" id="searchInput" class="search-input" placeholder="Busca gimnasios o entrenadores cerca de ti...">
+                <button class="search-location-btn" id="searchLocationBtn" title="Buscar por ubicación">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                        <circle cx="12" cy="9" r="2.5"/>
+                    </svg>
+                </button>
+                <button class="search-submit-btn" id="searchSubmitBtn" title="Buscar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <circle cx="11" cy="11" r="7"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Filter chips -->
+            <div class="filter-chips">
+                <button class="chip chip--active" data-filter="todos">Todos</button>
+                <button class="chip" data-filter="gym">Gimnasios</button>
+                <button class="chip" data-filter="professional">Entrenadores</button>
+                <button class="chip" data-filter="yoga">Yoga</button>
+                <button class="chip" data-filter="crossfit">Crossfit</button>
+            </div>
+        </div>
+
+        <!-- Estado de carga / error -->
+        <div id="statusMsg" class="status-msg" style="display:none;"></div>
+
+        <!-- Results List -->
+        <div class="results-list" id="resultsList">
+        </div>
+
+    </section>
+
 </main>
+
 <footer xlu-include-file="components/Footer.html"></footer>
+
+<!-- 1. Include header/footer (script normal) -->
+<script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
-    xLuIncludeFile()
+    xLuIncludeFile();
 </script>
+
+<!-- 2. Firebase (script module) -->
+<script type="module">
+    import FirebaseDb from "../javascript/FirebaseDb.js";
+
+    let db;
+    let userLat = null;
+    let userLng = null;
+    let activeFilter = "todos";
+    let allResults = [];
+
+    async function init() {
+        try {
+            db = await FirebaseDb.create();
+            getLocation(false);
+        } catch (e) {
+            showStatus("Error al conectar con la base de datos.", true);
+        }
+    }
+
+    function getLocation(searchAfter = true) {
+        if (!navigator.geolocation) {
+            showStatus("Tu navegador no soporta geolocalización.", true);
+            return;
+        }
+        showStatus("Obteniendo tu ubicación...");
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                document.getElementById("mapFrame").src =
+                    `https://www.google.com/maps/embed/v1/view?key=YOUR_MAPS_KEY&center=${userLat},${userLng}&zoom=14`;
+                hideStatus();
+                if (searchAfter) searchNearby();
+            },
+            () => showStatus("No se pudo obtener tu ubicación.", true)
+        );
+    }
+
+    async function searchNearby() {
+        if (userLat === null) {
+            showStatus("Primero activa tu ubicación.", true);
+            return;
+        }
+        showStatus("Buscando cerca de ti...");
+        try {
+            const gyms = await db.findGymsByDistance(userLat, userLng, 10);
+            allResults = gyms;
+            renderResults(filterResults(allResults));
+            hideStatus();
+        } catch (e) {
+            showStatus("Error al buscar. Inténtalo de nuevo.", true);
+        }
+    }
+
+    function filterResults(results) {
+        const searchText = document.getElementById("searchInput").value.toLowerCase();
+        return results.filter(item => {
+            const matchFilter =
+                activeFilter === "todos" ||
+                item.type === activeFilter ||
+                (item.tags && item.tags.includes(activeFilter));
+            const matchText =
+                !searchText ||
+                item.name?.toLowerCase().includes(searchText) ||
+                item.description?.toLowerCase().includes(searchText);
+            return matchFilter && matchText;
+        });
+    }
+
+    function renderResults(results) {
+        const list = document.getElementById("resultsList");
+
+        if (results.length === 0) {
+            list.innerHTML = `<p class="no-results">No se encontraron resultados cerca de ti.</p>`;
+            return;
+        }
+
+        list.innerHTML = results.map(item => {
+            const isGym = item.type === "gym";
+            const badgeClass = isGym ? "result-badge--gym" : "result-badge--trainer";
+            const badgeText = isGym ? "Gimnasio" : "Entrenador";
+            const distance = item.distanceKm ? `${item.distanceKm.toFixed(1)} km` : "";
+            const rating = item.rating ? `★ ${item.rating.toFixed(1)}` : "★ —";
+
+            return `
+            <div class="result-card" data-id="${item.id}" data-type="${item.type}">
+                <div class="result-photo">
+                    <span class="result-photo-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="4"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="result-info">
+                    <div class="result-header">
+                        <span class="result-name">${item.name}</span>
+                        <span class="result-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <p class="result-desc">${item.description || ""}</p>
+                    <div class="result-meta">
+                        ${distance ? `
+                        <span class="result-distance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                <circle cx="12" cy="9" r="2.5"/>
+                            </svg>
+                            ${distance}
+                        </span>` : ""}
+                        <span class="result-rating">${rating}</span>
+                    </div>
+                </div>
+                <button class="result-book-btn" data-id="${item.id}" data-type="${item.type}">Reservar</button>
+            </div>`;
+        }).join("");
+
+        list.querySelectorAll(".result-book-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.dataset.id;
+                const type = btn.dataset.type;
+                if (type === "gym") {
+                    window.location.href = `GymPage.html?id=${id}`;
+                } else {
+                    window.location.href = `ProfessionalPage.html?id=${id}`;
+                }
+            });
+        });
+    }
+
+    function showStatus(msg, isError = false) {
+        const el = document.getElementById("statusMsg");
+        el.textContent = msg;
+        el.style.display = "block";
+        el.style.color = isError ? "var(--danger)" : "var(--text-muted)";
+    }
+
+    function hideStatus() {
+        document.getElementById("statusMsg").style.display = "none";
+    }
+
+    document.getElementById("useLocationBtn").addEventListener("click", () => getLocation(true));
+    document.getElementById("searchLocationBtn").addEventListener("click", () => getLocation(true));
+    document.getElementById("searchSubmitBtn").addEventListener("click", () => renderResults(filterResults(allResults)));
+    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") renderResults(filterResults(allResults));
+    });
+
+    document.querySelectorAll(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
+            chip.classList.add("chip--active");
+            activeFilter = chip.dataset.filter;
+            renderResults(filterResults(allResults));
+        });
+    });
+
+    init();
+</script>
+
 </body>
 </html>
