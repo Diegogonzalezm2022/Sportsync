@@ -1,180 +1,115 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-}
+/* ===== OurTeam.css ===== */
 
-
-.main-header {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 20px;
-    background-color: #bbb;
-    border: 1px solid #000;
-}
-
-.logo-circle {
-    border-radius: 50%;
-    border: 1px solid #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #ccc;
-}
-
-.logo-circle.small { width: 50px; height: 50px; }
-.logo-circle.large { width: 80px; height: 80px; }
-
-.app-name { font-weight: bold; }
-
+/* ---------- Main Section ---------- */
 .team-section {
-    background-color: white;
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 40px 50px;
-    text-align: center;
-    box-sizing: border-box;
+    padding: 40px 20px 60px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
+/* ---------- Title ---------- */
 .team-title {
-    font-size: 18px;
-    color: #333;
-    margin-top: 0;
-    margin-bottom: 40px;
-    font-weight: bold;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 32px;
+    color: #1a1a1a;
 }
 
+/* ---------- Grid ---------- */
 .team-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 24px;
 }
 
+/* Last item (5th) centered in its own row */
+.team-member--center {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+/* ---------- Member Card ---------- */
 .team-member {
     display: flex;
     flex-direction: column;
     align-items: center;
+    text-align: center;
 }
 
-
+/* ---------- Photo Placeholder ---------- */
 .photo-placeholder {
-    width: 120px;
+    width: 100%;
     aspect-ratio: 1 / 1;
-    background-color: #F2F2F2;
-    border: 2px solid #ccc;
-    position: relative;
+    max-width: 180px;
+    background-color: #d9d9d9;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 20px;
+    position: relative;
+    margin-bottom: 10px;
+    overflow: hidden;
 }
 
+/* X cross lines */
 .photo-placeholder::before,
 .photo-placeholder::after {
-    content: "";
+    content: '';
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
+    width: 140%;
+    height: 1px;
+    background-color: #b0b0b0;
+    top: 50%;
+    left: -20%;
+    transform-origin: center;
 }
 
 .photo-placeholder::before {
-    background: linear-gradient(to bottom right, transparent 49%, #ccc 49.5%, #ccc 50.5%, transparent 51%);
+    transform: rotate(35deg);
 }
 
 .photo-placeholder::after {
-    background: linear-gradient(to top right, transparent 49%, #ccc 49.5%, #ccc 50.5%, transparent 51%);
+    transform: rotate(-35deg);
 }
 
-.team-text {
+.photo-placeholder span {
+    position: relative;
+    z-index: 1;
+    font-size: 0.85rem;
     color: #666;
-    font-size: 13px;
+    background-color: transparent;
+}
+
+/* ---------- Member Info ---------- */
+.member-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+}
+
+.member-desc {
+    font-size: 0.78rem;
+    color: #555;
     line-height: 1.4;
-    text-align: left;
     margin: 0;
-    font-weight: bold;
+    max-width: 160px;
 }
 
-
-.main-footer {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 330px;
-    padding: 20px;
-    background-color: #bbb;
-    border: 1px solid #000;
-}
-
-.footer-links {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-}
-
-.footer-links a {
-    color: #000;
-    text-decoration: underline;
-    font-size: 14px;
-}
-
-/* --- ADAPTACIÓN PARA ENTORNO VERTICAL (MÓVIL) --- */
-@media screen and (max-width: 768px) {
-
-    .main-header {
-        flex-direction: column;
-        gap: 20px;
-        padding: 15px;
-    }
-
-    .logo-circle.large {
-        width: 60px;
-        height: 60px;
-    }
-
-    .team-section {
-        margin: 20px 15px;
-        padding: 30px 20px;
-    }
-
+/* ---------- Responsive ---------- */
+@media (max-width: 400px) {
     .team-grid {
-        grid-template-columns: 1fr;
-        gap: 50px;
-    }
-
-    .team-member {
-        max-width: 300px;
-        margin: 0 auto;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 12px;
     }
 
     .photo-placeholder {
-        width: 150px;
-    }
-
-    .team-text {
-        text-align: center;
-    }
-
-    .main-footer {
-        flex-direction: column;
-        gap: 30px;
-        margin-top: 50px;
-        text-align: center;
-    }
-
-    .footer-links {
-        align-items: center;
+        max-width: 140px;
     }
 }
 
-/* Ajuste para pantallas pequeñas */
-@media screen and (max-width: 400px) {
-    .team-title {
-        font-size: 16px;
-    }
-
-    .photo-placeholder {
-        width: 130px;
-    }
-}

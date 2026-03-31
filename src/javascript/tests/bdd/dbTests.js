@@ -1,0 +1,17 @@
+import { Given,When,Then } from '@cucumber/cucumber'
+import assert from 'assert'
+
+Given('today is Sunday', function () {
+    // Write code here that turns the phrase above into concrete actions
+    assert(true)
+});
+
+When('I ask whether it\'s Friday yet', function () {
+    // Write code here that turns the phrase above into concrete actions
+    assert(true)
+});
+
+Then('I should be told {string}', function (string) {
+    // Write code here that turns the phrase above into concrete actions
+    assert(false)
+});
