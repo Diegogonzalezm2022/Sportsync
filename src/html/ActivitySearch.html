@@ -29,7 +29,7 @@
             <div class="user-info">
                 <span class="user-name">Name Surname</span>
                 <span class="user-role">User</span>
-                <button class="go-to-profile-btn" onclick="window.location.href='Profile.html'">Go to Profile</button>
+                <button class="go-to-profile-btn" onclick="window.location.href='/html/Profile.html'">Go to Profile</button>
             </div>
         </div>
 
@@ -96,7 +96,6 @@
 
         <!-- Results List -->
         <div class="results-list" id="resultsList">
-            <!-- Se rellena dinámicamente con Firebase -->
         </div>
 
     </section>
@@ -105,10 +104,15 @@
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
+<!-- 1. Include header/footer (script normal) -->
+<script src="../javascript/scripts/xlu-include-file.js"></script>
+<script>
+    xLuIncludeFile();
+</script>
+
+<!-- 2. Firebase (script module) -->
 <script type="module">
     import FirebaseDb from "../javascript/FirebaseDb.js";
-
-    xLuIncludeFile();
 
     let db;
     let userLat = null;
@@ -116,18 +120,15 @@
     let activeFilter = "todos";
     let allResults = [];
 
-    // ── Inicializar Firebase ──────────────────────────────
     async function init() {
         try {
             db = await FirebaseDb.create();
-            // Intentar obtener ubicación al cargar
             getLocation(false);
         } catch (e) {
             showStatus("Error al conectar con la base de datos.", true);
         }
     }
 
-    // ── Geolocalización ───────────────────────────────────
     function getLocation(searchAfter = true) {
         if (!navigator.geolocation) {
             showStatus("Tu navegador no soporta geolocalización.", true);
@@ -138,7 +139,6 @@
             (pos) => {
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
-                // Actualizar iframe del mapa con las coordenadas reales
                 document.getElementById("mapFrame").src =
                     `https://www.google.com/maps/embed/v1/view?key=YOUR_MAPS_KEY&center=${userLat},${userLng}&zoom=14`;
                 hideStatus();
@@ -148,7 +148,6 @@
         );
     }
 
-    // ── Buscar en Firebase ────────────────────────────────
     async function searchNearby() {
         if (userLat === null) {
             showStatus("Primero activa tu ubicación.", true);
@@ -165,26 +164,21 @@
         }
     }
 
-    // ── Filtrar resultados ────────────────────────────────
     function filterResults(results) {
         const searchText = document.getElementById("searchInput").value.toLowerCase();
-
         return results.filter(item => {
             const matchFilter =
                 activeFilter === "todos" ||
                 item.type === activeFilter ||
                 (item.tags && item.tags.includes(activeFilter));
-
             const matchText =
                 !searchText ||
                 item.name?.toLowerCase().includes(searchText) ||
                 item.description?.toLowerCase().includes(searchText);
-
             return matchFilter && matchText;
         });
     }
 
-    // ── Renderizar tarjetas ───────────────────────────────
     function renderResults(results) {
         const list = document.getElementById("resultsList");
 
@@ -233,12 +227,10 @@
             </div>`;
         }).join("");
 
-        // Evento en botones Reservar
         list.querySelectorAll(".result-book-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.dataset.id;
                 const type = btn.dataset.type;
-                // Redirige a la página de perfil correspondiente
                 if (type === "gym") {
                     window.location.href = `GymPage.html?id=${id}`;
                 } else {
@@ -248,7 +240,6 @@
         });
     }
 
-    // ── Helpers de estado ─────────────────────────────────
     function showStatus(msg, isError = false) {
         const el = document.getElementById("statusMsg");
         el.textContent = msg;
@@ -260,19 +251,9 @@
         document.getElementById("statusMsg").style.display = "none";
     }
 
-    // ── Eventos ───────────────────────────────────────────
-    document.getElementById("useLocationBtn").addEventListener("click", () => {
-        getLocation(true);
-    });
-
-    document.getElementById("searchLocationBtn").addEventListener("click", () => {
-        getLocation(true);
-    });
-
-    document.getElementById("searchSubmitBtn").addEventListener("click", () => {
-        renderResults(filterResults(allResults));
-    });
-
+    document.getElementById("useLocationBtn").addEventListener("click", () => getLocation(true));
+    document.getElementById("searchLocationBtn").addEventListener("click", () => getLocation(true));
+    document.getElementById("searchSubmitBtn").addEventListener("click", () => renderResults(filterResults(allResults)));
     document.getElementById("searchInput").addEventListener("keydown", (e) => {
         if (e.key === "Enter") renderResults(filterResults(allResults));
     });
@@ -286,8 +267,8 @@
         });
     });
 
-    // ── Arrancar ──────────────────────────────────────────
     init();
 </script>
+
 </body>
 </html>

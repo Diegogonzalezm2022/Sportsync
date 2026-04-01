@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit-My-Profile-SportSync</title>
     <link rel="stylesheet" href="../css/EditProfile.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
     <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
+<body>
+<header xlu-include-file="components/Header.html"></header>
+
 <main class="profile-main">
 
     <div class="profile-header">
-        <button class="back-btn" href = "#" aria-label="Volver">&#8592;</button>
+        <button class="back-btn" onclick="window.location.href='ActivitySearch.html'" aria-label="Volver">&#8592;</button>
         <div class="avatar-circle">
             <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -54,9 +57,18 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="save-btn">Save Changes</button>
+            <button onclick="window.location.href='EditProfile.html'" type="submit" class="save-btn">Save Changes</button>
         </div>
 
     </form>
-
 </main>
+
+<footer xlu-include-file="components/Footer.html"></footer>
+
+<script>
+    xLuIncludeFile();
+</script>
+
+
+</body>
+</html>
