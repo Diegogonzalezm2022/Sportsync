@@ -12,7 +12,16 @@
 <body>
 
 <header xlu-include-file="components/Header.html"></header>
-
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
+                chip.classList.add("chip--active");
+            });
+        });
+    });
+</script>
 <main class="activity-search-main">
 
     <!-- Left Column -->
@@ -117,7 +126,6 @@
     let db;
     let userLat = null;
     let userLng = null;
-    let activeFilter = "todos";
     let allResults = [];
 
     async function init() {
@@ -164,13 +172,15 @@
         }
     }
 
+    window.activeFilter = "todos";
+
     function filterResults(results) {
         const searchText = document.getElementById("searchInput").value.toLowerCase();
         return results.filter(item => {
             const matchFilter =
-                activeFilter === "todos" ||
-                item.type === activeFilter ||
-                (item.tags && item.tags.includes(activeFilter));
+                window.activeFilter === "todos" ||
+                item.type === window.activeFilter ||
+                (item.tags && item.tags.includes(window.activeFilter));
             const matchText =
                 !searchText ||
                 item.name?.toLowerCase().includes(searchText) ||
@@ -258,12 +268,13 @@
         if (e.key === "Enter") renderResults(filterResults(allResults));
     });
 
+    document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".chip").forEach(chip => {
-        chip.addEventListener("click", () => {
-            document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
-            chip.classList.add("chip--active");
-            activeFilter = chip.dataset.filter;
-            renderResults(filterResults(allResults));
+            chip.addEventListener("click", () => {
+                document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
+                chip.classList.add("chip--active");
+                window.activeFilter = chip.dataset.filter;
+            });
         });
     });
 

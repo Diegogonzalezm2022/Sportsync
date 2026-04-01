@@ -284,6 +284,8 @@ body {
     border-color: var(--text-primary);
 }
 
+
+
 /* --- Results List --- */
 .results-list {
     display: flex;
