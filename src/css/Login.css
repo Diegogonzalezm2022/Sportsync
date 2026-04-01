@@ -82,7 +82,16 @@ body {
     text-decoration: none;
     color: #555;
     margin-top: 3px;
+    cursor: pointer;
 }
+
+.links a:hover {
+    text-decoration: underline;
+    color: #555;
+    margin-top: 3px;
+    cursor: pointer;
+}
+
 
 /* Lado derecho */
 .right {
