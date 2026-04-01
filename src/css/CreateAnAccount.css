@@ -78,8 +78,8 @@ body {
 
 
 .photo-box {
-    width: 70%;
-    height: 70%;
+    width: 100%;
+    height: 100%;
     border: 1px solid #aaa;
     display: flex;
     justify-content: center;
@@ -89,24 +89,9 @@ body {
 }
 
 
-.photo-box::before,
-.photo-box::after {
-    content: "";
-    position: absolute;
+.photo-box img {
     width: 100%;
-    height: 1px;
-    background-color: #aaa;
-}
-
-.photo-box::before {
-    transform: rotate(45deg);
-}
-
-.photo-box::after {
-    transform: rotate(-45deg);
-}
-
-.photo-box span {
+    height: 100%;
     position: relative;
     background: transparent;
     color: #555;
