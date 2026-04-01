@@ -116,5 +116,6 @@
 }
 
 .save-btn:hover {
-    background-color: #c0c0c0;
+    background-color: grey;
+    color: white;
 }

@@ -238,6 +238,29 @@ body {
     background: var(--surface-2);
 }
 
+.search-clear-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.search-clear-btn:hover {
+    background: #e5e7eb;
+    color: #111;
+}
+
+.search-clear-btn svg {
+    width: 16px;
+    height: 16px;
+}
 .search-submit-btn {
     background: var(--text-primary);
     color: #fff;

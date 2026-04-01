@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProfileUser</title>
+    <link rel="stylesheet" href="../css/components/Header.css">
+    <link rel="stylesheet" href="../css/components/Footer.css">
+    <link rel="stylesheet" href="../css/ProfileUser.css">
+    <script src="../javascript/scripts/xlu-include-file.js"></script>
+
+</head>
+<body>
+<header xlu-include-file="components/Header.html"></header>
+
+<main class="profile-container">
+
+    <button class="back-btn" onclick="history.back()">&#8592;</button>
+
+    <section id="profile-header">
+        <div class="profile-photo-container">
+            <div class="photo-placeholder">
+                <img src="" id="profile-picture">
+            </div>
+        </div>
+
+        <div class="profile-info-grid">
+            <div class="info-group">
+                <p class="label">Name</p>
+                <div class="data-box" id="profile-name">Name Surname</div>
+            </div>
+            <div class="info-group">
+                <p class="label">User</p>
+                <div class="data-box" id = "profile-user">User</div>
+            </div>
+            <div class="info-group">
+                <p class="label">Email</p>
+                <div class="data-box" id = "profile-email">email@mail.com</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-details">
+        <div class="biography-section">
+            <p class="label">Biography</p>
+            <div class="bio-box" id="profile-bio"></div>
+        </div>
+    </section>
+
+    <h2 class="myreserv-title">My reservations</h2>
+    <section id="shared-files">
+        <div class="shared-item test-box">
+            <button class="btn-reserv" onclick="window.location.href='../html/ViewReservation.html'">View Reservations</button>
+        </div>
+    </section>
+    <div class="btn-edit-profile">
+         <button class="btn-edit" onclick="window.location.href='../html/EditProfile.html'">Edit Profile</button>
+    </div>
+</main>
+<footer xlu-include-file="components/Footer.html"></footer>
+
+<script src="../javascript/scripts/xlu-include-file.js"></script>
+<script>
+    xLuIncludeFile();
+</script>
+</body>
+</html>

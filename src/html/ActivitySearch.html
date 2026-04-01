@@ -38,7 +38,7 @@
             <div class="user-info">
                 <span class="user-name">Name Surname</span>
                 <span class="user-role">User</span>
-                <button class="go-to-profile-btn" onclick="window.location.href='/html/Profile.html'">Go to Profile</button>
+                <button class="go-to-profile-btn" onclick="window.location.href='ProfileUser.html'">Go to Profile</button>
             </div>
         </div>
 
@@ -76,6 +76,12 @@
                     </svg>
                 </button>
                 <input type="text" id="searchInput" class="search-input" placeholder="Busca gimnasios o entrenadores cerca de ti...">
+                <button class="search-clear-btn hidden" id="searchClearBtn" title="Limpiar búsqueda">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
                 <button class="search-location-btn" id="searchLocationBtn" title="Buscar por ubicación">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
@@ -261,6 +267,8 @@
         document.getElementById("statusMsg").style.display = "none";
     }
 
+
+    // Listeners directos, sin DOMContentLoaded
     document.getElementById("useLocationBtn").addEventListener("click", () => getLocation(true));
     document.getElementById("searchLocationBtn").addEventListener("click", () => getLocation(true));
     document.getElementById("searchSubmitBtn").addEventListener("click", () => renderResults(filterResults(allResults)));
@@ -268,13 +276,34 @@
         if (e.key === "Enter") renderResults(filterResults(allResults));
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
+
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    const searchInput = document.getElementById("searchInput");
+
+    // 1. Evento para limpiar la búsqueda
+    searchClearBtn.addEventListener("click", () => {
+        searchInput.value = ""; // Borra el texto
+        searchClearBtn.classList.add("hidden"); // Oculta el botón manualmente
+        searchInput.focus(); // Devuelve el cursor al buscador (buena práctica)
+
+        // Ejecuta tus funciones de renderizado con la lista limpia/completa
+        renderResults(filterResults(allResults));
+    });
+
+    // 2. Evento para mostrar/ocultar mientras se escribe
+    searchInput.addEventListener("input", (e) => {
+        if (e.target.value.length > 0) {
+            searchClearBtn.classList.remove("hidden");
+        } else {
+            searchClearBtn.classList.add("hidden");
+        }
+    });
+
     document.querySelectorAll(".chip").forEach(chip => {
-            chip.addEventListener("click", () => {
-                document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
-                chip.classList.add("chip--active");
-                window.activeFilter = chip.dataset.filter;
-            });
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
+            chip.classList.add("chip--active");
+            window.activeFilter = chip.dataset.filter;
         });
     });
 
