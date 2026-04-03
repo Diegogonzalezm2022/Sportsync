@@ -111,8 +111,8 @@ class FirebaseDb {
     async addActivity(ownerId, ownerType, activityData) {
         const activitiesRef = collection(this.db, "activities");
         const docRef = await addDoc(activitiesRef, {
-            ownerId,
-            ownerType,
+            ownerId: ownerId,
+            ownerType: ownerType,
             ...activityData,
             availableSlots: activityData.slots,
             createdAt: serverTimestamp()
