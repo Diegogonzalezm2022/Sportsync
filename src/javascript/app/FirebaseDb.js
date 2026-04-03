@@ -35,6 +35,12 @@ class FirebaseDb {
     }
 
     async makeReservation(userId, activityId, gymOrProId) {
+        const activitiesRef = await collection(this.db, "activities");
+        const activity = await activitiesRef.doc(activityId);
+        const availableSlots = activity.data().availableSlots;
+        if (availableSlots <= 0) {
+            throw "Activity full"
+        }
         const reservationsRef = collection(this.db, "reservations");
         const docRef = await addDoc(reservationsRef, {
             userId: userId,
@@ -44,6 +50,11 @@ class FirebaseDb {
             paid: false,
             createdAt: serverTimestamp()
         });
+        await updateDoc(activity,
+            {
+                availableSlots: availableSlots-1
+            }
+            );
         return docRef.id;
     }
 
