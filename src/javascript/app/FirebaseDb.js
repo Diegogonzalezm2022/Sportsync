@@ -37,9 +37,9 @@ class FirebaseDb {
     async makeReservation(userId, activityId, gymOrProId) {
         const reservationsRef = collection(this.db, "reservations");
         const docRef = await addDoc(reservationsRef, {
-            userId,
-            activityId,
-            gymOrProId,
+            userId: userId,
+            activityId: activityId,
+            gymOrProId: gymOrProId,
             status: "active",
             paid: false,
             createdAt: serverTimestamp()
@@ -49,6 +49,11 @@ class FirebaseDb {
 
     async cancelReservation(reservationId) {
         const reservationRef = doc(this.db, "reservations", reservationId);
+        const activityId = await reservationRef.get("activityId");
+        const cancelLimit = await doc(this.db, "activities", activityId.data()).get("maxCancelDate")
+        if (new Date(cancelLimit.data()) <= Date.now()) {
+            throw "Cancel limit passed";
+        }
         await updateDoc(reservationRef, {
             status: "cancelled"
         });
