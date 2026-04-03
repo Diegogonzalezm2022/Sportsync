@@ -45,7 +45,6 @@
 
     const db = await FirebaseDb.create();
 
-    // Cargar reservas activas y pasadas
     const active = await db.getUserReservations(userId, "active");
     const cancelled = await db.getUserReservations(userId, "cancelled");
     const done = await db.getUserReservations(userId, "done");
@@ -74,14 +73,14 @@
                     <button class="icon-btn share-icon" title="Compartir">
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
                     </button>
                     <button class="action-btn cancel-btn" data-id="${r.id}">Cancel</button>
                 </div>
             </article>`).join("");
 
-        // Eventos Cancel
         list.querySelectorAll(".cancel-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
@@ -114,7 +113,7 @@
                     <p>Paid: ${r.paid ? "✓" : "—"}</p>
                 </div>
                 <div class="card-actions past-actions">
-                    <div class="stars" data-target="${r.gymOrProId}">
+                    <div class="stars" data-target-id="${r.gymOrProId}">
                         <span data-value="1">★</span><span data-value="2">★</span>
                         <span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
                     </div>
@@ -123,7 +122,8 @@
                         <button class="icon-btn share-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                             </svg>
                         </button>
                         <span class="status-text">${r.status === "done" ? "Done" : "Cancelled"}</span>
@@ -131,10 +131,9 @@
                 </div>
             </article>`).join("");
 
-        // Estrellas de valoración en reservas pasadas
         list.querySelectorAll(".stars").forEach(starsEl => {
             const spans = starsEl.querySelectorAll("span");
-            const targetId = starsEl.dataset.target;
+            const targetId = starsEl.dataset.targetId;
             let selected = 0;
 
             spans.forEach(s => {
@@ -146,7 +145,11 @@
                     try {
                         await db.rateTarget(targetId, "gym", selected);
                     } catch {
-                        await db.rateTarget(targetId, "professional", selected);
+                        try {
+                            await db.rateTarget(targetId, "professional", selected);
+                        } catch {
+                            console.warn("No se pudo guardar la valoración.");
+                        }
                     }
                 });
             });

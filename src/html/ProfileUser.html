@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
     <link rel="stylesheet" href="../css/ProfileUser.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
-
 </head>
 <body>
 <header xlu-include-file="components/Header.html"></header>
@@ -28,15 +26,15 @@
         <div class="profile-info-grid">
             <div class="info-group">
                 <p class="label">Name</p>
-                <div class="data-box" id="profile-name">Name Surname</div>
+                <div class="data-box" id="profile-name">—</div>
             </div>
             <div class="info-group">
                 <p class="label">User</p>
-                <div class="data-box" id = "profile-user">User</div>
+                <div class="data-box" id="profile-user">—</div>
             </div>
             <div class="info-group">
                 <p class="label">Email</p>
-                <div class="data-box" id = "profile-email">email@mail.com</div>
+                <div class="data-box" id="profile-email">—</div>
             </div>
         </div>
     </section>
@@ -51,18 +49,46 @@
     <h2 class="myreserv-title">My reservations</h2>
     <section id="shared-files">
         <div class="shared-item test-box">
-            <button class="btn-reserv" onclick="window.location.href='../html/ViewReservation.html'">View Reservations</button>
+            <button class="btn-reserv" onclick="window.location.href='../html/History.html'">View History</button>
         </div>
     </section>
     <div class="btn-edit-profile">
-         <button class="btn-edit" onclick="window.location.href='../html/EditProfile.html'">Edit Profile</button>
+        <button class="btn-edit" onclick="window.location.href='../html/EditProfile.html'">Edit Profile</button>
     </div>
 </main>
+
 <footer xlu-include-file="components/Footer.html"></footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
     xLuIncludeFile();
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const userId = sessionStorage.getItem("userId");
+    if (!userId) window.location.href = "Login.html";
+
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const userSnap = await getDoc(doc(db, "users", userId));
+
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+        document.getElementById("profile-name").textContent = `${data.name} ${data.surname}`;
+        document.getElementById("profile-user").textContent = data.username;
+        document.getElementById("profile-email").textContent = data.email;
+        if (data.bio) {
+            document.getElementById("profile-bio").textContent = data.bio;
+        }
+    } else {
+        console.warn("No se encontraron datos del usuario en Firestore.");
+    }
 </script>
 </body>
 </html>

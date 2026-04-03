@@ -25,6 +25,23 @@
     background-color: #ccc;
 }
 
+/* Footer separado del contenido */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.reservations-main {
+    flex: 1;
+}
+
+.loading-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 10px 4px;
+}
+
 /* Responsive sencillo */
 @media (max-width: 768px) {
     .main-footer {
