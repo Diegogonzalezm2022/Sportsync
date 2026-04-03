@@ -2,39 +2,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
     <link rel="stylesheet" href="../css/Login.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
-
 </head>
 <body>
 <header xlu-include-file="components/Header.html"></header>
+
 <main class="container">
 
-    <!-- Lado izquierdo -->
     <section class="left">
         <h2>Login</h2>
-
-        <form class="form">
-            <label for="user">User:</label>
-            <input id="user" type="text" placeholder="example">
+        <div id="loginError" class="login-error" style="display:none;"></div>
+        <div class="form">
+            <label for="user">Email:</label>
+            <input id="user" type="email" placeholder="example@mail.com">
 
             <label for="password">Password:</label>
             <input id="password" type="password" placeholder="********">
 
-            <button class="btn btn-login" onclick="window.location.href='ActivitySearch.html'">Login</button>
+            <button class="btn btn-login" id="loginBtn">Login</button>
 
             <div class="links">
                 <a href="ForgotYourPassword.html">Forgot your password?</a>
                 <a href="RegisterAs.html">Register</a>
             </div>
-        </form>
+        </div>
     </section>
 
-    <!-- Lado derecho -->
     <section class="right">
         <div class="photo-box">
             <img src="../assets/imagenes/sporty_login_register.png" alt="">
@@ -42,9 +39,53 @@
     </section>
 
 </main>
+
 <footer xlu-include-file="components/Footer.html"></footer>
+
+<script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
-    xLuIncludeFile()
+    xLuIncludeFile();
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+        const email = document.getElementById("user").value.trim();
+        const password = document.getElementById("password").value;
+        const errorEl = document.getElementById("loginError");
+
+        if (!email || !password) {
+            errorEl.textContent = "Por favor rellena todos los campos.";
+            errorEl.style.display = "block";
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // Guardar uid en sessionStorage para usarlo en otras páginas
+            sessionStorage.setItem("userId", userCredential.user.uid);
+            sessionStorage.setItem("userEmail", userCredential.user.email);
+            window.location.href = "ActivitySearch.html";
+        } catch (e) {
+            errorEl.style.display = "block";
+            errorEl.textContent =
+                e.code === "auth/invalid-credential"
+                    ? "Email o contraseña incorrectos."
+                    : "Error al iniciar sesión. Inténtalo de nuevo.";
+        }
+    });
+
+    // Permitir login con Enter
+    document.getElementById("password").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("loginBtn").click();
+    });
 </script>
 </body>
 </html>

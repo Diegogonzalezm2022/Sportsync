@@ -116,3 +116,13 @@ body {
     background: transparent;
     color: #555;
 }
+
+.login-error {
+    background: #fdecea;
+    color: #c0392b;
+    border: 1px solid #f5c6c6;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}

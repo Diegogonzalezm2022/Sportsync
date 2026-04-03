@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Create-An-Account-SportSync</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create An Account - SportSync</title>
     <link rel="stylesheet" href="../css/CreateAnAccount.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
 <header xlu-include-file="components/Header.html"></header>
@@ -16,30 +15,29 @@
 
     <section class="form-section">
         <h2>Create an Account</h2>
-
-        <form action="#" method="post" class="register-form">
+        <div id="registerError" class="login-error" style="display:none;"></div>
+        <div class="register-form">
 
             <label>Email</label>
-            <input type="email" name="email" placeholder="example@gmail.com" required>
+            <input type="email" id="email" placeholder="example@gmail.com">
 
             <label>Name</label>
-            <input type="text" name="name" placeholder="example" required>
-
+            <input type="text" id="name" placeholder="example">
 
             <label>Surname</label>
-            <input type="text" Surname="Surname" placeholder="example" required>
+            <input type="text" id="surname" placeholder="example">
 
-            <label>User</label>
-            <input type="text" name="username" placeholder="example" required>
+            <label>Username</label>
+            <input type="text" id="username" placeholder="example">
 
             <label>Password</label>
-            <input type="password" name="password" required>
+            <input type="password" id="password">
 
             <label>Repeat password</label>
-            <input type="password" name="password" required>
+            <input type="password" id="passwordRepeat">
 
-            <button onclick="window.location.href='Login.html'" type="submit" class="btn-register">Register</button>
-        </form>
+            <button class="btn-register" id="registerBtn">Register</button>
+        </div>
     </section>
 
     <section class="photo-section">
@@ -48,10 +46,83 @@
         </div>
     </section>
 
-    </main>
+</main>
+
 <footer xlu-include-file="components/Footer.html"></footer>
+
+<script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
-    xLuIncludeFile()
+    xLuIncludeFile();
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Leer el rol elegido en RegisterAs.html (guardado en sessionStorage)
+    const role = sessionStorage.getItem("registerRole") || "user";
+
+    document.getElementById("registerBtn").addEventListener("click", async () => {
+        const email = document.getElementById("email").value.trim();
+        const name = document.getElementById("name").value.trim();
+        const surname = document.getElementById("surname").value.trim();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const passwordRepeat = document.getElementById("passwordRepeat").value;
+        const errorEl = document.getElementById("registerError");
+
+        errorEl.style.display = "none";
+
+        if (!email || !name || !surname || !username || !password) {
+            errorEl.textContent = "Por favor rellena todos los campos.";
+            errorEl.style.display = "block";
+            return;
+        }
+        if (password !== passwordRepeat) {
+            errorEl.textContent = "Las contraseñas no coinciden.";
+            errorEl.style.display = "block";
+            return;
+        }
+        if (password.length < 6) {
+            errorEl.textContent = "La contraseña debe tener al menos 6 caracteres.";
+            errorEl.style.display = "block";
+            return;
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const uid = userCredential.user.uid;
+
+            // Guardar datos del usuario en Firestore
+            await setDoc(doc(db, "users", uid), {
+                name,
+                surname,
+                username,
+                email,
+                role,         // "user" | "gym" | "professional"
+                createdAt: serverTimestamp()
+            });
+
+            sessionStorage.setItem("userId", uid);
+            sessionStorage.setItem("userEmail", email);
+            sessionStorage.setItem("userRole", role);
+
+            window.location.href = "Login.html";
+        } catch (e) {
+            errorEl.style.display = "block";
+            errorEl.textContent =
+                e.code === "auth/email-already-in-use"
+                    ? "Este email ya está registrado."
+                    : "Error al registrarse. Inténtalo de nuevo.";
+        }
+    });
 </script>
 </body>
 </html>
