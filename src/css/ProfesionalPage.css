@@ -478,7 +478,16 @@ body {
     background: var(--accent) !important;
     cursor: default;
 }
-
+.activity-owner-badge {
+    padding: 7px 16px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 /* ========================================
    Responsive
    ======================================== */

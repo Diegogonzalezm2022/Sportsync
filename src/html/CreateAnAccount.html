@@ -100,21 +100,24 @@
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // Guardar datos del usuario en Firestore
+            // Guardar datos sin rol todavía
             await setDoc(doc(db, "users", uid), {
                 name,
                 surname,
                 username,
                 email,
-                role,         // "user" | "gym" | "professional"
                 createdAt: serverTimestamp()
+                // NO guardamos role aquí, lo elegirá en el popup
             });
 
             sessionStorage.setItem("userId", uid);
             sessionStorage.setItem("userEmail", email);
-            sessionStorage.setItem("userRole", role);
 
+            // Redirigir a Login para que aparezca el popup de rol
+            // pero marcamos que viene del registro para forzar el popup
+            sessionStorage.setItem("showRolePopup", "true");
             window.location.href = "Login.html";
+
         } catch (e) {
             errorEl.style.display = "block";
             errorEl.textContent =

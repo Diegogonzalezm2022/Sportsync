@@ -126,3 +126,80 @@ body {
     font-size: 0.85rem;
     margin-bottom: 12px;
 }
+
+/* ===== Role popup ===== */
+.role-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    padding: 20px;
+}
+
+.role-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.role-popup {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+    transform: translateY(16px);
+    transition: transform 0.25s;
+}
+
+.role-overlay.active .role-popup {
+    transform: translateY(0);
+}
+
+.role-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    text-align: center;
+    margin: 0;
+}
+
+.role-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+.role-btn {
+    padding: 14px 32px;
+    border-radius: 50px;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e8e8e6;
+    color: #1a1a1a;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.role-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.13);
+}
+
+.role-btn--gym:hover       { background: #d6e4f0; }
+.role-btn--professional:hover { background: #d8f3dc; }
+.role-btn--user:hover      { background: #fef3cd; }

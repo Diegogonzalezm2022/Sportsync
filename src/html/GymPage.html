@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="../css/GymPage.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body class="page--gym">
 
@@ -15,17 +14,14 @@
 
 <main class="profile-page-main">
 
-    <!-- Back -->
     <button class="back-btn" onclick="history.back()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
     </button>
 
-    <!-- ===== TOP: photo + info ===== -->
     <section class="top-section">
 
-        <!-- Left: profile photo -->
         <div class="profile-photo-block">
             <div class="profile-photo">
                 <svg class="photo-x" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
@@ -34,8 +30,6 @@
                 </svg>
                 <span class="photo-caption">Gym Profile</span>
             </div>
-
-            <!-- Schedule -->
             <div class="schedule-block">
                 <span class="schedule-label">Schedule:</span>
                 <div class="schedule-box">
@@ -45,7 +39,6 @@
             </div>
         </div>
 
-        <!-- Right: text info -->
         <div class="info-block">
 
             <div class="info-row info-row--top">
@@ -94,13 +87,10 @@
         </div>
     </section>
 
-    <!-- ===== GALLERY ===== -->
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
             <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <div class="gallery-carousel" id="galleryCarousel">
                 <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
@@ -109,14 +99,11 @@
                 <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
             </div>
             <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M9 18l6-6-6-6"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
             </button>
         </div>
     </section>
 
-    <!-- ===== DATE FILTER ===== -->
     <section class="date-filter-section">
         <div class="date-btn-group">
             <button class="date-btn" id="dateFromBtn">
@@ -132,117 +119,128 @@
         </div>
     </section>
 
-    <!-- ===== ACTIVITIES ===== -->
-    <section class="activities-section">
-
-        <div class="activity-card">
-            <div class="activity-info">
-                <div class="activity-row">
-                    <span class="activity-field-label">Activity name:</span>
-                    <span class="activity-value">Spinning</span>
-                </div>
-                <div class="activity-row">
-                    <span class="activity-field-label">Activity schedule:</span>
-                    <span class="activity-value">Lun/Mié/Vie · 09:00–10:00</span>
-                </div>
-            </div>
-            <div class="activity-right">
-                <div class="activity-row">
-                    <span class="activity-field-label">Price:</span>
-                    <span class="activity-value activity-value--price">15€</span>
-                </div>
-                <div class="activity-row">
-                    <span class="activity-field-label">Available slots:</span>
-                    <span class="activity-value">5 / 20</span>
-                </div>
-            </div>
-            <button class="signup-btn" onclick="handleSignup(this)">Sign up</button>
-        </div>
-
-        <div class="activity-card">
-            <div class="activity-info">
-                <div class="activity-row">
-                    <span class="activity-field-label">Activity name:</span>
-                    <span class="activity-value">Yoga</span>
-                </div>
-                <div class="activity-row">
-                    <span class="activity-field-label">Activity schedule:</span>
-                    <span class="activity-value">Mar/Jue · 19:00–20:00</span>
-                </div>
-            </div>
-            <div class="activity-right">
-                <div class="activity-row">
-                    <span class="activity-field-label">Price:</span>
-                    <span class="activity-value activity-value--price">12€</span>
-                </div>
-                <div class="activity-row">
-                    <span class="activity-field-label">Available slots:</span>
-                    <span class="activity-value">12 / 15</span>
-                </div>
-            </div>
-            <button class="signup-btn" onclick="handleSignup(this)">Sign up</button>
-        </div>
-
+    <section class="activities-section" id="activitiesSection">
+        <!-- Se rellena dinámicamente según el rol -->
     </section>
 
 </main>
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
+<script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
     xLuIncludeFile();
+</script>
 
-    /* ---- Stars rating ---- */
-    const starsContainer = document.getElementById('starsContainer');
-    const stars = starsContainer.querySelectorAll('.star');
-    const ratingHint = document.getElementById('ratingHint');
-    let currentRating = 0;
+<script type="module">
+    // ── Protección de ruta ────────────────────────────────
+    const userId = sessionStorage.getItem("userId");
+    const role   = sessionStorage.getItem("userRole");
 
-    stars.forEach(star => {
-        star.addEventListener('mouseover', () => highlightStars(+star.dataset.value));
-        star.addEventListener('mouseout', () => highlightStars(currentRating));
-        star.addEventListener('click', () => {
-            currentRating = +star.dataset.value;
-            highlightStars(currentRating);
-            ratingHint.textContent = ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][currentRating];
-            ratingHint.style.color = 'var(--accent)';
+    if (!userId) window.location.href = "Login.html";
+
+    // Los professionals no acceden a GymPage
+    if (role === "professional") window.location.href = "ProfessionalPage.html";
+
+    // ── Mostrar/ocultar Sign up según rol ─────────────────
+    const isGym = role === "gym";
+
+    const activitiesSection = document.getElementById("activitiesSection");
+
+    const activities = [
+        { name: "Spinning",  schedule: "Lun/Mié/Vie · 09:00–10:00", price: "15€", available: 5,  total: 20 },
+        { name: "Yoga",      schedule: "Mar/Jue · 19:00–20:00",      price: "12€", available: 12, total: 15 }
+    ];
+
+    activitiesSection.innerHTML = activities.map((a, i) => `
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity name:</span>
+                    <span class="activity-value">${a.name}</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Activity schedule:</span>
+                    <span class="activity-value">${a.schedule}</span>
+                </div>
+            </div>
+            <div class="activity-right">
+                <div class="activity-row">
+                    <span class="activity-field-label">Price:</span>
+                    <span class="activity-value activity-value--price">${a.price}</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Available slots:</span>
+                    <span class="activity-value">${a.available} / ${a.total}</span>
+                </div>
+            </div>
+            ${isGym
+        ? `<span class="activity-owner-badge">Tu actividad</span>`
+        : `<button class="signup-btn" id="signupBtn${i}">Sign up</button>`
+    }
+        </div>`).join("");
+
+    if (!isGym) {
+        activities.forEach((_, i) => {
+            document.getElementById(`signupBtn${i}`).addEventListener("click", function () {
+                this.textContent = "✓ Apuntado";
+                this.classList.add("signup-btn--done");
+                this.disabled = true;
+            });
         });
-    });
-
-    function highlightStars(n) {
-        stars.forEach(s => s.classList.toggle('star--active', +s.dataset.value <= n));
     }
 
-    /* ---- Date filter ---- */
-    document.getElementById('dateFromBtn').addEventListener('click', () => document.getElementById('dateFromInput').showPicker?.() || document.getElementById('dateFromInput').click());
-    document.getElementById('dateToBtn').addEventListener('click', () => document.getElementById('dateToInput').showPicker?.() || document.getElementById('dateToInput').click());
+    // ── Stars ─────────────────────────────────────────────
+    const starsContainer = document.getElementById("starsContainer");
+    const stars = starsContainer.querySelectorAll(".star");
+    const ratingHint = document.getElementById("ratingHint");
+    let currentRating = 0;
 
-    document.getElementById('dateFromInput').addEventListener('change', function () {
-        document.getElementById('dateFromLabel').textContent = this.value ? formatDate(this.value) : 'Date from';
-        document.getElementById('dateFromBtn').classList.toggle('date-btn--active', !!this.value);
+    if (isGym) {
+        starsContainer.style.pointerEvents = "none";
+        ratingHint.textContent = "Tu perfil";
+    } else {
+        stars.forEach(star => {
+            star.addEventListener("mouseover", () => highlightStars(+star.dataset.value));
+            star.addEventListener("mouseout",  () => highlightStars(currentRating));
+            star.addEventListener("click", () => {
+                currentRating = +star.dataset.value;
+                highlightStars(currentRating);
+                ratingHint.textContent = ["","Muy malo","Malo","Regular","Bueno","Excelente"][currentRating];
+                ratingHint.style.color = "var(--accent)";
+            });
+        });
+    }
+
+    function highlightStars(n) {
+        stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= n));
+    }
+
+    // ── Date filter ───────────────────────────────────────
+    document.getElementById("dateFromBtn").addEventListener("click", () =>
+        document.getElementById("dateFromInput").showPicker?.() || document.getElementById("dateFromInput").click());
+    document.getElementById("dateToBtn").addEventListener("click", () =>
+        document.getElementById("dateToInput").showPicker?.() || document.getElementById("dateToInput").click());
+
+    document.getElementById("dateFromInput").addEventListener("change", function () {
+        document.getElementById("dateFromLabel").textContent = this.value ? formatDate(this.value) : "Date from";
+        document.getElementById("dateFromBtn").classList.toggle("date-btn--active", !!this.value);
     });
-    document.getElementById('dateToInput').addEventListener('change', function () {
-        document.getElementById('dateToLabel').textContent = this.value ? formatDate(this.value) : 'Date to';
-        document.getElementById('dateToBtn').classList.toggle('date-btn--active', !!this.value);
+    document.getElementById("dateToInput").addEventListener("change", function () {
+        document.getElementById("dateToLabel").textContent = this.value ? formatDate(this.value) : "Date to";
+        document.getElementById("dateToBtn").classList.toggle("date-btn--active", !!this.value);
     });
 
     function formatDate(val) {
-        const [y, m, d] = val.split('-');
+        const [y, m, d] = val.split("-");
         return `${d}/${m}/${y}`;
     }
 
-    /* ---- Carousel ---- */
-    document.getElementById('carouselLeft').addEventListener('click', () =>
-        document.getElementById('galleryCarousel').scrollBy({ left: -140, behavior: 'smooth' }));
-    document.getElementById('carouselRight').addEventListener('click', () =>
-        document.getElementById('galleryCarousel').scrollBy({ left: 140, behavior: 'smooth' }));
-
-    /* ---- Sign up ---- */
-    function handleSignup(btn) {
-        btn.textContent = '✓ Apuntado';
-        btn.classList.add('signup-btn--done');
-        btn.disabled = true;
-    }
+    // ── Carousel ──────────────────────────────────────────
+    document.getElementById("carouselLeft").addEventListener("click", () =>
+        document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" }));
+    document.getElementById("carouselRight").addEventListener("click", () =>
+        document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" }));
 </script>
 </body>
 </html>

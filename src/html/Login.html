@@ -40,6 +40,18 @@
 
 </main>
 
+<!-- ===== POPUP SELECTOR DE ROL ===== -->
+<div class="role-overlay" id="roleOverlay">
+    <div class="role-popup">
+        <h2 class="role-title">Who are you?</h2>
+        <div class="role-options">
+            <button class="role-btn role-btn--gym" data-role="gym">Im a gym</button>
+            <button class="role-btn role-btn--professional" data-role="professional">Im a professional</button>
+            <button class="role-btn role-btn--user" data-role="user">Im a user</button>
+        </div>
+    </div>
+</div>
+
 <footer xlu-include-file="components/Footer.html"></footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
@@ -50,16 +62,32 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
+    let loggedUid = null;
+
+    // ── Si viene del registro mostrar popup directamente ──
+    const comingFromRegister = sessionStorage.getItem("showRolePopup");
+    const alreadyLoggedId = sessionStorage.getItem("userId");
+
+    if (comingFromRegister === "true" && alreadyLoggedId) {
+        sessionStorage.removeItem("showRolePopup");
+        loggedUid = alreadyLoggedId;
+        document.getElementById("roleOverlay").classList.add("active");
+    }
+
+    // ── LOGIN ─────────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
         const email = document.getElementById("user").value.trim();
         const password = document.getElementById("password").value;
         const errorEl = document.getElementById("loginError");
+        errorEl.style.display = "none";
 
         if (!email || !password) {
             errorEl.textContent = "Por favor rellena todos los campos.";
@@ -69,10 +97,21 @@
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            // Guardar uid en sessionStorage para usarlo en otras páginas
-            sessionStorage.setItem("userId", userCredential.user.uid);
-            sessionStorage.setItem("userEmail", userCredential.user.email);
-            window.location.href = "ActivitySearch.html";
+            loggedUid = userCredential.user.uid;
+
+            sessionStorage.setItem("userId", loggedUid);
+            sessionStorage.setItem("userEmail", email);
+
+            const userSnap = await getDoc(doc(db, "users", loggedUid));
+            const userData = userSnap.exists() ? userSnap.data() : {};
+
+            if (userData.role) {
+                sessionStorage.setItem("userRole", userData.role);
+                redirectByRole(userData.role);
+            } else {
+                document.getElementById("roleOverlay").classList.add("active");
+            }
+
         } catch (e) {
             errorEl.style.display = "block";
             errorEl.textContent =
@@ -82,10 +121,27 @@
         }
     });
 
-    // Permitir login con Enter
     document.getElementById("password").addEventListener("keydown", e => {
         if (e.key === "Enter") document.getElementById("loginBtn").click();
     });
+
+    // ── POPUP: elegir rol ─────────────────────────────────
+    document.querySelectorAll(".role-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const role = btn.dataset.role;
+            await updateDoc(doc(db, "users", loggedUid), { role });
+            sessionStorage.setItem("userRole", role);
+            document.getElementById("roleOverlay").classList.remove("active");
+            redirectByRole(role);
+        });
+    });
+
+    // ── Redirigir según rol ───────────────────────────────
+    function redirectByRole(role) {
+        if (role === "gym")               window.location.href = "GymPage.html";
+        else if (role === "professional") window.location.href = "ProfessionalPage.html";
+        else                              window.location.href = "ActivitySearch.html";
+    }
 </script>
 </body>
 </html>
