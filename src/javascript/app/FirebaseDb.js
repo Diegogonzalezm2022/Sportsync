@@ -1,6 +1,6 @@
 // FirebaseDb.js
-import { initializeApp } from '@firebase/app';
-import {
+const { initializeApp } = require('@firebase/app');
+const {
     getFirestore,
     collection,
     addDoc,
@@ -12,7 +12,9 @@ import {
     where,
     updateDoc,
     serverTimestamp
-} from '@firebase/firestore';
+} = require('@firebase/firestore');
+
+const firebaseConfig = require('/src/assets/firebaseConfig.json');
 
 class FirebaseDb {
 
@@ -28,8 +30,6 @@ class FirebaseDb {
     }
 
     async _init() {
-        const response = await fetch("../assets/firebaseConfig.json");
-        const firebaseConfig = await response.json();
         this.app = initializeApp(firebaseConfig);
         this.db = getFirestore(this.app);
     }
@@ -178,4 +178,4 @@ class FirebaseDb {
     }
 }
 
-export default FirebaseDb;
+module.exports = FirebaseDb;
