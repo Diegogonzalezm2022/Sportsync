@@ -29,7 +29,7 @@ Given('the data of a new gym', function () {
     }
 });
 
-When('this data is added to the system', async function () {
+When('the gym is added to the system', async function () {
     addedId = await dbInstance.addGym(dataToAdd);
 });
 
@@ -45,6 +45,35 @@ Then('the new gym appears on the database', async function () {
     assert(gymData.schedule === "14:00-20:00");
     assert(gymData.rating === 0);
     assert(gymData.ratingCount === 0);
+})
+
+// ── ADD PROFESSIONAL ──────────────────────────────────────────────
+Given('the data of a new professional', function () {
+    dataToAdd = {
+        name: "Test Professional",
+        description: "Test description",
+        contactInfo: "Phone: 123456789",
+        schedule: "14:00-20:00",
+        location: new GeoPoint(0, 0)
+    }
+});
+
+When('the professional is added to the system', async function () {
+    addedId = await dbInstance.addProfessional(dataToAdd);
+});
+
+Then('the new professional appears on the database', async function () {
+    const dbProfessionalRef = doc(dbConnection, "professionals", addedId);
+    const dbProfessional = await getDoc(dbProfessionalRef);
+    const professionalData = dbProfessional.data();
+    await deleteDoc(dbProfessionalRef);
+    assert(professionalData.name === "Test Professional");
+    assert(professionalData.description === "Test description");
+    assert(professionalData.location.isEqual(new GeoPoint(0, 0)));
+    assert(professionalData.contactInfo === "Phone: 123456789");
+    assert(professionalData.schedule === "14:00-20:00");
+    assert(professionalData.rating === 0);
+    assert(professionalData.ratingCount === 0);
 })
 
 // ── SEARCH GYM ───────────────────────────────────────────

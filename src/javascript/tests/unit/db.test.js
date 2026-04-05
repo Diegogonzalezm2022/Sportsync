@@ -31,3 +31,24 @@ test("gymIsInsertedInDBWhenNewGymIsCreated", async ()=> {
     expect(gymData.rating).toEqual(0);
     expect(gymData.ratingCount).toEqual(0);
 })
+
+test("professionalIsInsertedInDBWhenNewProfessionalIsCreated", async ()=> {
+    const addedProfessional = await dbInstance.addProfessional({
+        name: "Test Professional",
+        description: "Test description",
+        contactInfo: "Phone: 123456789",
+        schedule: "14:00-20:00",
+        location: new GeoPoint(0, 0)
+    });
+    const dbProfessionalRef = doc(dbConnection, "professionals", addedProfessional);
+    const dbProfessional = await getDoc(dbProfessionalRef);
+    const professionalData = dbProfessional.data();
+    await deleteDoc(dbProfessionalRef);
+    expect(professionalData.name).toEqual("Test Professional");
+    expect(professionalData.description).toEqual("Test description");
+    expect(professionalData.location).toEqual(new GeoPoint(0, 0));
+    expect(professionalData.contactInfo).toEqual("Phone: 123456789");
+    expect(professionalData.schedule).toEqual("14:00-20:00");
+    expect(professionalData.rating).toEqual(0);
+    expect(professionalData.ratingCount).toEqual(0);
+})
