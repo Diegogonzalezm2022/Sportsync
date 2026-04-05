@@ -167,3 +167,6 @@
         font-size: 1.3rem;
     }
 }
+.auth-only {
+    display: none;
+}

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Header</title>
     <link type="text/css" rel="stylesheet" href="../../css/components/Header.css">
-
 </head>
 <body>
 
@@ -19,19 +18,35 @@
     <div class="menu-icon" onclick="document.getElementById('mobile-menu-popup').classList.toggle('active')">&#9776;</div>
 
     <div id="mobile-menu-popup" class="header-popup-menu">
-        <div class="popup-user-profile">
+
+        <div class="popup-user-profile auth-only">
             <div class="popup-avatar"></div>
             <span>User</span>
         </div>
 
         <nav class="popup-nav">
-            <button onclick="window.location.href='ViewReservation.html'">View reservations</button>
-            <button onclick="window.location.href='EditProfile.html'">Edit Profile</button>
-            <button onclick="window.location.href='History.html'">History</button>
-            <button class="logout-btn" onclick="window.location.href='index.html'">Logout</button>
+            <button class="auth-only" onclick="window.location.href='ViewReservation.html'">View reservations</button>
+            <button class="auth-only" onclick="window.location.href='EditProfile.html'">Edit Profile</button>
+            <button class="auth-only" onclick="window.location.href='History.html'">History</button>
+
+            <button id="auth-action-btn" class="logout-btn">Cargando...</button>
         </nav>
     </div>
 </header>
 
 </body>
 </html>
+
+<div id="mobile-menu-popup" class="header-popup-menu">
+    <div class="popup-user-profile">
+        <div class="popup-avatar"></div>
+        <span>User</span>
+    </div>
+
+    <nav class="popup-nav">
+        <button onclick="window.location.href='ViewReservation.html'">View reservations</button>
+        <button onclick="window.location.href='EditProfile.html'">Edit Profile</button>
+        <button onclick="window.location.href='History.html'">History</button>
+        <button class="logout-btn" onclick="window.location.href='index.html'">Logout</button>
+    </nav>
+</div>
