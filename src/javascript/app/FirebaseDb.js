@@ -71,6 +71,10 @@ class FirebaseDb {
             status: "cancelled"
         }
         );
+        await updateDoc(activityRef, {
+            availableSlots: activity.data().availableSlots+1
+
+        })
     }
 
     async findGymsByDistance(lat, lng, radiusKm = 10) {
