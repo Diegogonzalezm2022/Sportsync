@@ -97,6 +97,12 @@ Then('the gym appears in the search results', async () => {
     await deleteDoc(doc(dbConnection, "gyms", addedId));
 });
 
+Then('the gym does not appear in the search results', async () => {
+    const found = searchResults.some(gym => gym.id === addedId);
+    assert(!found, "The gym was found in search results");
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+})
+
 // ── BOOK GYM ─────────────────────────────────────────────
 Given('there is an activity with available slots', async () => {
     addedId = await dbInstance.addGym({
