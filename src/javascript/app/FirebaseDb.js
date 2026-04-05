@@ -14,7 +14,7 @@ const {
     serverTimestamp
 } = require('@firebase/firestore');
 
-const firebaseConfig = require('/src/assets/firebaseConfig.json');
+const firebaseConfig = require('../../assets/firebaseConfig.json');
 
 class FirebaseDb {
 
