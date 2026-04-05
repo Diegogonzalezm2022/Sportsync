@@ -167,3 +167,21 @@ Then('the reservation status is cancelled in the database', async () => {
     await deleteDoc(doc(dbConnection, "activities", activityId));
     await deleteDoc(doc(dbConnection, "gyms", addedId));
 });
+
+// ── AVAILABLE SLOTS UPDATING WHEN MAKING A RESERVATION ───────────────────────────────────────
+Then("the activity's available slots are reduced by one", async () => {
+    const snap = await getDoc(doc(dbConnection, "activities", activityId));
+    assert(snap.data().availableSlots === 9);
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+})
+
+// ── AVAILABLE SLOTS UPDATING WHEN MAKING CANCELLING ───────────────────────────────────────
+Then("the activity's available slots are increased by one", async () => {
+    const snap = await getDoc(doc(dbConnection, "activities", activityId));
+    assert(snap.data().availableSlots === 10);
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+})
