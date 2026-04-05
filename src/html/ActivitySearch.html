@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../css/ActivitySearch.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -31,12 +33,7 @@
         </div>
 
         <div class="map-container">
-            <iframe id="mapFrame"
-                    title="Nearby map"
-                    loading="lazy"
-                    allowfullscreen
-                    src="https://www.openstreetmap.org/export/embed.html?bbox=-15.49,-15.38,28.10,28.15&layer=mapnik"
-            ></iframe>
+            <div id="map" style="width:100%; height:230px; border-radius:12px;"></div>
             <button class="use-location-btn" id="useLocationBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
@@ -97,7 +94,24 @@
 
 </main>
 
-<footer xlu-include-file="components/Footer.html"></footer>
+<footer class="main-footer">
+    <div class="footer-links">
+        <a href="https://github.com/Diegogonzalezm2022/Sportsync">Link GitHub</a>
+        <a href="https://www.figma.com/design/932AGbsgEWwMm1Z0YmgsVN/PS_Grupo10?node-id=0-1&p=f&t=l3bNIiRxuAhtjPYc-0">Link Figma</a>
+        <a href="Index.html">Home</a>
+        <a href="AboutUs.html">About Us</a>
+    </div>
+    <div class="footer-logo">
+        <strong>Logo</strong>
+    </div>
+    <div class="footer-contact">
+        <a href="mailto:cathaysa.moreno101@alu.ulpgc.es?subject=Consulta sobre la web&body=Hola, me gustaría saber más sobre...">Link Email</a>
+        <a href="https://wa.me/+34628193554?text=Hola!%20Vengo%20de%20tu%20web%20y%20tengo%20una%20duda%20sobre...">Link Phone</a>
+        <div class="team-link">
+            <a href="OurTeam.html">Our Team</a>
+        </div>
+    </div>
+</footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
@@ -133,6 +147,15 @@
     let allResults = [];
     let activeFilter = "todos";
 
+    // ── Mapa Leaflet ──────────────────────────────────────
+    const map = L.map("map").setView([28.1235, -15.4362], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    let userMarker = null;
+    const resultMarkers = [];
+
     // ── Geolocalización ───────────────────────────────────
     function getLocation() {
         if (!navigator.geolocation) {
@@ -145,9 +168,22 @@
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
 
-                // Actualizar mapa con OpenStreetMap (gratuito)
-                document.getElementById("mapFrame").src =
-                    `https://www.openstreetmap.org/export/embed.html?bbox=${userLng-0.05},${userLat-0.05},${userLng+0.05},${userLat+0.05}&layer=mapnik&marker=${userLat},${userLng}`;
+                // Marcador del usuario en verde
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.marker([userLat, userLng], {
+                    icon: L.divIcon({
+                        className: "",
+                        html: `<div style="
+                            width:16px; height:16px; border-radius:50%;
+                            background:#2d6a4f; border:3px solid white;
+                            box-shadow:0 2px 6px rgba(0,0,0,0.4)">
+                        </div>`,
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    })
+                }).addTo(map).bindPopup("Tu ubicación");
+
+                map.setView([userLat, userLng], 14);
 
                 hideStatus();
                 await searchNearby();
@@ -167,19 +203,17 @@
     async function searchNearby() {
         showStatus("Buscando cerca de ti...");
 
-        const radiusKm = 50; // radio amplio para pruebas, reduce a 10 en producción
+        const radiusKm = 50;
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
 
         try {
-            // Buscar gyms
             const gymsSnap = await getDocs(query(
                 collection(db, "gyms"),
                 where("location.lat", ">=", userLat - latDelta),
                 where("location.lat", "<=", userLat + latDelta)
             ));
 
-            // Buscar professionals
             const prosSnap = await getDocs(query(
                 collection(db, "professionals"),
                 where("location.lat", ">=", userLat - latDelta),
@@ -206,8 +240,46 @@
                 }
             });
 
-            // Combinar y ordenar por distancia
             allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
+
+            // ── Marcadores en el mapa ─────────────────────
+            resultMarkers.forEach(m => map.removeLayer(m));
+            resultMarkers.length = 0;
+
+            allResults.forEach(item => {
+                const isGym = item.type === "gym";
+                const color = isGym ? "#1d3557" : "#c08000";
+                const label = isGym ? "🏋️" : "👤";
+
+                const marker = L.marker([item.location.lat, item.location.lng], {
+                    icon: L.divIcon({
+                        className: "",
+                        html: `<div style="
+                            background:${color}; color:white; border-radius:8px;
+                            padding:4px 7px; font-size:11px; font-weight:700;
+                            white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+                            border:2px solid white;">
+                            ${label} ${item.name}
+                        </div>`,
+                        iconAnchor: [0, 0]
+                    })
+                }).addTo(map).bindPopup(`
+                    <strong>${item.name}</strong><br>
+                    ${item.description || ""}<br>
+                    <em>${item.distanceKm.toFixed(1)} km</em>
+                `);
+
+                resultMarkers.push(marker);
+            });
+
+            // Ajustar zoom para ver todos los marcadores
+            if (allResults.length > 0) {
+                const allPoints = [
+                    [userLat, userLng],
+                    ...allResults.map(r => [r.location.lat, r.location.lng])
+                ];
+                map.fitBounds(allPoints, { padding: [30, 30] });
+            }
 
             hideStatus();
             renderResults(filterResults(allResults));
@@ -259,41 +331,40 @@
             const page       = isGym ? "GymPage" : "ProfessionalPage";
 
             return `
-        <div class="result-card">
-            <div class="result-photo">
-                <span class="result-photo-placeholder">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="4"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <path d="M21 15l-5-5L5 21"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="result-info">
-                <div class="result-header">
-                    <span class="result-name">${item.name}</span>
-                    <span class="result-badge ${badgeClass}">${badgeText}</span>
-                </div>
-                <p class="result-desc">${item.description || ""}</p>
-                <div class="result-meta">
-                    ${distance ? `
-                    <span class="result-distance">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                            <circle cx="12" cy="9" r="2.5"/>
+            <div class="result-card">
+                <div class="result-photo">
+                    <span class="result-photo-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="4"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
                         </svg>
-                        ${distance}
-                    </span>` : ""}
-                    <span class="result-rating">${rating}</span>
+                    </span>
                 </div>
-            </div>
-            <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
-                Ver perfil
-            </button>
-        </div>`;
+                <div class="result-info">
+                    <div class="result-header">
+                        <span class="result-name">${item.name}</span>
+                        <span class="result-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <p class="result-desc">${item.description || ""}</p>
+                    <div class="result-meta">
+                        ${distance ? `
+                        <span class="result-distance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                <circle cx="12" cy="9" r="2.5"/>
+                            </svg>
+                            ${distance}
+                        </span>` : ""}
+                        <span class="result-rating">${rating}</span>
+                    </div>
+                </div>
+                <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
+                    Ver perfil
+                </button>
+            </div>`;
         }).join("");
 
-        // Eventos en los botones Ver perfil
         list.querySelectorAll(".result-book-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 window.location.href = `${btn.dataset.page}.html?id=${btn.dataset.id}`;
