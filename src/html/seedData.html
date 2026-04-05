@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Seed Data</title>
+</head>
+<body>
+<h2>Cargando datos en Firestore...</h2>
+<div id="log" style="font-family: monospace; margin-top: 20px;"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp }
+        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const log = document.getElementById("log");
+    function print(msg, ok = true) {
+        const p = document.createElement("p");
+        p.textContent = (ok ? "✓ " : "✗ ") + msg;
+        p.style.color = ok ? "green" : "red";
+        log.appendChild(p);
+    }
+
+    // ── GYMS ─────────────────────────────────────────────
+    const gyms = [
+        {
+            name: "FitZone Gran Canaria",
+            description: "Centro de fitness completo con musculación, cardio y clases grupales.",
+            type: "gym",
+            rating: 4.7,
+            ratingCount: 24,
+            schedule: "Lun–Dom · 7:00–23:00",
+            contactInfo: "Tel: +34 928 111 222",
+            location: { lat: 28.1235, lng: -15.4362 }
+        },
+        {
+            name: "PowerGym Las Palmas",
+            description: "Especialistas en musculación y powerlifting. Equipamiento de alta gama.",
+            type: "gym",
+            rating: 4.5,
+            ratingCount: 18,
+            schedule: "Lun–Sáb · 6:30–22:00",
+            contactInfo: "Tel: +34 928 333 444",
+            location: { lat: 28.1190, lng: -15.4420 }
+        },
+        {
+            name: "Crossfit Canarias",
+            description: "Box de CrossFit con coaches certificados y WOD diario. Primer mes gratis.",
+            type: "gym",
+            rating: 4.9,
+            ratingCount: 41,
+            schedule: "Lun–Dom · 7:00–21:00",
+            contactInfo: "Tel: +34 928 555 666",
+            location: { lat: 28.1310, lng: -15.4280 }
+        }
+    ];
+
+    // ── PROFESSIONALS ─────────────────────────────────────
+    const professionals = [
+        {
+            name: "Carlos Medina",
+            description: "Entrenador personal especializado en pérdida de peso y entrenamiento funcional.",
+            type: "professional",
+            rating: 4.8,
+            ratingCount: 15,
+            schedule: "Lun–Vie · 8:00–20:00",
+            contactInfo: "Tel: +34 600 111 222",
+            location: { lat: 28.1250, lng: -15.4390 }
+        },
+        {
+            name: "Laura Santana",
+            description: "Instructora de yoga y pilates certificada. Clases individuales y grupos reducidos.",
+            type: "professional",
+            rating: 5.0,
+            ratingCount: 32,
+            schedule: "Lun–Sáb · 9:00–19:00",
+            contactInfo: "Tel: +34 600 333 444",
+            location: { lat: 28.1270, lng: -15.4350 }
+        },
+        {
+            name: "Marcos Alonso",
+            description: "Coach de nutrición deportiva y preparación física para competición.",
+            type: "professional",
+            rating: 4.6,
+            ratingCount: 9,
+            schedule: "Mar–Dom · 10:00–21:00",
+            contactInfo: "Tel: +34 600 555 666",
+            location: { lat: 28.1200, lng: -15.4410 }
+        }
+    ];
+
+    // ── Insertar en Firestore ─────────────────────────────
+    print("Insertando gimnasios...");
+    for (const gym of gyms) {
+        try {
+            const ref = await addDoc(collection(db, "gyms"), {
+                ...gym,
+                createdAt: serverTimestamp()
+            });
+            print(`Gym "${gym.name}" → ID: ${ref.id}`);
+        } catch (e) {
+            print(`Error en "${gym.name}": ${e.message}`, false);
+        }
+    }
+
+    print("Insertando profesionales...");
+    for (const pro of professionals) {
+        try {
+            const ref = await addDoc(collection(db, "professionals"), {
+                ...pro,
+                createdAt: serverTimestamp()
+            });
+            print(`Pro "${pro.name}" → ID: ${ref.id}`);
+        } catch (e) {
+            print(`Error en "${pro.name}": ${e.message}`, false);
+        }
+    }
+
+    print("¡Todo listo! Ya puedes cerrar esta página.");
+</script>
+</body>
+</html>

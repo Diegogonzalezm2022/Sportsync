@@ -7,27 +7,15 @@
     <link rel="stylesheet" href="../css/ActivitySearch.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
 </head>
 <body>
 
 <header xlu-include-file="components/Header.html"></header>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".chip").forEach(chip => {
-            chip.addEventListener("click", () => {
-                document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
-                chip.classList.add("chip--active");
-            });
-        });
-    });
-</script>
+
 <main class="activity-search-main">
 
-    <!-- Left Column -->
     <aside class="left-panel">
 
-        <!-- User Card -->
         <div class="user-card">
             <div class="user-avatar">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -36,20 +24,18 @@
                 </svg>
             </div>
             <div class="user-info">
-                <span class="user-name">Name Surname</span>
-                <span class="user-role">User</span>
+                <span class="user-name" id="userName">—</span>
+                <span class="user-role" id="userRole">—</span>
                 <button class="go-to-profile-btn" onclick="window.location.href='ProfileUser.html'">Go to Profile</button>
             </div>
         </div>
 
-        <!-- Map -->
         <div class="map-container">
             <iframe id="mapFrame"
                     title="Nearby map"
                     loading="lazy"
                     allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d50000!2d-122.4194!3d37.7749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2ses!4v1"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=-15.49,-15.38,28.10,28.15&layer=mapnik"
             ></iframe>
             <button class="use-location-btn" id="useLocationBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -62,10 +48,8 @@
 
     </aside>
 
-    <!-- Right Column -->
     <section class="right-panel">
 
-        <!-- Search Bar -->
         <div class="search-bar-wrapper">
             <div class="search-bar">
                 <button class="search-filter-btn" title="Filtros">
@@ -76,8 +60,8 @@
                     </svg>
                 </button>
                 <input type="text" id="searchInput" class="search-input" placeholder="Busca gimnasios o entrenadores cerca de ti...">
-                <button class="search-clear-btn hidden" id="searchClearBtn" title="Limpiar búsqueda">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <button class="search-clear-btn hidden" id="searchClearBtn" title="Limpiar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
@@ -96,21 +80,17 @@
                 </button>
             </div>
 
-            <!-- Filter chips -->
             <div class="filter-chips">
                 <button class="chip chip--active" data-filter="todos">Todos</button>
                 <button class="chip" data-filter="gym">Gimnasios</button>
                 <button class="chip" data-filter="professional">Entrenadores</button>
-                <button class="chip" data-filter="yoga">Yoga</button>
-                <button class="chip" data-filter="crossfit">Crossfit</button>
             </div>
         </div>
 
-        <!-- Estado de carga / error -->
         <div id="statusMsg" class="status-msg" style="display:none;"></div>
 
-        <!-- Results List -->
         <div class="results-list" id="resultsList">
+            <p class="no-results">Pulsa "Usar mi ubicación" para buscar cerca de ti.</p>
         </div>
 
     </section>
@@ -119,82 +99,149 @@
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
-<!-- 1. Include header/footer (script normal) -->
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
     xLuIncludeFile();
 </script>
 
-<!-- 2. Firebase (script module) -->
 <script type="module">
-    import FirebaseDb from "../javascript/FirebaseDb.js";
+    import { initializeApp }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where }
+        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    let db;
+    // ── Protección de ruta ────────────────────────────────
+    const userId = sessionStorage.getItem("userId");
+    if (!userId) window.location.href = "Login.html";
+
+    // ── Mostrar nombre de usuario ─────────────────────────
+    const userName = sessionStorage.getItem("userEmail") || "Usuario";
+    const userRole = sessionStorage.getItem("userRole") || "";
+    document.getElementById("userName").textContent = userName;
+    document.getElementById("userRole").textContent =
+        userRole === "gym" ? "Gimnasio"
+            : userRole === "professional" ? "Profesional"
+                : "Usuario";
+
+    // ── Firebase ──────────────────────────────────────────
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
     let userLat = null;
     let userLng = null;
     let allResults = [];
+    let activeFilter = "todos";
 
-    async function init() {
-        try {
-            db = await FirebaseDb.create();
-            getLocation(false);
-        } catch (e) {
-            showStatus("Error al conectar con la base de datos.", true);
-        }
-    }
-
-    function getLocation(searchAfter = true) {
+    // ── Geolocalización ───────────────────────────────────
+    function getLocation() {
         if (!navigator.geolocation) {
             showStatus("Tu navegador no soporta geolocalización.", true);
             return;
         }
         showStatus("Obteniendo tu ubicación...");
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
+            async (pos) => {
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
+
+                // Actualizar mapa con OpenStreetMap (gratuito)
                 document.getElementById("mapFrame").src =
-                    `https://www.google.com/maps/embed/v1/view?key=YOUR_MAPS_KEY&center=${userLat},${userLng}&zoom=14`;
+                    `https://www.openstreetmap.org/export/embed.html?bbox=${userLng-0.05},${userLat-0.05},${userLng+0.05},${userLat+0.05}&layer=mapnik&marker=${userLat},${userLng}`;
+
                 hideStatus();
-                if (searchAfter) searchNearby();
+                await searchNearby();
             },
-            () => showStatus("No se pudo obtener tu ubicación.", true)
+            (err) => {
+                if (err.code === 1) {
+                    showStatus("Permiso de ubicación denegado. Actívalo en tu navegador.", true);
+                } else {
+                    showStatus("No se pudo obtener tu ubicación.", true);
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     }
 
+    // ── Buscar en Firestore ───────────────────────────────
     async function searchNearby() {
-        if (userLat === null) {
-            showStatus("Primero activa tu ubicación.", true);
-            return;
-        }
         showStatus("Buscando cerca de ti...");
+
+        const radiusKm = 50; // radio amplio para pruebas, reduce a 10 en producción
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
+
         try {
-            const gyms = await db.findGymsByDistance(userLat, userLng, 10);
-            allResults = gyms;
-            renderResults(filterResults(allResults));
+            // Buscar gyms
+            const gymsSnap = await getDocs(query(
+                collection(db, "gyms"),
+                where("location.lat", ">=", userLat - latDelta),
+                where("location.lat", "<=", userLat + latDelta)
+            ));
+
+            // Buscar professionals
+            const prosSnap = await getDocs(query(
+                collection(db, "professionals"),
+                where("location.lat", ">=", userLat - latDelta),
+                where("location.lat", "<=", userLat + latDelta)
+            ));
+
+            const gyms = [];
+            gymsSnap.forEach(d => {
+                const data = { id: d.id, type: "gym", ...d.data() };
+                if (data.location?.lng >= userLng - lngDelta &&
+                    data.location?.lng <= userLng + lngDelta) {
+                    data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
+                    gyms.push(data);
+                }
+            });
+
+            const pros = [];
+            prosSnap.forEach(d => {
+                const data = { id: d.id, type: "professional", ...d.data() };
+                if (data.location?.lng >= userLng - lngDelta &&
+                    data.location?.lng <= userLng + lngDelta) {
+                    data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
+                    pros.push(data);
+                }
+            });
+
+            // Combinar y ordenar por distancia
+            allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
+
             hideStatus();
+            renderResults(filterResults(allResults));
+
         } catch (e) {
-            showStatus("Error al buscar. Inténtalo de nuevo.", true);
+            console.error(e);
+            showStatus("Error al buscar. Comprueba que Firestore tiene datos.", true);
         }
     }
 
-    window.activeFilter = "todos";
+    // ── Calcular distancia real (fórmula Haversine) ───────
+    function calcDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
 
+    // ── Filtrar resultados ────────────────────────────────
     function filterResults(results) {
         const searchText = document.getElementById("searchInput").value.toLowerCase();
         return results.filter(item => {
-            const matchFilter =
-                window.activeFilter === "todos" ||
-                item.type === window.activeFilter ||
-                (item.tags && item.tags.includes(window.activeFilter));
-            const matchText =
-                !searchText ||
+            const matchFilter = activeFilter === "todos" || item.type === activeFilter;
+            const matchText = !searchText ||
                 item.name?.toLowerCase().includes(searchText) ||
                 item.description?.toLowerCase().includes(searchText);
             return matchFilter && matchText;
         });
     }
 
+    // ── Renderizar tarjetas ───────────────────────────────
     function renderResults(results) {
         const list = document.getElementById("resultsList");
 
@@ -204,110 +251,97 @@
         }
 
         list.innerHTML = results.map(item => {
-            const isGym = item.type === "gym";
+            const isGym      = item.type === "gym";
             const badgeClass = isGym ? "result-badge--gym" : "result-badge--trainer";
-            const badgeText = isGym ? "Gimnasio" : "Entrenador";
-            const distance = item.distanceKm ? `${item.distanceKm.toFixed(1)} km` : "";
-            const rating = item.rating ? `★ ${item.rating.toFixed(1)}` : "★ —";
+            const badgeText  = isGym ? "Gimnasio" : "Entrenador";
+            const distance   = item.distanceKm != null ? `${item.distanceKm.toFixed(1)} km` : "";
+            const rating     = item.rating ? `★ ${Number(item.rating).toFixed(1)}` : "★ —";
+            const page       = isGym ? "GymPage" : "ProfessionalPage";
 
             return `
-            <div class="result-card" data-id="${item.id}" data-type="${item.type}">
-                <div class="result-photo">
-                    <span class="result-photo-placeholder">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="3" width="18" height="18" rx="4"/>
-                            <circle cx="8.5" cy="8.5" r="1.5"/>
-                            <path d="M21 15l-5-5L5 21"/>
+        <div class="result-card">
+            <div class="result-photo">
+                <span class="result-photo-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="4"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="result-info">
+                <div class="result-header">
+                    <span class="result-name">${item.name}</span>
+                    <span class="result-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <p class="result-desc">${item.description || ""}</p>
+                <div class="result-meta">
+                    ${distance ? `
+                    <span class="result-distance">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                            <circle cx="12" cy="9" r="2.5"/>
                         </svg>
-                    </span>
+                        ${distance}
+                    </span>` : ""}
+                    <span class="result-rating">${rating}</span>
                 </div>
-                <div class="result-info">
-                    <div class="result-header">
-                        <span class="result-name">${item.name}</span>
-                        <span class="result-badge ${badgeClass}">${badgeText}</span>
-                    </div>
-                    <p class="result-desc">${item.description || ""}</p>
-                    <div class="result-meta">
-                        ${distance ? `
-                        <span class="result-distance">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                                <circle cx="12" cy="9" r="2.5"/>
-                            </svg>
-                            ${distance}
-                        </span>` : ""}
-                        <span class="result-rating">${rating}</span>
-                    </div>
-                </div>
-                <button class="result-book-btn" data-id="${item.id}" data-type="${item.type}">Reservar</button>
-            </div>`;
+            </div>
+            <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
+                Ver perfil
+            </button>
+        </div>`;
         }).join("");
 
+        // Eventos en los botones Ver perfil
         list.querySelectorAll(".result-book-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                const id = btn.dataset.id;
-                const type = btn.dataset.type;
-                if (type === "gym") {
-                    window.location.href = `GymPage.html?id=${id}`;
-                } else {
-                    window.location.href = `ProfessionalPage.html?id=${id}`;
-                }
+                window.location.href = `${btn.dataset.page}.html?id=${btn.dataset.id}`;
             });
         });
     }
 
+    // ── Helpers estado ────────────────────────────────────
     function showStatus(msg, isError = false) {
         const el = document.getElementById("statusMsg");
         el.textContent = msg;
         el.style.display = "block";
-        el.style.color = isError ? "var(--danger)" : "var(--text-muted)";
+        el.style.color = isError ? "var(--danger, #c0392b)" : "var(--text-muted, #999)";
     }
-
     function hideStatus() {
         document.getElementById("statusMsg").style.display = "none";
     }
 
+    // ── Eventos ───────────────────────────────────────────
+    document.getElementById("useLocationBtn").addEventListener("click", getLocation);
+    document.getElementById("searchLocationBtn").addEventListener("click", getLocation);
 
-    // Listeners directos, sin DOMContentLoaded
-    document.getElementById("useLocationBtn").addEventListener("click", () => getLocation(true));
-    document.getElementById("searchLocationBtn").addEventListener("click", () => getLocation(true));
-    document.getElementById("searchSubmitBtn").addEventListener("click", () => renderResults(filterResults(allResults)));
-    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+    document.getElementById("searchSubmitBtn").addEventListener("click", () =>
+        renderResults(filterResults(allResults)));
+
+    document.getElementById("searchInput").addEventListener("keydown", e => {
         if (e.key === "Enter") renderResults(filterResults(allResults));
     });
 
-
-    const searchClearBtn = document.getElementById("searchClearBtn");
-    const searchInput = document.getElementById("searchInput");
-
-    // 1. Evento para limpiar la búsqueda
-    searchClearBtn.addEventListener("click", () => {
-        searchInput.value = ""; // Borra el texto
-        searchClearBtn.classList.add("hidden"); // Oculta el botón manualmente
-        searchInput.focus(); // Devuelve el cursor al buscador (buena práctica)
-
-        // Ejecuta tus funciones de renderizado con la lista limpia/completa
-        renderResults(filterResults(allResults));
+    document.getElementById("searchInput").addEventListener("input", e => {
+        const clearBtn = document.getElementById("searchClearBtn");
+        clearBtn.classList.toggle("hidden", e.target.value.length === 0);
     });
 
-    // 2. Evento para mostrar/ocultar mientras se escribe
-    searchInput.addEventListener("input", (e) => {
-        if (e.target.value.length > 0) {
-            searchClearBtn.classList.remove("hidden");
-        } else {
-            searchClearBtn.classList.add("hidden");
-        }
+    document.getElementById("searchClearBtn").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("searchClearBtn").classList.add("hidden");
+        renderResults(filterResults(allResults));
     });
 
     document.querySelectorAll(".chip").forEach(chip => {
         chip.addEventListener("click", () => {
             document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
             chip.classList.add("chip--active");
-            window.activeFilter = chip.dataset.filter;
+            activeFilter = chip.dataset.filter;
+            renderResults(filterResults(allResults));
         });
     });
-
-    init();
 </script>
 
 </body>
