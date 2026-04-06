@@ -239,3 +239,57 @@ Then('the activity appears in the database', async () => {
     assert(activityData.schedule.toDate().getTime() === new Date(2026, 8, 8, 14).getTime());
     assert(activityData.maxCancelDate.toDate().getTime() === new Date(2026, 7, 8).getTime());
 })
+
+// ── LIMIT CANCELLATIONS ───────────────────────────────────────
+let cancellationLimit;
+let cancellationResult;
+
+Given('a client has made {int} cancellations this month', async (count) => {
+    addedId = await dbInstance.addGym({
+        name: "Test Gym Limit",
+        description: "Test",
+        contactInfo: "Phone: 000000000",
+        schedule: "08:00-22:00",
+        location: new GeoPoint(0, 0)
+    });
+
+    activityId = await dbInstance.addActivity(addedId, "gym", {
+        name: "Test Activity Limit",
+        availableSlots: 10,
+        maxCancelDate: new Date(Date.now() + 86400000).toISOString()
+    });
+
+    reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
+    await dbInstance.setUserCancellations(testUserId, count);
+});
+
+Given('the cancellation limit per month is {int}', async (limit) => {
+    cancellationLimit = limit;
+    await dbInstance.setCancellationLimit(cancellationLimit);
+});
+
+Given('a new month has started', async () => {
+    await dbInstance.resetMonthlyCancellations(testUserId);
+});
+
+When('the client cancels a booking', async () => {
+    cancellationResult = await dbInstance.cancelReservationWithLimit(reservationId, testUserId, cancellationLimit);
+});
+
+Then('the cancellation is accepted', async () => {
+    assert(cancellationResult.success, "The cancellation should have been accepted");
+    const snap = await getDoc(doc(dbConnection, "reservations", reservationId));
+    assert(snap.data().status === "cancelled", "Status is not cancelled");
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+});
+
+Then('the cancellation is rejected', async () => {
+    assert(!cancellationResult.success, "The cancellation should have been rejected");
+    const snap = await getDoc(doc(dbConnection, "reservations", reservationId));
+    assert(snap.data().status === "active", "Status should still be active");
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+});
