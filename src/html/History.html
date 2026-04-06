@@ -30,7 +30,20 @@
 
 </main>
 
-<footer xlu-include-file="components/Footer.html"></footer>
+<footer class="main-footer">
+    <div class="footer-links">
+        <a href="https://github.com/Diegogonzalezm2022/Sportsync">Link GitHub</a>
+        <a href="https://www.figma.com/design/932AGbsgEWwMm1Z0YmgsVN/PS_Grupo10?node-id=0-1&p=f&t=l3bNIiRxuAhtjPYc-0">Link Figma</a>
+        <a href="Index.html">Home</a>
+        <a href="AboutUs.html">About Us</a>
+    </div>
+    <div class="footer-logo"><strong>Logo</strong></div>
+    <div class="footer-contact">
+        <a href="mailto:cathaysa.moreno101@alu.ulpgc.es">Link Email</a>
+        <a href="https://wa.me/+34628193554">Link Phone</a>
+        <div class="team-link"><a href="OurTeam.html">Our Team</a></div>
+    </div>
+</footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
@@ -38,21 +51,64 @@
 </script>
 
 <script type="module">
-    import FirebaseDb from "../javascript/app/FirebaseDb.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc }
+        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const userId = sessionStorage.getItem("userId");
     if (!userId) window.location.href = "Login.html";
 
-    const db = await FirebaseDb.create();
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-    const active = await db.getUserReservations(userId, "active");
-    const cancelled = await db.getUserReservations(userId, "cancelled");
-    const done = await db.getUserReservations(userId, "done");
-    const past = [...done, ...cancelled];
+    // ── Cargar reservas del usuario ───────────────────────
+    async function loadReservations() {
+        const snap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId)
+        ));
 
-    renderActive(active);
-    renderPast(past);
+        const reservations = [];
+        snap.forEach(d => reservations.push({ id: d.id, ...d.data() }));
 
+        // Cargar nombres de gym/profesional y actividad para cada reserva
+        const enriched = await Promise.all(reservations.map(async r => {
+            let ownerName = r.gymOrProId;
+            let activityName = r.activityId;
+
+            // Nombre del gym o profesional
+            try {
+                const colName = r.ownerType === "gym" ? "gyms" : "professionals";
+                const ownerSnap = await getDoc(doc(db, colName, r.gymOrProId));
+                if (ownerSnap.exists()) ownerName = ownerSnap.data().name || r.gymOrProId;
+            } catch {}
+
+            // Nombre de la actividad
+            try {
+                const actSnap = await getDoc(doc(db, "activities", r.activityId));
+                if (actSnap.exists()) {
+                    const actData = actSnap.data();
+                    activityName = actData.name || r.activityId;
+                    r.activitySchedule = actData.schedule || "—";
+                    r.activityPrice    = actData.price    || "—";
+                }
+            } catch {}
+
+            return { ...r, ownerName, activityName };
+        }));
+
+        const active    = enriched.filter(r => r.status === "active");
+        const cancelled = enriched.filter(r => r.status === "cancelled");
+        const done      = enriched.filter(r => r.status === "done");
+        const past      = [...done, ...cancelled];
+
+        renderActive(active);
+        renderPast(past);
+    }
+
+    // ── Renderizar activas ────────────────────────────────
     function renderActive(reservations) {
         const list = document.getElementById("activeList");
         if (reservations.length === 0) {
@@ -62,15 +118,15 @@
         list.innerHTML = reservations.map(r => `
             <article class="reservation-card" data-id="${r.id}">
                 <div class="card-info">
-                    <p><strong>Gym / Pro:</strong> ${r.gymOrProId}</p>
-                    <p><strong>Activity:</strong> ${r.activityId}</p>
-                    <p><strong>Created:</strong> ${r.createdAt?.toDate?.().toLocaleDateString() ?? "—"}</p>
+                    <p><strong>${r.ownerType === "gym" ? "Gym" : "Professional"}:</strong> ${r.ownerName}</p>
+                    <p><strong>Activity:</strong> ${r.activityName}</p>
+                    <p><strong>Schedule:</strong> ${formatSchedule(r.activitySchedule)}</p>
                 </div>
                 <div class="card-status">
                     <p>Paid: ${r.paid ? "✓" : "Pendiente"}</p>
                 </div>
                 <div class="card-actions">
-                    <button class="icon-btn share-icon" title="Compartir">
+                    <button class="icon-btn share-icon" title="Compartir" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
@@ -85,17 +141,20 @@
             btn.addEventListener("click", async () => {
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
                 try {
-                    await db.cancelReservation(btn.dataset.id);
+                    await updateDoc(doc(db, "reservations", btn.dataset.id), { status: "cancelled" });
                     btn.closest(".reservation-card").remove();
+                    const activeList = document.getElementById("activeList");
+                    if (!activeList.querySelector(".reservation-card")) {
+                        activeList.innerHTML = `<p class="loading-hint">No tienes reservas activas.</p>`;
+                    }
                 } catch (e) {
-                    alert(e === "Cancel limit passed"
-                        ? "No puedes cancelar, ha pasado el límite de cancelación."
-                        : "Error al cancelar.");
+                    alert("Error al cancelar la reserva.");
                 }
             });
         });
     }
 
+    // ── Renderizar pasadas ────────────────────────────────
     function renderPast(reservations) {
         const list = document.getElementById("pastList");
         if (reservations.length === 0) {
@@ -105,21 +164,21 @@
         list.innerHTML = reservations.map(r => `
             <article class="reservation-card past-card" data-id="${r.id}">
                 <div class="card-info">
-                    <p><strong>Gym / Pro:</strong> ${r.gymOrProId}</p>
-                    <p><strong>Activity:</strong> ${r.activityId}</p>
-                    <p><strong>Created:</strong> ${r.createdAt?.toDate?.().toLocaleDateString() ?? "—"}</p>
+                    <p><strong>${r.ownerType === "gym" ? "Gym" : "Professional"}:</strong> ${r.ownerName}</p>
+                    <p><strong>Activity:</strong> ${r.activityName}</p>
+                    <p><strong>Schedule:</strong> ${formatSchedule(r.activitySchedule)}</p>
                 </div>
                 <div class="card-status">
                     <p>Paid: ${r.paid ? "✓" : "—"}</p>
                 </div>
                 <div class="card-actions past-actions">
-                    <div class="stars" data-target-id="${r.gymOrProId}">
+                    <div class="stars" data-target-id="${r.gymOrProId}" data-owner-type="${r.ownerType}">
                         <span data-value="1">★</span><span data-value="2">★</span>
                         <span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
                     </div>
                     <div class="action-row">
                         <button class="action-btn signup-btn">Sign up again</button>
-                        <button class="icon-btn share-icon">
+                        <button class="icon-btn share-icon" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
@@ -131,26 +190,31 @@
                 </div>
             </article>`).join("");
 
+        // Estrellas valoración
         list.querySelectorAll(".stars").forEach(starsEl => {
-            const spans = starsEl.querySelectorAll("span");
-            const targetId = starsEl.dataset.targetId;
-            let selected = 0;
+            const spans      = starsEl.querySelectorAll("span");
+            const targetId   = starsEl.dataset.targetId;
+            const ownerType  = starsEl.dataset.ownerType;
+            let selected     = 0;
 
             spans.forEach(s => {
                 s.addEventListener("mouseover", () => highlight(+s.dataset.value));
-                s.addEventListener("mouseout", () => highlight(selected));
+                s.addEventListener("mouseout",  () => highlight(selected));
                 s.addEventListener("click", async () => {
                     selected = +s.dataset.value;
                     highlight(selected);
                     try {
-                        await db.rateTarget(targetId, "gym", selected);
-                    } catch {
-                        try {
-                            await db.rateTarget(targetId, "professional", selected);
-                        } catch {
-                            console.warn("No se pudo guardar la valoración.");
+                        const colName    = ownerType === "gym" ? "gyms" : "professionals";
+                        const targetRef  = doc(db, colName, targetId);
+                        const targetSnap = await getDoc(targetRef);
+                        if (targetSnap.exists()) {
+                            const { rating = 0, ratingCount = 0 } = targetSnap.data();
+                            await updateDoc(targetRef, {
+                                rating: ((rating * ratingCount) + selected) / (ratingCount + 1),
+                                ratingCount: ratingCount + 1
+                            });
                         }
-                    }
+                    } catch (e) { console.error(e); }
                 });
             });
 
@@ -159,6 +223,33 @@
             }
         });
     }
+
+    // ── Helpers ───────────────────────────────────────────
+    function formatSchedule(schedule) {
+        if (!schedule) return "—";
+        if (typeof schedule === "object" && schedule.seconds) {
+            return new Date(schedule.seconds * 1000).toLocaleDateString("es-ES", {
+                weekday: "long", day: "numeric", month: "long", year: "numeric"
+            });
+        }
+        return schedule;
+    }
+
+    function shareReservation(ownerName, activityName) {
+        if (navigator.share) {
+            navigator.share({
+                title: "Mi reserva en SportSync",
+                text: `Me he apuntado a ${activityName} en ${ownerName}`,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(`Me he apuntado a ${activityName} en ${ownerName}`);
+            alert("Copiado al portapapeles");
+        }
+    }
+
+    // ── Arrancar ──────────────────────────────────────────
+    loadReservations();
 </script>
 </body>
 </html>

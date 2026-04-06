@@ -56,12 +56,10 @@
                     <span class="rating-hint" id="ratingHint">Valora este profesional</span>
                 </div>
             </div>
-
             <div class="info-field">
                 <span class="info-label">Professional description:</span>
                 <div class="info-value info-value--desc" id="profileDesc">—</div>
             </div>
-
             <div class="info-field">
                 <span class="info-label">Contact info:</span>
                 <div class="contact-lines" id="contactLines">—</div>
@@ -161,10 +159,9 @@
                     ? `${data.schedule.from}–${data.schedule.to}` : "";
             }
             if (data.contactInfo) {
-                document.getElementById("contactLines").innerHTML = `
-                    <span class="contact-item">${data.contactInfo}</span>`;
+                document.getElementById("contactLines").innerHTML =
+                    `<span class="contact-item">${data.contactInfo}</span>`;
             }
-            // Mostrar rating actual
             if (data.rating) {
                 const rounded = Math.round(data.rating);
                 document.querySelectorAll(".star").forEach(s => {
@@ -178,6 +175,7 @@
     // ── Actividades ───────────────────────────────────────
     const activitiesSection = document.getElementById("activitiesSection");
     let allActivities = [];
+    let myActivityIds = new Set();
 
     async function loadActivities(fromDate = null, toDate = null) {
         activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;padding:10px 0;">Cargando actividades...</p>`;
@@ -188,6 +186,15 @@
             ));
             allActivities = [];
             snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
+
+            // Cargar reservas activas del usuario
+            const myReservationsSnap = await getDocs(query(
+                collection(db, "reservations"),
+                where("userId", "==", userId),
+                where("status", "==", "active")
+            ));
+            myActivityIds = new Set();
+            myReservationsSnap.forEach(d => myActivityIds.add(d.data().activityId));
 
             let filtered = allActivities;
             if (fromDate || toDate) {
@@ -211,7 +218,9 @@
             activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;padding:10px 0;">No hay actividades disponibles.</p>`;
             return;
         }
-        activitiesSection.innerHTML = activities.map((a, i) => `
+        activitiesSection.innerHTML = activities.map((a, i) => {
+            const alreadySignedUp = myActivityIds.has(a.id);
+            return `
             <div class="activity-card">
                 <div class="activity-info">
                     <div class="activity-row">
@@ -238,18 +247,38 @@
                     </div>
                 </div>
                 ${isOwner
-            ? `<span class="activity-owner-badge">Tu actividad</span>`
-            : `<button class="signup-btn" data-activity-id="${a.id}" data-index="${i}">Sign up</button>`
-        }
-            </div>`).join("");
+                ? `<span class="activity-owner-badge">Tu actividad</span>`
+                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''}"
+                        data-activity-id="${a.id}"
+                        ${alreadySignedUp ? 'disabled' : ''}>
+                        ${alreadySignedUp ? '✓ Ya apuntado' : 'Sign up'}
+                       </button>`
+            }
+            </div>`;
+        }).join("");
 
         if (!isOwner) {
-            activitiesSection.querySelectorAll(".signup-btn").forEach(btn => {
+            activitiesSection.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     if (btn.classList.contains("signup-btn--done")) return;
-                    btn.textContent = "Guardando...";
+                    btn.textContent = "Comprobando...";
                     btn.disabled = true;
                     try {
+                        // Doble comprobación en Firestore
+                        const existingSnap = await getDocs(query(
+                            collection(db, "reservations"),
+                            where("userId", "==", userId),
+                            where("activityId", "==", btn.dataset.activityId),
+                            where("status", "==", "active")
+                        ));
+                        if (!existingSnap.empty) {
+                            btn.textContent = "✓ Ya apuntado";
+                            btn.classList.add("signup-btn--done");
+                            myActivityIds.add(btn.dataset.activityId);
+                            return;
+                        }
+
+                        btn.textContent = "Guardando...";
                         await addDoc(collection(db, "reservations"), {
                             userId,
                             activityId: btn.dataset.activityId,
@@ -259,14 +288,18 @@
                             paid: false,
                             createdAt: serverTimestamp()
                         });
+
                         const actRef  = doc(db, "activities", btn.dataset.activityId);
                         const actSnap = await getDoc(actRef);
                         if (actSnap.exists()) {
                             const slots = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
                             if (slots > 0) await updateDoc(actRef, { availableSlots: slots - 1 });
                         }
+
                         btn.textContent = "✓ Apuntado";
                         btn.classList.add("signup-btn--done");
+                        myActivityIds.add(btn.dataset.activityId);
+
                     } catch (e) {
                         console.error(e);
                         btn.textContent = "Error";
