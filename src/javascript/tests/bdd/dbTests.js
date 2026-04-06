@@ -1,6 +1,6 @@
 const { Given,When,Then, BeforeAll } = require('@cucumber/cucumber')
 const assert = require('assert')
-const {GeoPoint, getFirestore, doc, getDoc, deleteDoc} = require("@firebase/firestore");
+const {GeoPoint, Timestamp, getFirestore, doc, getDoc, deleteDoc} = require("@firebase/firestore");
 const FirebaseDb = require("../../app/FirebaseDb");
 
 let dbInstance;
@@ -115,7 +115,7 @@ Given('there is an activity with available slots', async () => {
 
     activityId = await dbInstance.addActivity(addedId, "gym", {
         name: "Test Activity",
-        slots: 10,
+        availableSlots: 10,
         maxCancelDate: new Date(Date.now() + 86400000).toISOString()
     });
 });
@@ -147,7 +147,7 @@ Given('the user has an active reservation', async () => {
 
     activityId = await dbInstance.addActivity(addedId, "gym", {
         name: "Test Activity Cancel",
-        slots: 10,
+        availableSlots: 10,
         maxCancelDate: new Date(Date.now() + 86400000).toISOString()
     });
 
@@ -184,4 +184,58 @@ Then("the activity's available slots are increased by one", async () => {
     await deleteDoc(doc(dbConnection, "reservations", reservationId));
     await deleteDoc(doc(dbConnection, "activities", activityId));
     await deleteDoc(doc(dbConnection, "gyms", addedId));
+})
+
+// ── ADDING ACTIVITIES ───────────────────────────────────────
+
+let type;
+
+Given("a gym that exists in the database", async () => {
+    addedId = await dbInstance.addGym({
+        name: "Test Gym",
+        description: "Test description",
+        contactInfo: "Phone: 123456789",
+        schedule: "14:00-20:00",
+        location: new GeoPoint(0, 0)
+    })
+    type="gym"
+})
+
+Given("a professional that exists in the database", async () => {
+    addedId = await dbInstance.addGym({
+        name: "Test Professional",
+        description: "Test description",
+        contactInfo: "Phone: 123456789",
+        schedule: "14:00-20:00",
+        location: new GeoPoint(0, 0)
+    })
+    type="professional"
+})
+
+When('they create an activity', async () => {
+    activityId = await dbInstance.addActivity(addedId, type, {
+        name: "Test activity",
+        maxCancelDate: new Date(2026, 7, 8),
+        price: 11.99,
+        availableSlots: 20,
+        schedule: new Date(2026, 8, 8, 14),
+    });
+})
+
+Then('the activity appears in the database', async () => {
+    const activitySnap = await getDoc(doc(dbConnection, "activities", activityId));
+    const activityData = activitySnap.data();
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    if (type === "gym") {
+        await deleteDoc(doc(dbConnection, "gyms", addedId));
+    } else if (type === "professional") {
+        await deleteDoc(doc(dbConnection, "professionals", activityId));
+    }
+    assert(activityData.name === "Test activity");
+    assert(activityData.ownerId === addedId);
+    assert(activityData.ownerType === type);
+    assert(activityData.price === 11.99);
+    assert(activityData.availableSlots === 20);
+    assert(activityData.schedule.toDate().getTime() === new Date(2026, 8, 8, 14).getTime());
+    assert(activityData.maxCancelDate.toDate().getTime() === new Date(2026, 7, 8).getTime());
 })

@@ -132,7 +132,6 @@ class FirebaseDb {
             ownerId: ownerId,
             ownerType: ownerType,
             ...activityData,
-            availableSlots: activityData.slots,
             createdAt: serverTimestamp()
         });
         return docRef.id;
