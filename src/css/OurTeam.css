@@ -44,6 +44,7 @@
 /* ---------- Photo Placeholder ---------- */
 .photo-placeholder {
     width: 100%;
+    height: 100%;
     aspect-ratio: 1 / 1;
     max-width: 180px;
     background-color: #d9d9d9;
@@ -56,33 +57,14 @@
     overflow: hidden;
 }
 
-/* X cross lines */
-.photo-placeholder::before,
-.photo-placeholder::after {
-    content: '';
-    position: absolute;
-    width: 140%;
-    height: 1px;
-    background-color: #b0b0b0;
-    top: 50%;
-    left: -20%;
-    transform-origin: center;
-}
-
-.photo-placeholder::before {
-    transform: rotate(35deg);
-}
-
-.photo-placeholder::after {
-    transform: rotate(-35deg);
-}
-
-.photo-placeholder span {
+.photo-placeholder img {
     position: relative;
     z-index: 1;
     font-size: 0.85rem;
     color: #666;
     background-color: transparent;
+    height: 100%;
+    width: 100%;
 }
 
 /* ---------- Member Info ---------- */
