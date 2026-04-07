@@ -174,7 +174,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp }
+    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp, GeoPoint }
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const userId    = sessionStorage.getItem("userId");
@@ -254,6 +254,9 @@
                 navigator.geolocation.getCurrentPosition(success)
 
                 async function success(position) {
+                    lat = position.coords.latitude;
+                    lon = position.coords.longitude;
+
                     await updateDoc(doc(db, "professionals", ownerId), {
                         name: nameEl.textContent,
                         description: descEl.textContent,
@@ -262,7 +265,8 @@
                             days: daysEl.textContent,
                             from: hoursEl.textContent.split('–')[0] || "",
                             to: hoursEl.textContent.split('–')[1] || ""
-                        }
+                        },
+                        location: new GeoPoint(lat, lon)
                     });
                     alert("Profile updated!");
                     location.reload();
