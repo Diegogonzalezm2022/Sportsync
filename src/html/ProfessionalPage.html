@@ -248,18 +248,25 @@
         saveBtn.addEventListener("click", async () => {
             saveBtn.disabled = true;
             try {
-                await updateDoc(doc(db, "professionals", ownerId), {
-                    name: nameEl.textContent,
-                    description: descEl.textContent,
-                    contactInfo: contactEl.textContent,
-                    schedule: {
-                        days: daysEl.textContent,
-                        from: hoursEl.textContent.split('–')[0] || "",
-                        to: hoursEl.textContent.split('–')[1] || ""
-                    }
-                });
-                alert("Profile updated!");
-                location.reload();
+                let lat;
+                let lon;
+
+                navigator.geolocation.getCurrentPosition(success)
+
+                async function success(position) {
+                    await updateDoc(doc(db, "professionals", ownerId), {
+                        name: nameEl.textContent,
+                        description: descEl.textContent,
+                        contactInfo: contactEl.textContent,
+                        schedule: {
+                            days: daysEl.textContent,
+                            from: hoursEl.textContent.split('–')[0] || "",
+                            to: hoursEl.textContent.split('–')[1] || ""
+                        }
+                    });
+                    alert("Profile updated!");
+                    location.reload();
+                }
             } catch (e) {
                 alert("Error saving changes.");
                 saveBtn.disabled = false;

@@ -159,7 +159,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp }
+    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp, GeoPoint }
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const userId = sessionStorage.getItem("userId");
@@ -223,18 +223,30 @@
         saveBtn.addEventListener("click", async () => {
             saveBtn.disabled = true;
             try {
-                await updateDoc(doc(db, "gyms", ownerId), {
-                    name: nameEl.textContent,
-                    description: descEl.textContent,
-                    contactInfo: contactEl.textContent,
-                    schedule: {
-                        days: daysEl.textContent,
-                        from: hoursEl.textContent.split('–')[0] || "",
-                        to: hoursEl.textContent.split('–')[1] || ""
-                    }
-                });
-                alert("Gym Profile updated!");
-                location.reload();
+
+                let lat;
+                let lon;
+
+                navigator.geolocation.getCurrentPosition(success)
+
+                async function success(position) {
+                    lat = position.coords.latitude;
+                    lon = position.coords.longitude;
+
+                    await updateDoc(doc(db, "gyms", ownerId), {
+                        name: nameEl.textContent,
+                        description: descEl.textContent,
+                        contactInfo: contactEl.textContent,
+                        schedule: {
+                            days: daysEl.textContent,
+                            from: hoursEl.textContent.split('–')[0] || "",
+                            to: hoursEl.textContent.split('–')[1] || ""
+                        },
+                        location: new GeoPoint(lat, lon),
+                    });
+                    alert("Gym Profile updated!");
+                    location.reload();
+                }
             } catch (e) {
                 alert("Error saving changes.");
                 saveBtn.disabled = false;
@@ -270,7 +282,7 @@
                     availableSlots: parseInt(aSlots) || 0,
                     ownerId: ownerId,
                     ownerType: "gym",
-                    createdAt: serverTimestamp()
+                    createdAt: serverTimestamp(),
                 });
                 alert("Activity Created!");
                 location.reload();
