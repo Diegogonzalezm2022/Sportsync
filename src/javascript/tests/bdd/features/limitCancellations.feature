@@ -1,20 +1,13 @@
 Feature: Limit cancellations per client
 
-  Scenario: Client cancels within the allowed limit
-    Given a client has made 2 cancellations this month
-    And the cancellation limit per month is 3
-    When the client cancels a booking
+  Scenario: Client cancels before the cancellation deadline
+    Given the user has an active reservation
+    And the activity has a cancellation deadline in the future
+    When the user cancels the reservation
     Then the cancellation is accepted
 
-  Scenario: Client reaches the cancellation limit
-    Given a client has made 3 cancellations this month
-    And the cancellation limit per month is 3
-    When the client cancels a booking
+  Scenario: Client cancels after the cancellation deadline
+    Given the user has an active reservation
+    And the activity has a cancellation deadline in the past
+    When the user cancels the reservation
     Then the cancellation is rejected
-
-  Scenario: Cancellation limit resets the following month
-    Given a client has made 3 cancellations this month
-    And the cancellation limit per month is 3
-    And a new month has started
-    When the client cancels a booking
-    Then the cancellation is accepted

@@ -241,10 +241,9 @@ Then('the activity appears in the database', async () => {
 })
 
 // ── LIMIT CANCELLATIONS ───────────────────────────────────────
-let cancellationLimit;
 let cancellationResult;
 
-Given('a client has made {int} cancellations this month', async (count) => {
+Given('the activity has a cancellation deadline in the future', async () => {
     addedId = await dbInstance.addGym({
         name: "Test Gym Limit",
         description: "Test",
@@ -260,20 +259,28 @@ Given('a client has made {int} cancellations this month', async (count) => {
     });
 
     reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
-    await dbInstance.setUserCancellations(testUserId, count);
 });
 
-Given('the cancellation limit per month is {int}', async (limit) => {
-    cancellationLimit = limit;
-    await dbInstance.setCancellationLimit(cancellationLimit);
+Given('the activity has a cancellation deadline in the past', async () => {
+    addedId = await dbInstance.addGym({
+        name: "Test Gym Limit",
+        description: "Test",
+        contactInfo: "Phone: 000000000",
+        schedule: "08:00-22:00",
+        location: new GeoPoint(0, 0)
+    });
+
+    activityId = await dbInstance.addActivity(addedId, "gym", {
+        name: "Test Activity Limit",
+        availableSlots: 10,
+        maxCancelDate: new Date(Date.now() - 86400000).toISOString()
+    });
+
+    reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
 });
 
-Given('a new month has started', async () => {
-    await dbInstance.resetMonthlyCancellations(testUserId);
-});
-
-When('the client cancels a booking', async () => {
-    cancellationResult = await dbInstance.cancelReservationWithLimit(reservationId, testUserId, cancellationLimit);
+When('the user cancels the reservation', async () => {
+    cancellationResult = await dbInstance.cancelReservation(reservationId);
 });
 
 Then('the cancellation is accepted', async () => {
