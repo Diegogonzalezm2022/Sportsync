@@ -35,11 +35,11 @@ redacción de los archivos .feature (Gherkin) fueron tareas para asegurar la cal
 
 # ⭐ Logros del Sprint Zero:
 Durante este sprint se han sentado las bases del sistema, logrando implementar y validar mediante tests BDD con Cucumber las siguientes funcionalidades:
-* -Gestión de centros y profesionales: Se puede dar de alta gimnasios (HU16) y contratar profesionales (HU15), ambos verificados contra la base de datos Firebase.
-* -Localización: Los usuarios pueden buscar centros por proximidad geográfica (HU01), validando distancias en distintas direcciones.
-* -Sistema de reservas: Se implementó la reserva de actividades (HU02) y su cancelación (HU10), actualizando correctamente el estado en la base de datos.
-* -Control de aforo: El sistema actualiza automáticamente los huecos disponibles tanto al reservar (HU20) como al cancelar (HU21).
-* -Creación de servicios: Los centros y profesionales pueden crear actividades (HU25).-Límite de cancelaciones: Se estableció un control por fecha límite que impide cancelar reservas fuera de plazo (HU18).
+* Gestión de centros y profesionales: Se puede dar de alta gimnasios (HU16) y contratar profesionales (HU15), ambos verificados contra la base de datos Firebase.
+* Localización: Los usuarios pueden buscar centros por proximidad geográfica (HU01), validando distancias en distintas direcciones.
+* Sistema de reservas: Se implementó la reserva de actividades (HU02) y su cancelación (HU10), actualizando correctamente el estado en la base de datos.
+* Control de aforo: El sistema actualiza automáticamente los huecos disponibles tanto al reservar (HU20) como al cancelar (HU21).
+* Creación de servicios: Los centros y profesionales pueden crear actividades (HU25).-Límite de cancelaciones: Se estableció un control por fecha límite que impide cancelar reservas fuera de plazo (HU18).
 
 # 💻 Tecnologías
 * HTML5 (Estructura y Formularios)
