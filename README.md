@@ -1,12 +1,12 @@
-# 📂 Proyecto StudyHub
+# 📂 Proyecto SportSync
 Este es el repositorio del proyecto en el que desarrollaremos una web de reserva deportiva.
 
 # 🤝 Equipo:
-Diego González Moreno
-Saúl Falcón Gil
-Cathaysa Moreno Cabrera
-Samuel Santana García
-Edwin Johnson Osagie Batista
+* Diego González Moreno
+* Saúl Falcón Gil
+* Cathaysa Moreno Cabrera
+* Samuel Santana García
+* Edwin Johnson Osagie Batista
 
 # 👀 Descripción del proyecto: Idea de proyecto
 SportSync nace como una plataforma digital diseñada para unificar la oferta deportiva y eliminar la 
