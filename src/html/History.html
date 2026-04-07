@@ -140,13 +140,35 @@
             btn.addEventListener("click", async () => {
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
                 try {
-                    await updateDoc(doc(db, "reservations", btn.dataset.id), { status: "cancelled" });
+                    const reservationId = btn.dataset.id;
+
+                    // 1. Obtener la reserva para saber qué actividad tiene
+                    const reservationSnap = await getDoc(doc(db, "reservations", reservationId));
+                    if (!reservationSnap.exists()) return;
+                    const reservationData = reservationSnap.data();
+
+                    // 2. Cancelar la reserva
+                    await updateDoc(doc(db, "reservations", reservationId), {
+                        status: "cancelled"
+                    });
+
+                    // 3. Devolver el slot a la actividad
+                    const actRef  = doc(db, "activities", reservationData.activityId);
+                    const actSnap = await getDoc(actRef);
+                    if (actSnap.exists()) {
+                        const currentSlots = actSnap.data().availableSlots ?? 0;
+                        await updateDoc(actRef, { availableSlots: currentSlots + 1 });
+                    }
+
+                    // 4. Quitar la tarjeta de la UI
                     btn.closest(".reservation-card").remove();
                     const activeList = document.getElementById("activeList");
                     if (!activeList.querySelector(".reservation-card")) {
                         activeList.innerHTML = `<p class="loading-hint">No tienes reservas activas.</p>`;
                     }
+
                 } catch (e) {
+                    console.error(e);
                     alert("Error al cancelar la reserva.");
                 }
             });
