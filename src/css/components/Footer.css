@@ -37,10 +37,21 @@
 }
 
 
-.footer-logo {
+.footer-logo{
     width: 70px;
     height: 70px;
-    border-radius: 50%;
+    border-radius: 100%;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+}
+
+.footer-logo img{
+    width: 70px;
+    height: 70px;
+    border-radius: 100%;
     border: 1px solid #333;
     display: flex;
     align-items: center;
