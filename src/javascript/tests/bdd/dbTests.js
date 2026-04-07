@@ -10,7 +10,9 @@ let addedId;
 
 let searchResults;
 let activityId;
+let activityId2;
 let reservationId;
+let reservationId2;
 const testUserId = "test-user-cucumber";
 
 BeforeAll(async () => {
@@ -255,7 +257,7 @@ Given('the activity has a cancellation deadline in the future', async () => {
     activityId = await dbInstance.addActivity(addedId, "gym", {
         name: "Test Activity Limit",
         availableSlots: 10,
-        maxCancelDate: new Date(Date.now() + 86400000).toISOString()
+        maxCancelDate: new Date(Date.now() + 86400000)
     });
 
     reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
@@ -273,13 +275,13 @@ Given('the activity has a cancellation deadline in the past', async () => {
     activityId = await dbInstance.addActivity(addedId, "gym", {
         name: "Test Activity Limit",
         availableSlots: 10,
-        maxCancelDate: new Date(Date.now() - 86400000).toISOString()
+        maxCancelDate: new Date(Date.now() - 86400000)
     });
 
     reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
 });
 
-When('the user cancels the reservation', async () => {
+When('the user tries to cancel the reservation', async () => {
     cancellationResult = await dbInstance.cancelReservation(reservationId);
 });
 
@@ -298,5 +300,76 @@ Then('the cancellation is rejected', async () => {
     assert(snap.data().status === "active", "Status should still be active");
     await deleteDoc(doc(dbConnection, "reservations", reservationId));
     await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+});
+
+// ── GET USER HISTORY ───────────────────────────────────────
+Given('the user has an active and a cancelled reservation', async () => {
+    const existingReservations = await dbInstance.getUserReservations(testUserId);
+    for (const res of existingReservations) {
+        await deleteDoc(doc(dbConnection, "reservations", res.id));
+    }
+
+    addedId = await dbInstance.addGym({
+        name: "Test Gym Book",
+        description: "Test",
+        contactInfo: "Phone: 000000000",
+        schedule: "08:00-22:00",
+        location: new GeoPoint(0, 0)
+    });
+
+    activityId = await dbInstance.addActivity(addedId, "gym", {
+        name: "Test Activity",
+        availableSlots: 10,
+        maxCancelDate: new Date(Date.now() + 86400000)
+    });
+
+    activityId2 = await dbInstance.addActivity(addedId, "gym", {
+        name: "Test Activity Cancel",
+        availableSlots: 10,
+        maxCancelDate: new Date(Date.now() + 86400000)
+    });
+
+    reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);
+    reservationId2 = await dbInstance.makeReservation(testUserId, activityId2, addedId);
+
+    await dbInstance.cancelReservation(reservationId2);
+});
+
+// -- Scenario 1: --
+When('the user requests their complete reservation history', async () => {
+    searchResults = await dbInstance.getUserReservations(testUserId);
+});
+
+Then('the system returns a list with both reservations', async () => {
+    assert(searchResults.length === 2, "Expected exactly 2 reservations");
+
+    const hasActive = searchResults.some(r => r.id === reservationId && r.status === "active");
+    const hasCancelled = searchResults.some(r => r.id === reservationId2 && r.status === "cancelled");
+
+    assert(hasActive, "Active reservation missing");
+    assert(hasCancelled, "Cancelled reservation missing");
+
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "reservations", reservationId2));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "activities", activityId2));
+    await deleteDoc(doc(dbConnection, "gyms", addedId));
+});
+
+// -- Scenario 2: Filtrado solo por activas --
+When('the user requests only active reservations', async () => {
+    searchResults = await dbInstance.getUserReservations(testUserId, "active");
+});
+
+Then('the system returns a list with only the active reservation', async () => {
+    assert(searchResults.length === 1, "Expected exactly 1 active reservation");
+    assert(searchResults[0].id === reservationId, "The returned reservation is not the active one");
+    assert(searchResults[0].status === "active", "The status is not active");
+
+    await deleteDoc(doc(dbConnection, "reservations", reservationId));
+    await deleteDoc(doc(dbConnection, "reservations", reservationId2));
+    await deleteDoc(doc(dbConnection, "activities", activityId));
+    await deleteDoc(doc(dbConnection, "activities", activityId2));
     await deleteDoc(doc(dbConnection, "gyms", addedId));
 });
