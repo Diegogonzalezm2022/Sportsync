@@ -12,10 +12,9 @@
 <header xlu-include-file="components/Header.html"></header>
 
 <main class="container">
-
     <section class="left">
         <h2>Login</h2>
-        <div id="loginError" class="login-error" style="display:none;"></div>
+        <div id="loginError" class="login-error" style="display:none; color: red; margin-bottom: 10px;"></div>
         <div class="form">
             <label for="user">Email:</label>
             <input id="user" type="email" placeholder="example@mail.com">
@@ -34,13 +33,11 @@
 
     <section class="right">
         <div class="photo-box">
-            <img src="../assets/imagenes/sporty_login_register.png" alt="">
+            <img src="../assets/imagenes/sporty_login_register.png" alt="Sporty Logo">
         </div>
     </section>
-
 </main>
 
-<!-- ===== POPUP SELECTOR DE ROL ===== -->
 <div class="role-overlay" id="roleOverlay">
     <div class="role-popup">
         <h2 class="role-title">Who are you?</h2>
@@ -56,13 +53,15 @@
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
-    xLuIncludeFile();
+    if (typeof xLuIncludeFile === 'function') {
+        xLuIncludeFile();
+    }
 </script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBe7Muffm1j7b8apziWK13B_54q6DCaUT0",
@@ -73,84 +72,107 @@
         appId: "1:124816158835:web:39a68c1772fa3427a33a06",
         measurementId: "G-0G1XLG4TN2"
     };
-    //const response = await fetch("../assets/firebaseConfig.json");
-    //const firebaseConfig = await response.json();
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     let loggedUid = null;
 
-    // ── Si viene del registro mostrar popup directamente ──
-    const comingFromRegister = sessionStorage.getItem("showRolePopup");
-    const alreadyLoggedId = sessionStorage.getItem("userId");
-
-    if (comingFromRegister === "true" && alreadyLoggedId) {
-        sessionStorage.removeItem("showRolePopup");
-        loggedUid = alreadyLoggedId;
-        document.getElementById("roleOverlay").classList.add("active");
+    // 1. FUNCIÓN REDIRECT (Global dentro del módulo)
+    function redirectByRole(role, ownId) {
+        if (role === "gym")
+            window.location.href = `GymPage.html?id=${ownId}`;
+        else if (role === "professional")
+            window.location.href = `ProfessionalPage.html?id=${ownId}`;
+        else
+            window.location.href = "ActivitySearch.html";
     }
 
-    // ── LOGIN ─────────────────────────────────────────────
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-        const email = document.getElementById("user").value.trim();
-        const password = document.getElementById("password").value;
-        const errorEl = document.getElementById("loginError");
-        errorEl.style.display = "none";
+    // 2. LÓGICA DE LOGIN
+    const loginBtn = document.getElementById("loginBtn");
+    if (loginBtn) {
+        loginBtn.addEventListener("click", async () => {
+            const email = document.getElementById("user").value.trim();
+            const password = document.getElementById("password").value;
+            const errorEl = document.getElementById("loginError");
 
-        if (!email || !password) {
-            errorEl.textContent = "Por favor rellena todos los campos.";
-            errorEl.style.display = "block";
-            return;
-        }
+            errorEl.style.display = "none";
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            loggedUid = userCredential.user.uid;
-
-            sessionStorage.setItem("userId", loggedUid);
-            sessionStorage.setItem("userEmail", email);
-
-            const userSnap = await getDoc(doc(db, "users", loggedUid));
-            const userData = userSnap.exists() ? userSnap.data() : {};
-
-            if (userData.role) {
-                sessionStorage.setItem("userRole", userData.role);
-                redirectByRole(userData.role);
-            } else {
-                document.getElementById("roleOverlay").classList.add("active");
+            if (!email || !password) {
+                errorEl.textContent = "Por favor rellena todos los campos.";
+                errorEl.style.display = "block";
+                return;
             }
 
-        } catch (e) {
-            errorEl.style.display = "block";
-            errorEl.textContent =
-                e.code === "auth/invalid-credential"
-                    ? "Email o contraseña incorrectos."
-                    : "Error al iniciar sesión. Inténtalo de nuevo.";
-        }
-    });
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                loggedUid = userCredential.user.uid;
 
+                sessionStorage.setItem("userId", loggedUid);
+                sessionStorage.setItem("userEmail", email);
+
+                const userSnap = await getDoc(doc(db, "users", loggedUid));
+                const userData = userSnap.exists() ? userSnap.data() : {};
+
+                if (userData.role) {
+                    sessionStorage.setItem("userRole", userData.role);
+                    // Si es negocio, el ownerId es su propio UID
+                    const oId = (userData.role === "gym" || userData.role === "professional") ? loggedUid : null;
+                    if (oId) sessionStorage.setItem("ownerId", oId);
+
+                    redirectByRole(userData.role, oId);
+                } else {
+                    // Si no tiene rol, mostramos el popup
+                    document.getElementById("roleOverlay").classList.add("active");
+                }
+
+            } catch (e) {
+                console.error("Error en login:", e);
+                errorEl.style.display = "block";
+                errorEl.textContent = "Email o contraseña incorrectos.";
+            }
+        });
+    }
+
+    // Soporte para tecla Enter
     document.getElementById("password").addEventListener("keydown", e => {
-        if (e.key === "Enter") document.getElementById("loginBtn").click();
+        if (e.key === "Enter") loginBtn.click();
     });
 
-    // ── POPUP: elegir rol ─────────────────────────────────
+    // 3. SELECCIÓN DE ROL (Para nuevos usuarios)
     document.querySelectorAll(".role-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             const role = btn.dataset.role;
-            await updateDoc(doc(db, "users", loggedUid), { role });
-            sessionStorage.setItem("userRole", role);
-            document.getElementById("roleOverlay").classList.remove("active");
-            redirectByRole(role);
+            if (!loggedUid) return;
+
+            try {
+                await updateDoc(doc(db, "users", loggedUid), { role });
+                sessionStorage.setItem("userRole", role);
+
+                if (role === "gym" || role === "professional") {
+                    const colName = role === "gym" ? "gyms" : "professionals";
+                    const userSnap = await getDoc(doc(db, "users", loggedUid));
+                    const uData = userSnap.exists() ? userSnap.data() : {};
+
+                    await setDoc(doc(db, colName, loggedUid), {
+                        name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
+                        description: "",
+                        contactInfo: "",
+                        schedule: "",
+                        ownerId: loggedUid,
+                        createdAt: serverTimestamp()
+                    });
+                    sessionStorage.setItem("ownerId", loggedUid);
+                }
+
+                document.getElementById("roleOverlay").classList.remove("active");
+                redirectByRole(role, loggedUid);
+            } catch (error) {
+                console.error("Error al asignar rol:", error);
+            }
         });
     });
-
-    // ── Redirigir según rol ───────────────────────────────
-    function redirectByRole(role) {
-        if (role === "gym")               window.location.href = "GymPage.html";
-        else if (role === "professional") window.location.href = "ProfessionalPage.html";
-        else                              window.location.href = "ActivitySearch.html";
-    }
 </script>
 </body>
 </html>

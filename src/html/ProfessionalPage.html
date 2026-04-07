@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="../css/ProfessionalPage.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
+    <style>
+        /* Estilos rápidos para el modo edición */
+        .edit-mode-btn { margin-top: 10px; padding: 8px 15px; cursor: pointer; border-radius: 5px; border: none; background: var(--accent, #f39c12); color: white; font-weight: bold; }
+        .save-btn { background: #27ae60; display: none; }
+        .editing { border: 1px dashed #f39c12; padding: 5px; background: #fffdf0; color: #333 !important; min-height: 20px; }
+
+        /* Estilos para el Modal de Actividades */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: #333; }
+        .modal-content h2 { margin-bottom: 15px; color: #f39c12; }
+        .modal-form { display: flex; flex-direction: column; gap: 10px; }
+        .modal-form label { font-weight: bold; font-size: 0.9rem; text-align: left; }
+        .modal-form input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
 </head>
 <body>
 
@@ -32,8 +47,8 @@
             <div class="schedule-block">
                 <span class="schedule-label">Schedule:</span>
                 <div class="schedule-box">
-                    <span class="schedule-days" id="scheduleDays">—</span>
-                    <span class="schedule-hours" id="scheduleHours">—</span>
+                    <span class="schedule-days" id="scheduleDays" contenteditable="false">—</span>
+                    <span class="schedule-hours" id="scheduleHours" contenteditable="false">—</span>
                 </div>
             </div>
         </div>
@@ -42,7 +57,7 @@
             <div class="info-row info-row--top">
                 <div class="info-field">
                     <span class="info-label">Professional name:</span>
-                    <div class="info-value info-value--name" id="profileName">—</div>
+                    <div class="info-value info-value--name" id="profileName" contenteditable="false">—</div>
                 </div>
                 <div class="rating-block">
                     <span class="info-label">Average score:</span>
@@ -58,14 +73,46 @@
             </div>
             <div class="info-field">
                 <span class="info-label">Professional description:</span>
-                <div class="info-value info-value--desc" id="profileDesc">—</div>
+                <div class="info-value info-value--desc" id="profileDesc" contenteditable="false">—</div>
             </div>
             <div class="info-field">
                 <span class="info-label">Contact info:</span>
-                <div class="contact-lines" id="contactLines">—</div>
+                <div class="contact-lines" id="contactLines" contenteditable="false">—</div>
+            </div>
+
+            <div id="ownerControls" style="display:none;">
+                <button id="editBtn" class="edit-mode-btn">Edit Profile</button>
+                <button id="saveBtn" class="edit-mode-btn save-btn">Save Changes</button>
             </div>
         </div>
     </section>
+
+    <div id="createActivityWrapper" style="display:none; text-align: center; margin: 20px 0;">
+        <button id="openModalBtn" class="edit-mode-btn" style="background: #27ae60;">+ Create New Activity</button>
+    </div>
+
+    <div id="activityModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>New Activity</h2>
+            <div class="modal-form">
+                <label>Name:</label>
+                <input type="text" id="actName" placeholder="Personal Training, Pilates...">
+                <label>Schedule (Time):</label>
+                <input type="text" id="actSchedule" placeholder="09:00 - 10:00">
+                <label>Date:</label>
+                <input type="date" id="actDate">
+                <label>Price (€):</label>
+                <input type="number" id="actPrice" placeholder="0">
+                <label>Slots:</label>
+                <input type="number" id="actSlots" placeholder="5">
+
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button id="saveActivityBtn" class="edit-mode-btn" style="background: #27ae60; flex:1;">Create</button>
+                    <button id="closeModalBtn" class="edit-mode-btn" style="background: #e74c3c; flex:1;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
@@ -137,31 +184,41 @@
     const ownerType = "professional";
 
     if (!userId) window.location.href = "Login.html";
-    if (role === "gym") window.location.href = "GymPage.html";
+    if (role === "gym" && !params.get("id")) window.location.href = "GymPage.html";
 
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    const isOwner = role === ownerType;
+    const isOwner = (userId === ownerId);
+
+    const nameEl = document.getElementById("profileName");
+    const descEl = document.getElementById("profileDesc");
+    const contactEl = document.getElementById("contactLines");
+    const daysEl = document.getElementById("scheduleDays");
+    const hoursEl = document.getElementById("scheduleHours");
 
     // ── Cargar datos del profesional ──────────────────────
     if (ownerId) {
         const proSnap = await getDoc(doc(db, "professionals", ownerId));
         if (proSnap.exists()) {
             const data = proSnap.data();
-            document.getElementById("profileName").textContent = data.name || "—";
-            document.getElementById("profileDesc").textContent = data.description || "—";
+            nameEl.textContent = data.name || "—";
+            descEl.textContent = data.description || "—";
+
             if (data.schedule) {
-                document.getElementById("scheduleDays").textContent  = data.schedule.days  || data.schedule;
-                document.getElementById("scheduleHours").textContent = data.schedule.from && data.schedule.to
-                    ? `${data.schedule.from}–${data.schedule.to}` : "";
+                daysEl.textContent = typeof data.schedule === 'string' ? data.schedule : (data.schedule.days || "—");
+                hoursEl.textContent = (data.schedule.from && data.schedule.to) ? `${data.schedule.from}–${data.schedule.to}` : "";
             }
-            if (data.contactInfo) {
-                document.getElementById("contactLines").innerHTML =
-                    `<span class="contact-item">${data.contactInfo}</span>`;
+
+            contactEl.innerHTML = data.contactInfo || "—";
+
+            if (isOwner) {
+                document.getElementById("ownerControls").style.display = "block";
+                document.getElementById("createActivityWrapper").style.display = "block";
             }
+
             if (data.rating) {
                 const rounded = Math.round(data.rating);
                 document.querySelectorAll(".star").forEach(s => {
@@ -172,7 +229,84 @@
         }
     }
 
-    // ── Actividades ───────────────────────────────────────
+    // ── Lógica de Edición ─────────────────────────────────
+    if (isOwner) {
+        const editBtn = document.getElementById("editBtn");
+        const saveBtn = document.getElementById("saveBtn");
+        const editableFields = [nameEl, descEl, contactEl, daysEl, hoursEl];
+
+        editBtn.addEventListener("click", () => {
+            const isEditing = nameEl.contentEditable === "true";
+            editableFields.forEach(el => {
+                el.contentEditable = !isEditing;
+                el.classList.toggle("editing", !isEditing);
+            });
+            editBtn.textContent = isEditing ? "Edit Profile" : "Cancel";
+            saveBtn.style.display = isEditing ? "none" : "inline-block";
+        });
+
+        saveBtn.addEventListener("click", async () => {
+            saveBtn.disabled = true;
+            try {
+                await updateDoc(doc(db, "professionals", ownerId), {
+                    name: nameEl.textContent,
+                    description: descEl.textContent,
+                    contactInfo: contactEl.textContent,
+                    schedule: {
+                        days: daysEl.textContent,
+                        from: hoursEl.textContent.split('–')[0] || "",
+                        to: hoursEl.textContent.split('–')[1] || ""
+                    }
+                });
+                alert("Profile updated!");
+                location.reload();
+            } catch (e) {
+                alert("Error saving changes.");
+                saveBtn.disabled = false;
+            }
+        });
+
+        // ── Modal Crear Actividad ──
+        const modal = document.getElementById("activityModal");
+        const openModalBtn = document.getElementById("openModalBtn");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+        const saveActivityBtn = document.getElementById("saveActivityBtn");
+
+        openModalBtn.onclick = () => modal.classList.add("active");
+        closeModalBtn.onclick = () => modal.classList.remove("active");
+
+        saveActivityBtn.addEventListener("click", async () => {
+            const aName = document.getElementById("actName").value;
+            const aSched = document.getElementById("actSchedule").value;
+            const aDate = document.getElementById("actDate").value;
+            const aPrice = document.getElementById("actPrice").value;
+            const aSlots = document.getElementById("actSlots").value;
+
+            if(!aName || !aSched || !aDate) return alert("Please fill Name, Schedule and Date");
+
+            saveActivityBtn.disabled = true;
+            try {
+                await addDoc(collection(db, "activities"), {
+                    name: aName,
+                    schedule: aSched,
+                    date: aDate,
+                    price: parseFloat(aPrice) || 0,
+                    slots: parseInt(aSlots) || 0,
+                    availableSlots: parseInt(aSlots) || 0,
+                    ownerId: ownerId,
+                    ownerType: "professional",
+                    createdAt: serverTimestamp()
+                });
+                alert("Activity Created!");
+                location.reload();
+            } catch (e) {
+                alert("Error creating activity");
+                saveActivityBtn.disabled = false;
+            }
+        });
+    }
+
+    // ── Cargar Actividades ────────────────────────────────
     const activitiesSection = document.getElementById("activitiesSection");
     let allActivities = [];
     let myActivityIds = new Set();
@@ -180,19 +314,11 @@
     async function loadActivities(fromDate = null, toDate = null) {
         activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;padding:10px 0;">Cargando actividades...</p>`;
         try {
-            const snap = await getDocs(query(
-                collection(db, "activities"),
-                where("ownerId", "==", ownerId)
-            ));
+            const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
             allActivities = [];
             snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
 
-            // Cargar reservas activas del usuario
-            const myReservationsSnap = await getDocs(query(
-                collection(db, "reservations"),
-                where("userId", "==", userId),
-                where("status", "==", "active")
-            ));
+            const myReservationsSnap = await getDocs(query(collection(db, "reservations"), where("userId", "==", userId), where("status", "==", "active")));
             myActivityIds = new Set();
             myReservationsSnap.forEach(d => myActivityIds.add(d.data().activityId));
 
@@ -202,184 +328,89 @@
                     if (!a.date) return true;
                     const actDate = new Date(a.date);
                     if (fromDate && actDate < new Date(fromDate)) return false;
-                    if (toDate   && actDate > new Date(toDate))   return false;
+                    if (toDate && actDate > new Date(toDate)) return false;
                     return true;
                 });
             }
             renderActivities(filtered);
         } catch (e) {
-            console.error(e);
-            activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#c0392b;">Error al cargar actividades.</p>`;
+            activitiesSection.innerHTML = `<p style="color:red;">Error loading activities.</p>`;
         }
     }
 
     function renderActivities(activities) {
         if (activities.length === 0) {
-            activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;padding:10px 0;">No hay actividades disponibles.</p>`;
+            activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay actividades disponibles.</p>`;
             return;
         }
-        activitiesSection.innerHTML = activities.map((a, i) => {
+        activitiesSection.innerHTML = activities.map(a => {
             const alreadySignedUp = myActivityIds.has(a.id);
             return `
             <div class="activity-card">
                 <div class="activity-info">
-                    <div class="activity-row">
-                        <span class="activity-field-label">Activity name:</span>
-                        <span class="activity-value">${a.name || "—"}</span>
-                    </div>
-                    <div class="activity-row">
-                        <span class="activity-field-label">Activity schedule:</span>
-                        <span class="activity-value">${a.schedule || "—"}</span>
-                    </div>
-                    ${a.date ? `<div class="activity-row">
-                        <span class="activity-field-label">Date:</span>
-                        <span class="activity-value">${a.date}</span>
-                    </div>` : ""}
+                    <div class="activity-row"><span class="activity-field-label">Name:</span> <span class="activity-value">${a.name}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Schedule:</span> <span class="activity-value">${a.schedule}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Date:</span> <span class="activity-value">${a.date}</span></div>
                 </div>
                 <div class="activity-right">
-                    <div class="activity-row">
-                        <span class="activity-field-label">Price:</span>
-                        <span class="activity-value activity-value--price">${a.price ? a.price + "€" : "Gratis"}</span>
-                    </div>
-                    <div class="activity-row">
-                        <span class="activity-field-label">Available slots:</span>
-                        <span class="activity-value">${a.availableSlots ?? a.slots ?? "—"}</span>
-                    </div>
+                    <div class="activity-row"><span class="activity-field-label">Price:</span> <span class="activity-value">${a.price}€</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Slots:</span> <span class="activity-value">${a.availableSlots ?? a.slots}</span></div>
                 </div>
-                ${isOwner
-                ? `<span class="activity-owner-badge">Tu actividad</span>`
-                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''}"
-                        data-activity-id="${a.id}"
-                        ${alreadySignedUp ? 'disabled' : ''}>
-                        ${alreadySignedUp ? '✓ Ya apuntado' : 'Sign up'}
-                       </button>`
-            }
+                ${isOwner ? `<span class="activity-owner-badge">Tu actividad</span>` :
+                `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''}" data-id="${a.id}" ${alreadySignedUp ? 'disabled' : ''}>${alreadySignedUp ? '✓' : 'Sign up'}</button>`}
             </div>`;
         }).join("");
 
-        if (!isOwner) {
-            activitiesSection.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    if (btn.classList.contains("signup-btn--done")) return;
-                    btn.textContent = "Comprobando...";
+        if(!isOwner) {
+            activitiesSection.querySelectorAll(".signup-btn").forEach(btn => {
+                btn.onclick = async () => {
+                    const actId = btn.dataset.id;
                     btn.disabled = true;
                     try {
-                        // Doble comprobación en Firestore
-                        const existingSnap = await getDocs(query(
-                            collection(db, "reservations"),
-                            where("userId", "==", userId),
-                            where("activityId", "==", btn.dataset.activityId),
-                            where("status", "==", "active")
-                        ));
-                        if (!existingSnap.empty) {
-                            btn.textContent = "✓ Ya apuntado";
-                            btn.classList.add("signup-btn--done");
-                            myActivityIds.add(btn.dataset.activityId);
-                            return;
-                        }
-
-                        btn.textContent = "Guardando...";
-                        await addDoc(collection(db, "reservations"), {
-                            userId,
-                            activityId: btn.dataset.activityId,
-                            gymOrProId: ownerId,
-                            ownerType,
-                            status: "active",
-                            paid: false,
-                            createdAt: serverTimestamp()
-                        });
-
-                        const actRef  = doc(db, "activities", btn.dataset.activityId);
+                        await addDoc(collection(db, "reservations"), { userId, activityId: actId, gymOrProId: ownerId, ownerType: "professional", status: "active", createdAt: serverTimestamp() });
+                        const actRef = doc(db, "activities", actId);
                         const actSnap = await getDoc(actRef);
-                        if (actSnap.exists()) {
-                            const slots = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
-                            if (slots > 0) await updateDoc(actRef, { availableSlots: slots - 1 });
+                        if(actSnap.exists()){
+                            const cur = actSnap.data().availableSlots ?? actSnap.data().slots;
+                            if(cur > 0) await updateDoc(actRef, { availableSlots: cur - 1 });
                         }
-
-                        btn.textContent = "✓ Apuntado";
-                        btn.classList.add("signup-btn--done");
-                        myActivityIds.add(btn.dataset.activityId);
-
-                    } catch (e) {
-                        console.error(e);
-                        btn.textContent = "Error";
-                        btn.disabled = false;
-                    }
-                });
+                        location.reload();
+                    } catch(e) { alert("Error"); btn.disabled = false; }
+                }
             });
         }
     }
 
-    // ── Filtro fechas ─────────────────────────────────────
-    document.getElementById("dateFromBtn").addEventListener("click", () =>
-        document.getElementById("dateFromInput").showPicker?.() ||
-        document.getElementById("dateFromInput").click());
-    document.getElementById("dateToBtn").addEventListener("click", () =>
-        document.getElementById("dateToInput").showPicker?.() ||
-        document.getElementById("dateToInput").click());
-
-    document.getElementById("dateFromInput").addEventListener("change", function () {
-        const [y, m, d] = this.value.split("-");
-        document.getElementById("dateFromLabel").textContent = this.value ? `${d}/${m}/${y}` : "Date from";
-        document.getElementById("dateFromBtn").classList.toggle("date-btn--active", !!this.value);
-        loadActivities(this.value || null, document.getElementById("dateToInput").value || null);
-    });
-    document.getElementById("dateToInput").addEventListener("change", function () {
-        const [y, m, d] = this.value.split("-");
-        document.getElementById("dateToLabel").textContent = this.value ? `${d}/${m}/${y}` : "Date to";
-        document.getElementById("dateToBtn").classList.toggle("date-btn--active", !!this.value);
-        loadActivities(document.getElementById("dateFromInput").value || null, this.value || null);
-    });
-
-    // ── Stars ─────────────────────────────────────────────
+    // ── Estrellas y Filtros ──
     const starsContainer = document.getElementById("starsContainer");
-    const stars          = starsContainer.querySelectorAll(".star");
-    const ratingHint     = document.getElementById("ratingHint");
-    let currentRating    = 0;
-
-    if (isOwner) {
-        starsContainer.style.pointerEvents = "none";
-        ratingHint.textContent = "Tu perfil";
-    } else {
+    const stars = starsContainer.querySelectorAll(".star");
+    if (!isOwner) {
         stars.forEach(star => {
-            star.addEventListener("mouseover", () => highlightStars(+star.dataset.value));
-            star.addEventListener("mouseout",  () => highlightStars(currentRating));
-            star.addEventListener("click", async () => {
-                currentRating = +star.dataset.value;
-                highlightStars(currentRating);
-                ratingHint.textContent = ["","Muy malo","Malo","Regular","Bueno","Excelente"][currentRating];
-                ratingHint.style.color = "var(--accent)";
-                if (ownerId) {
-                    const targetRef  = doc(db, "professionals", ownerId);
-                    const targetSnap = await getDoc(targetRef);
-                    if (targetSnap.exists()) {
-                        const { rating = 0, ratingCount = 0 } = targetSnap.data();
-                        await updateDoc(targetRef, {
-                            rating: ((rating * ratingCount) + currentRating) / (ratingCount + 1),
-                            ratingCount: ratingCount + 1
-                        });
-                    }
+            star.onclick = async () => {
+                const val = +star.dataset.value;
+                const targetRef = doc(db, "professionals", ownerId);
+                const snap = await getDoc(targetRef);
+                if (snap.exists()) {
+                    const { rating = 0, ratingCount = 0 } = snap.data();
+                    await updateDoc(targetRef, {
+                        rating: ((rating * ratingCount) + val) / (ratingCount + 1),
+                        ratingCount: ratingCount + 1
+                    });
+                    alert("Rating saved!");
+                    location.reload();
                 }
-            });
+            };
         });
     }
 
-    function highlightStars(n) {
-        stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= n));
-    }
+    document.getElementById("dateFromInput").onchange = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);
+    document.getElementById("dateToInput").onchange = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);
 
-    // ── Carousel ──────────────────────────────────────────
-    document.getElementById("carouselLeft").addEventListener("click", () =>
-        document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" }));
-    document.getElementById("carouselRight").addEventListener("click", () =>
-        document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" }));
+    // ── Carousel ──
+    document.getElementById("carouselLeft").onclick = () => document.getElementById("galleryCarousel").scrollBy({left: -140, behavior: 'smooth'});
+    document.getElementById("carouselRight").onclick = () => document.getElementById("galleryCarousel").scrollBy({left: 140, behavior: 'smooth'});
 
-    // ── Arrancar ──────────────────────────────────────────
-    if (ownerId) {
-        loadActivities();
-    } else {
-        activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;">No se encontró el perfil.</p>`;
-    }
+    if (ownerId) loadActivities();
 </script>
 </body>
 </html>
