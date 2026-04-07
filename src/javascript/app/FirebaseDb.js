@@ -126,6 +126,16 @@ class FirebaseDb {
         return docRef.id;
     }
 
+    async addMaterial(materialData) {
+        const materialsRef = collection(this.db, "materials");
+        const docRef = await addDoc(materialsRef, {
+            ...materialData,
+            rating: 0,
+            ratingCount: 0,
+            createdAt: serverTimestamp()
+        })
+    }
+
     async addActivity(ownerId, ownerType, activityData) {
         const activitiesRef = collection(this.db, "activities");
         const docRef = await addDoc(activitiesRef, {
