@@ -59,22 +59,27 @@ class FirebaseDb {
     }
 
     async cancelReservation(reservationId) {
-        const reservationRef = await doc(this.db, "reservations", reservationId);
-        const reservation = await getDoc(reservationRef);
-        const activityId = await reservation.data().activityId;
-        const activityRef = await doc(this.db, "activities", activityId)
-        const activity = await getDoc(activityRef);
-        if (activity.data().maxCancelDate.toDate() <= Date.now()) {
-            throw new Error("Cancel limit passed");
-        }
-        await updateDoc(reservationRef, {
-            status: "cancelled"
-        }
-        );
-        await updateDoc(activityRef, {
-            availableSlots: activity.data().availableSlots+1
+        try {
+            const reservationRef = await doc(this.db, "reservations", reservationId);
+            const reservation = await getDoc(reservationRef);
+            const activityId = await reservation.data().activityId;
+            const activityRef = await doc(this.db, "activities", activityId)
+            const activity = await getDoc(activityRef);
+            if (activity.data().maxCancelDate.toDate() <= Date.now()) {
+                return { success: false, error: "Cancel limit passed" };
+            }
+            await updateDoc(reservationRef, {
+                status: "cancelled"
+            }
+            );
+            await updateDoc(activityRef, {
+                availableSlots: activity.data().availableSlots+1
 
-        })
+            });
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 
     async findGymsByDistance(lat, lng, radiusKm = 10) {
