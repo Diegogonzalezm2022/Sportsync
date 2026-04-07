@@ -39,7 +39,7 @@ class FirebaseDb {
         const activity = await getDoc(activityDoc);
         const availableSlots = activity.data().availableSlots;
         if (availableSlots <= 0) {
-            throw "Activity full"
+            throw new Error("Activity full");
         }
         const reservationsRef = collection(this.db, "reservations");
         const docRef = await addDoc(reservationsRef, {
@@ -64,8 +64,8 @@ class FirebaseDb {
         const activityId = await reservation.data().activityId;
         const activityRef = await doc(this.db, "activities", activityId)
         const activity = await getDoc(activityRef);
-        if (new Date(activity.data().maxCancelDate) <= Date.now()) {
-            throw "Cancel limit passed";
+        if (activity.data().maxCancelDate.toDate() <= Date.now()) {
+            throw new Error("Cancel limit passed");
         }
         await updateDoc(reservationRef, {
             status: "cancelled"

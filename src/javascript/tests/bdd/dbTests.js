@@ -148,7 +148,7 @@ Given('the user has an active reservation', async () => {
     activityId = await dbInstance.addActivity(addedId, "gym", {
         name: "Test Activity Cancel",
         availableSlots: 10,
-        maxCancelDate: new Date(Date.now() + 86400000).toISOString()
+        maxCancelDate: new Date(Date.now() + 86400000)
     });
 
     reservationId = await dbInstance.makeReservation(testUserId, activityId, addedId);

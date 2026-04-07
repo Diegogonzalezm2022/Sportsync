@@ -52,3 +52,31 @@ test("professionalIsInsertedInDBWhenNewProfessionalIsCreated", async ()=> {
     expect(professionalData.rating).toEqual(0);
     expect(professionalData.ratingCount).toEqual(0);
 })
+
+test("errorIsThrownWhenAttemptingToBookFullActivity", async ()=> {
+    const addedActivity = await dbInstance.addActivity("temp", "gym", {
+        name: "Test activity",
+        maxCancelDate: new Date(2026, 7, 8),
+        price: 11.99,
+        availableSlots: 0,
+        schedule: new Date(2026, 8, 8, 14),
+    });
+    await expect(async () => {
+        await dbInstance.makeReservation("tempUser", addedActivity, "temp");
+    }).rejects.toThrow("Activity full");
+    await deleteDoc(doc(dbConnection, "activities", addedActivity));
+})
+
+test("errorIsThrownWhenAttemptingToCancelBeyondMaxDate", async ()=> {
+    const addedActivity = await dbInstance.addActivity("temp", "gym", {
+        name: "Test activity",
+        maxCancelDate: new Date(2024, 7, 8),
+        price: 11.99,
+        availableSlots: 2,
+        schedule: new Date(2026, 8, 8, 14),
+    });
+    const reserved = await dbInstance.makeReservation("tempUser", addedActivity, "temp");
+    await expect(async () => {await dbInstance.cancelReservation(reserved)}).rejects.toThrow("Cancel limit passed");
+    await deleteDoc(doc(dbConnection, "activities", addedActivity));
+    await deleteDoc(doc(dbConnection, "reservations", reserved));
+})
