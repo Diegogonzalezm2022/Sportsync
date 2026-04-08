@@ -120,27 +120,45 @@
 
 <script type="module">
     import { initializeApp }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where }
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc }
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     // ── Protección de ruta ────────────────────────────────
     const userId = sessionStorage.getItem("userId");
     if (!userId) window.location.href = "Login.html";
 
-    // ── Mostrar nombre de usuario ─────────────────────────
-    const userName = sessionStorage.getItem("userEmail") || "Usuario";
-    const userRole = sessionStorage.getItem("userRole") || "";
-    document.getElementById("userName").textContent = userName;
-    document.getElementById("userRole").textContent =
-        userRole === "gym" ? "Gimnasio"
-            : userRole === "professional" ? "Profesional"
-                : "Usuario";
-
     // ── Firebase ──────────────────────────────────────────
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
+
+    // ── Cargar datos del usuario desde Firestore ──────────
+    const userSnap = await getDoc(doc(db, "users", userId));
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+
+        // Nombre de usuario
+        document.getElementById("userName").textContent =
+            data.username || `${data.name || ""} ${data.surname || ""}`.trim() || sessionStorage.getItem("userEmail") || "Usuario";
+
+        // Foto de perfil — sustituir el SVG por la imagen si existe
+        if (data.photoURL) {
+            const avatarDiv = document.querySelector(".user-avatar");
+            avatarDiv.innerHTML = `<img src="${data.photoURL}" alt="Foto de perfil"
+                style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        }
+    } else {
+        document.getElementById("userName").textContent =
+            sessionStorage.getItem("userEmail") || "Usuario";
+    }
+
+    // ── Rol ───────────────────────────────────────────────
+    const userRole = sessionStorage.getItem("userRole") || "";
+    document.getElementById("userRole").textContent =
+        userRole === "gym" ? "Gimnasio"
+            : userRole === "professional" ? "Profesional"
+                : "Usuario";
 
     let userLat = null;
     let userLng = null;
@@ -168,23 +186,19 @@
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
 
-                // Marcador del usuario en verde
                 if (userMarker) map.removeLayer(userMarker);
                 userMarker = L.marker([userLat, userLng], {
                     icon: L.divIcon({
                         className: "",
-                        html: `<div style="
-                            width:16px; height:16px; border-radius:50%;
-                            background:#2d6a4f; border:3px solid white;
-                            box-shadow:0 2px 6px rgba(0,0,0,0.4)">
-                        </div>`,
+                        html: `<div style="width:16px;height:16px;border-radius:50%;
+                               background:#2d6a4f;border:3px solid white;
+                               box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
                         iconSize: [16, 16],
                         iconAnchor: [8, 8]
                     })
                 }).addTo(map).bindPopup("Tu ubicación");
 
                 map.setView([userLat, userLng], 14);
-
                 hideStatus();
                 await searchNearby();
             },
@@ -202,12 +216,6 @@
     // ── Buscar en Firestore ───────────────────────────────
     async function searchNearby() {
         showStatus("Buscando cerca de ti...");
-
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-
         const radiusKm = 50;
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
@@ -218,7 +226,6 @@
                 where("location.lat", ">=", userLat - latDelta),
                 where("location.lat", "<=", userLat + latDelta)
             ));
-
             const prosSnap = await getDocs(query(
                 collection(db, "professionals"),
                 where("location.lat", ">=", userLat - latDelta),
@@ -259,13 +266,12 @@
                 const marker = L.marker([item.location.lat, item.location.lng], {
                     icon: L.divIcon({
                         className: "",
-                        html: `<div style="
-                            background:${color}; color:white; border-radius:8px;
-                            padding:4px 7px; font-size:11px; font-weight:700;
-                            white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.3);
-                            border:2px solid white;">
-                            ${label} ${item.name}
-                        </div>`,
+                        html: `<div style="background:${color};color:white;border-radius:8px;
+                               padding:4px 7px;font-size:11px;font-weight:700;
+                               white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);
+                               border:2px solid white;">
+                               ${label} ${item.name}
+                               </div>`,
                         iconAnchor: [0, 0]
                     })
                 }).addTo(map).bindPopup(`
@@ -273,17 +279,14 @@
                     ${item.description || ""}<br>
                     <em>${item.distanceKm.toFixed(1)} km</em>
                 `);
-
                 resultMarkers.push(marker);
             });
 
-            // Ajustar zoom para ver todos los marcadores
             if (allResults.length > 0) {
-                const allPoints = [
-                    [userLat, userLng],
-                    ...allResults.map(r => [r.location.lat, r.location.lng])
-                ];
-                map.fitBounds(allPoints, { padding: [30, 30] });
+                map.fitBounds(
+                    [[userLat, userLng], ...allResults.map(r => [r.location.lat, r.location.lng])],
+                    { padding: [30, 30] }
+                );
             }
 
             hideStatus();
@@ -293,17 +296,16 @@
             console.error(e);
             showStatus("Error al buscar. Comprueba que Firestore tiene datos.", true);
         }
-    })
     }
 
-    // ── Calcular distancia real (fórmula Haversine) ───────
+    // ── Distancia Haversine ───────────────────────────────
     function calcDistance(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        const a = Math.sin(dLat/2)**2 +
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
+            Math.sin(dLng/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
@@ -322,20 +324,17 @@
     // ── Renderizar tarjetas ───────────────────────────────
     function renderResults(results) {
         const list = document.getElementById("resultsList");
-
         if (results.length === 0) {
             list.innerHTML = `<p class="no-results">No se encontraron resultados cerca de ti.</p>`;
             return;
         }
-
         list.innerHTML = results.map(item => {
-            const isGym      = item.type === "gym";
+            const isGym     = item.type === "gym";
             const badgeClass = isGym ? "result-badge--gym" : "result-badge--trainer";
             const badgeText  = isGym ? "Gimnasio" : "Entrenador";
             const distance   = item.distanceKm != null ? `${item.distanceKm.toFixed(1)} km` : "";
             const rating     = item.rating ? `★ ${Number(item.rating).toFixed(1)}` : "★ —";
             const page       = isGym ? "GymPage" : "ProfessionalPage";
-
             return `
             <div class="result-card">
                 <div class="result-photo">
@@ -354,8 +353,7 @@
                     </div>
                     <p class="result-desc">${item.description || ""}</p>
                     <div class="result-meta">
-                        ${distance ? `
-                        <span class="result-distance">
+                        ${distance ? `<span class="result-distance">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                                 <circle cx="12" cy="9" r="2.5"/>
@@ -378,7 +376,7 @@
         });
     }
 
-    // ── Helpers estado ────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────
     function showStatus(msg, isError = false) {
         const el = document.getElementById("statusMsg");
         el.textContent = msg;
@@ -392,25 +390,19 @@
     // ── Eventos ───────────────────────────────────────────
     document.getElementById("useLocationBtn").addEventListener("click", getLocation);
     document.getElementById("searchLocationBtn").addEventListener("click", getLocation);
-
     document.getElementById("searchSubmitBtn").addEventListener("click", () =>
         renderResults(filterResults(allResults)));
-
     document.getElementById("searchInput").addEventListener("keydown", e => {
         if (e.key === "Enter") renderResults(filterResults(allResults));
     });
-
     document.getElementById("searchInput").addEventListener("input", e => {
-        const clearBtn = document.getElementById("searchClearBtn");
-        clearBtn.classList.toggle("hidden", e.target.value.length === 0);
+        document.getElementById("searchClearBtn").classList.toggle("hidden", e.target.value.length === 0);
     });
-
     document.getElementById("searchClearBtn").addEventListener("click", () => {
         document.getElementById("searchInput").value = "";
         document.getElementById("searchClearBtn").classList.add("hidden");
         renderResults(filterResults(allResults));
     });
-
     document.querySelectorAll(".chip").forEach(chip => {
         chip.addEventListener("click", () => {
             document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
