@@ -242,7 +242,7 @@
                             from: hoursEl.textContent.split('–')[0] || "",
                             to: hoursEl.textContent.split('–')[1] || ""
                         },
-                        location: new GeoPoint(lat, lon),
+                        location: {lat: lat, lng: lon},
                     });
                     alert("Gym Profile updated!");
                     location.reload();

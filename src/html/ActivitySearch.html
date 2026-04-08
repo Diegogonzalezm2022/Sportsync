@@ -203,6 +203,11 @@
     async function searchNearby() {
         showStatus("Buscando cerca de ti...");
 
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+
         const radiusKm = 50;
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
@@ -288,6 +293,7 @@
             console.error(e);
             showStatus("Error al buscar. Comprueba que Firestore tiene datos.", true);
         }
+    })
     }
 
     // ── Calcular distancia real (fórmula Haversine) ───────
