@@ -37,12 +37,12 @@
     <div class="profile-form">
 
         <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Example">
+            <label for="username">Usuario</label>
+            <input type="text" id="username" name="username" placeholder="Ejemplo">
         </div>
 
         <div class="form-group">
-            <label for="bio">Biography</label>
+            <label for="bio">Biografía</label>
             <textarea id="bio" name="bio" placeholder="Cuéntanos algo sobre ti..."
                       style="width:100%; padding:9px 12px; border:1px solid #d6d6d6; border-radius:8px;
                 font-family:inherit; font-size:0.88rem; resize:vertical; min-height:80px; outline:none;"></textarea>
@@ -50,32 +50,33 @@
 
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="example@mail.com">
+            <input type="email" id="email" name="email" placeholder="ejemplo@mail.com">
         </div>
 
         <div class="form-group">
-            <label for="phone">Phone number</label>
+            <label for="phone">Teléfono</label>
             <input type="tel" id="phone" name="phone" placeholder="+34 123 456 789">
         </div>
 
         <div class="form-group inline-group">
-            <label for="payment-method">Payment method:</label>
+            <label for="payment-method">Método de pago:</label>
             <div class="select-wrapper">
                 <select id="payment-method" name="payment-method">
                     <option value="" disabled selected>Selecciona</option>
-                    <option value="card">Credit Card</option>
+                    <option value="card">Tarjeta de Crédito</option>
                     <option value="paypal">PayPal</option>
                     <option value="bizum">Bizum</option>
+                    <option value="efectivo">Efectivo</option>
                 </select>
             </div>
         </div>
 
         <div class="form-group">
-            <input type="text" id="payment-details" name="payment-details" placeholder="Número de tarjeta, email de PayPal, teléfono Bizum...">
+            <input type="text" id="payment-details" name="payment-details" placeholder="Número de tarjeta o email de PayPal...">
         </div>
 
         <div class="form-actions">
-            <button type="button" class="save-btn" id="saveBtn">Save Changes</button>
+            <button type="button" class="save-btn" id="saveBtn">Guardar Cambios</button>
         </div>
 
     </div>
