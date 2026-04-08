@@ -15,14 +15,14 @@
 
     <div class="section-header">
         <button class="back-btn" onclick="history.back()">&#8592;</button>
-        <h2>Active reservations:</h2>
+        <h2>Reservas activas:</h2>
     </div>
     <div class="cards-container" id="activeList">
         <p class="loading-hint">Cargando...</p>
     </div>
 
     <div class="section-header past-header">
-        <h2>Past reservations:</h2>
+        <h2>Reservas pasadas:</h2>
     </div>
     <div class="cards-container" id="pastList">
         <p class="loading-hint">Cargando...</p>
@@ -118,11 +118,11 @@
             <article class="reservation-card" data-id="${r.id}">
                 <div class="card-info">
                     <p><strong>${r.ownerType === "gym" ? "Gym" : "Professional"}:</strong> ${r.ownerName}</p>
-                    <p><strong>Activity:</strong> ${r.activityName}</p>
-                    <p><strong>Schedule:</strong> ${formatSchedule(r.activitySchedule)}</p>
+                    <p><strong>Actividad:</strong> ${r.activityName}</p>
+                    <p><strong>Horario:</strong> ${formatSchedule(r.activitySchedule)}</p>
                 </div>
                 <div class="card-status">
-                    <p>Paid: ${r.paid ? "✓" : "Pendiente"}</p>
+                    <p>Pago: ${r.paid ? "✓" : "Pendiente"}</p>
                 </div>
                 <div class="card-actions">
                     <button class="icon-btn share-icon" title="Compartir" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
@@ -132,7 +132,7 @@
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
                     </button>
-                    <button class="action-btn cancel-btn" data-id="${r.id}">Cancel</button>
+                    <button class="action-btn cancel-btn" data-id="${r.id}">Cancelar</button>
                 </div>
             </article>`).join("");
 
@@ -185,12 +185,12 @@
         list.innerHTML = reservations.map(r => `
             <article class="reservation-card past-card" data-id="${r.id}">
                 <div class="card-info">
-                    <p><strong>${r.ownerType === "gym" ? "Gym" : "Professional"}:</strong> ${r.ownerName}</p>
-                    <p><strong>Activity:</strong> ${r.activityName}</p>
-                    <p><strong>Schedule:</strong> ${formatSchedule(r.activitySchedule)}</p>
+                    <p><strong>${r.ownerType === "gym" ? "Gimnasio" : "Profesional"}:</strong> ${r.ownerName}</p>
+                    <p><strong>Actividad:</strong> ${r.activityName}</p>
+                    <p><strong>Horario:</strong> ${formatSchedule(r.activitySchedule)}</p>
                 </div>
                 <div class="card-status">
-                    <p>Paid: ${r.paid ? "✓" : "—"}</p>
+                    <p>Pagado: ${r.paid ? "✓" : "—"}</p>
                 </div>
                 <div class="card-actions past-actions">
                     <div class="stars" data-target-id="${r.gymOrProId}" data-owner-type="${r.ownerType}">
@@ -198,7 +198,7 @@
                         <span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
                     </div>
                     <div class="action-row">
-                        <button class="action-btn signup-btn">Sign up again</button>
+                        <button class="action-btn signup-btn">Volver a registrarte</button>
                         <button class="icon-btn share-icon" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -206,7 +206,7 @@
                                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                             </svg>
                         </button>
-                        <span class="status-text">${r.status === "done" ? "Done" : "Cancelled"}</span>
+                        <span class="status-text">${r.status === "done" ? "Hecho" : "Cancelado"}</span>
                     </div>
                 </div>
             </article>`).join("");
