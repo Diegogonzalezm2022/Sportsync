@@ -341,10 +341,10 @@
                 </div>
                 <div class="activity-right">
                     <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Huecos:</span> <span class="activity-value">${a.availableSlots ?? a.slots}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots}</span></div>
                 </div>
                 ${isOwner ? `<span class="activity-owner-badge">Tu actividad</span>` :
-                `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''}" data-id="${a.id}" ${alreadySignedUp ? 'disabled' : ''}>${alreadySignedUp ? '✓' : 'Registrarse'}</button>`}
+                `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''}" data-id="${a.id}" ${alreadySignedUp ? 'disabled' : ''}>${alreadySignedUp ? '✓' : 'Apuntarme'}</button>`}
             </div>`;
         }).join("");
 
