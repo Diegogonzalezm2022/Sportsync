@@ -1,5 +1,8 @@
 /* ===== OurTeam.css ===== */
 
+body{
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
 /* ---------- Main Section ---------- */
 .team-section {
     padding: 40px 20px 60px;
