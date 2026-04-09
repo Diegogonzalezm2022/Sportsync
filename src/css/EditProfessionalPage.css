@@ -451,10 +451,10 @@ body {
 
 /* --- Activity form --- */
 .activity-form {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto; /* campos | botón */
+    align-items: end;
+    gap: 12px;
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -504,18 +504,19 @@ body {
 }
 
 .create-activity-btn {
-    padding: 9px 18px;
+    padding: 6px 12px;      /* antes: 9px 18px */
     background: var(--text-primary);
-    color: #fff;
-    border: none;
+    font-size: 0.76rem;     /* antes: 0.83rem */
+    font-weight: 700;
+    width: fit-content;
+    align-self: flex-end;
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 0.83rem;
-    font-weight: 700;
     cursor: pointer;
+    color: #fff;
+    border: none;
     white-space: nowrap;
     transition: background 0.2s;
-    align-self: flex-end;
 }
 
 .create-activity-btn:hover { background: var(--accent); }
