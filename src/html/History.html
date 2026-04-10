@@ -29,8 +29,8 @@
     </div>
 
 </main>
-<footer xlu-include-file="components/Footer.html"></footer>
 
+<footer xlu-include-file="components/Footer.html"></footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
@@ -39,7 +39,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc }
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, serverTimestamp }
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const userId = sessionStorage.getItem("userId");
@@ -50,7 +50,6 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // ── Cargar reservas del usuario ───────────────────────
     async function loadReservations() {
         const snap = await getDocs(query(
             collection(db, "reservations"),
@@ -60,30 +59,29 @@
         const reservations = [];
         snap.forEach(d => reservations.push({ id: d.id, ...d.data() }));
 
-        // Cargar nombres de gym/profesional y actividad para cada reserva
         const enriched = await Promise.all(reservations.map(async r => {
             let ownerName = r.gymOrProId;
             let activityName = r.activityId;
+            let availableSlots = null;
 
-            // Nombre del gym o profesional
             try {
                 const colName = r.ownerType === "gym" ? "gyms" : "professionals";
                 const ownerSnap = await getDoc(doc(db, colName, r.gymOrProId));
                 if (ownerSnap.exists()) ownerName = ownerSnap.data().name || r.gymOrProId;
             } catch {}
 
-            // Nombre de la actividad
             try {
                 const actSnap = await getDoc(doc(db, "activities", r.activityId));
                 if (actSnap.exists()) {
                     const actData = actSnap.data();
-                    activityName = actData.name || r.activityId;
+                    activityName   = actData.name     || r.activityId;
                     r.activitySchedule = actData.schedule || "—";
                     r.activityPrice    = actData.price    || "—";
+                    availableSlots = actData.availableSlots ?? actData.slots ?? 0;
                 }
             } catch {}
 
-            return { ...r, ownerName, activityName };
+            return { ...r, ownerName, activityName, availableSlots };
         }));
 
         const active    = enriched.filter(r => r.status === "active");
@@ -105,7 +103,7 @@
         list.innerHTML = reservations.map(r => `
             <article class="reservation-card" data-id="${r.id}">
                 <div class="card-info">
-                    <p><strong>${r.ownerType === "gym" ? "Gym" : "Professional"}:</strong> ${r.ownerName}</p>
+                    <p><strong>${r.ownerType === "gym" ? "Gym" : "Profesional"}:</strong> ${r.ownerName}</p>
                     <p><strong>Actividad:</strong> ${r.activityName}</p>
                     <p><strong>Horario:</strong> ${formatSchedule(r.activitySchedule)}</p>
                 </div>
@@ -113,14 +111,17 @@
                     <p>Pago: ${r.paid ? "✓" : "Pendiente"}</p>
                 </div>
                 <div class="card-actions">
-                    <button class="icon-btn share-icon" title="Compartir" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
+                    <button class="icon-btn share-icon" title="Compartir"
+                        onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
                     </button>
-                    <button class="action-btn cancel-btn" data-id="${r.id}">Cancelar</button>
+                    <button class="action-btn cancel-btn" data-id="${r.id}" data-activity-id="${r.activityId}">
+                        Cancelar
+                    </button>
                 </div>
             </article>`).join("");
 
@@ -129,26 +130,18 @@
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
                 try {
                     const reservationId = btn.dataset.id;
+                    const activityId    = btn.dataset.activityId;
 
-                    // 1. Obtener la reserva para saber qué actividad tiene
-                    const reservationSnap = await getDoc(doc(db, "reservations", reservationId));
-                    if (!reservationSnap.exists()) return;
-                    const reservationData = reservationSnap.data();
+                    await updateDoc(doc(db, "reservations", reservationId), { status: "cancelled" });
 
-                    // 2. Cancelar la reserva
-                    await updateDoc(doc(db, "reservations", reservationId), {
-                        status: "cancelled"
-                    });
-
-                    // 3. Devolver el slot a la actividad
-                    const actRef  = doc(db, "activities", reservationData.activityId);
+                    // Devolver el slot
+                    const actRef  = doc(db, "activities", activityId);
                     const actSnap = await getDoc(actRef);
                     if (actSnap.exists()) {
                         const currentSlots = actSnap.data().availableSlots ?? 0;
                         await updateDoc(actRef, { availableSlots: currentSlots + 1 });
                     }
 
-                    // 4. Quitar la tarjeta de la UI
                     btn.closest(".reservation-card").remove();
                     const activeList = document.getElementById("activeList");
                     if (!activeList.querySelector(".reservation-card")) {
@@ -170,7 +163,9 @@
             list.innerHTML = `<p class="loading-hint">No tienes reservas pasadas.</p>`;
             return;
         }
-        list.innerHTML = reservations.map(r => `
+        list.innerHTML = reservations.map(r => {
+            const noSlots = r.availableSlots !== null && r.availableSlots <= 0;
+            return `
             <article class="reservation-card past-card" data-id="${r.id}">
                 <div class="card-info">
                     <p><strong>${r.ownerType === "gym" ? "Gimnasio" : "Profesional"}:</strong> ${r.ownerName}</p>
@@ -186,8 +181,15 @@
                         <span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
                     </div>
                     <div class="action-row">
-                        <button class="action-btn signup-btn">Volver a registrarte</button>
-                        <button class="icon-btn share-icon" onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
+                        <button class="action-btn signup-btn ${noSlots ? 'signup-btn--full' : ''}"
+                            data-activity-id="${r.activityId}"
+                            data-owner-id="${r.gymOrProId}"
+                            data-owner-type="${r.ownerType}"
+                            ${noSlots ? 'disabled' : ''}>
+                            ${noSlots ? 'Sin huecos' : 'Volver a registrarte'}
+                        </button>
+                        <button class="icon-btn share-icon"
+                            onclick="shareReservation('${r.ownerName}', '${r.activityName}')">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
@@ -197,14 +199,85 @@
                         <span class="status-text">${r.status === "done" ? "Hecho" : "Cancelado"}</span>
                     </div>
                 </div>
-            </article>`).join("");
+            </article>`;
+        }).join("");
 
-        // Estrellas valoración
+        // ── Botón "Volver a registrarte" ──────────────────
+        list.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const activityId = btn.dataset.activityId;
+                const ownerId    = btn.dataset.ownerId;
+                const ownerType  = btn.dataset.ownerType;
+
+                btn.disabled = true;
+                btn.textContent = "Comprobando...";
+
+                try {
+                    // 1. Comprobar huecos disponibles en Firestore
+                    const actRef  = doc(db, "activities", activityId);
+                    const actSnap = await getDoc(actRef);
+                    if (!actSnap.exists()) {
+                        alert("Actividad no encontrada.");
+                        btn.disabled = false;
+                        btn.textContent = "Volver a registrarte";
+                        return;
+                    }
+                    const currentSlots = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
+                    if (currentSlots <= 0) {
+                        btn.textContent = "Sin huecos";
+                        btn.classList.add("signup-btn--full");
+                        return;
+                    }
+
+                    // 2. Comprobar que no tiene ya una reserva activa
+                    const existingSnap = await getDocs(query(
+                        collection(db, "reservations"),
+                        where("userId", "==", userId),
+                        where("activityId", "==", activityId),
+                        where("status", "==", "active")
+                    ));
+                    if (!existingSnap.empty) {
+                        alert("Ya tienes una reserva activa para esta actividad.");
+                        btn.textContent = "Ya apuntado";
+                        btn.classList.add("signup-btn--done");
+                        return;
+                    }
+
+                    // 3. Crear la nueva reserva
+                    await addDoc(collection(db, "reservations"), {
+                        userId,
+                        activityId,
+                        gymOrProId: ownerId,
+                        ownerType,
+                        status: "active",
+                        paid: false,
+                        createdAt: serverTimestamp()
+                    });
+
+                    // 4. Reducir un hueco
+                    await updateDoc(actRef, { availableSlots: currentSlots - 1 });
+
+                    btn.textContent = "✓ Registrado";
+                    btn.classList.add("signup-btn--done");
+
+                    // Recargar para que aparezca en activas
+                    setTimeout(() => location.reload(), 800);
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Error al registrarse.");
+                    btn.disabled = false;
+                    btn.textContent = "Volver a registrarte";
+                }
+            });
+        });
+
+        // ── Estrellas valoración ──────────────────────────
         list.querySelectorAll(".stars").forEach(starsEl => {
-            const spans      = starsEl.querySelectorAll("span");
-            const targetId   = starsEl.dataset.targetId;
-            const ownerType  = starsEl.dataset.ownerType;
-            let selected     = 0;
+            const spans     = starsEl.querySelectorAll("span");
+            const targetId  = starsEl.dataset.targetId;
+            const ownerType = starsEl.dataset.ownerType;
+            let selected    = 0;
 
             spans.forEach(s => {
                 s.addEventListener("mouseover", () => highlight(+s.dataset.value));
@@ -257,7 +330,6 @@
         }
     }
 
-    // ── Arrancar ──────────────────────────────────────────
     loadReservations();
 </script>
 </body>
