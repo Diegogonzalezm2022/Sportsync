@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="../css/History.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>emailjs.init("bOhMQRr1h4BzhaNUT");</script>
 </head>
 <body>
 <header xlu-include-file="components/Header.html"></header>
@@ -74,9 +77,10 @@
                 const actSnap = await getDoc(doc(db, "activities", r.activityId));
                 if (actSnap.exists()) {
                     const actData = actSnap.data();
-                    activityName   = actData.name     || r.activityId;
+                    activityName       = actData.name     || r.activityId;
                     r.activitySchedule = actData.schedule || "—";
                     r.activityPrice    = actData.price    || "—";
+                    r.activityDate     = actData.date     || "—";
                     availableSlots = actData.availableSlots ?? actData.slots ?? 0;
                 }
             } catch {}
@@ -119,7 +123,14 @@
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
                     </button>
-                    <button class="action-btn cancel-btn" data-id="${r.id}" data-activity-id="${r.activityId}">
+                    <button class="action-btn cancel-btn"
+                        data-id="${r.id}"
+                        data-activity-id="${r.activityId}"
+                        data-activity-name="${r.activityName}"
+                        data-activity-schedule="${r.activitySchedule || '—'}"
+                        data-activity-price="${r.activityPrice || '—'}"
+                        data-activity-date="${r.activityDate || '—'}"
+                        data-owner-name="${r.ownerName}">
                         Cancelar
                     </button>
                 </div>
@@ -129,8 +140,13 @@
             btn.addEventListener("click", async () => {
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
                 try {
-                    const reservationId = btn.dataset.id;
-                    const activityId    = btn.dataset.activityId;
+                    const reservationId  = btn.dataset.id;
+                    const activityId     = btn.dataset.activityId;
+                    const activityName   = btn.dataset.activityName;
+                    const activitySched  = btn.dataset.activitySchedule;
+                    const activityPrice  = btn.dataset.activityPrice;
+                    const activityDate   = btn.dataset.activityDate;
+                    const ownerName      = btn.dataset.ownerName;
 
                     await updateDoc(doc(db, "reservations", reservationId), { status: "cancelled" });
 
@@ -142,11 +158,32 @@
                         await updateDoc(actRef, { availableSlots: currentSlots + 1 });
                     }
 
+                    // Email de cancelación
+                    const userEmail = sessionStorage.getItem("userEmail") || "";
+                    const userName  = userEmail.split("@")[0] || "Cliente";
+
+                    await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                        type:              "cancelada ❌",
+                        user_name:         userName,
+                        user_email:        userEmail,
+                        activity_name:     activityName,
+                        activity_date:     activityDate,
+                        activity_schedule: activitySched,
+                        activity_price:    activityPrice,
+                        owner_name:        ownerName,
+                        comment:           "¡Hasta la próxima!"
+                    });
+
+                    // Mensaje en pantalla
+                    alert("Correo enviado con reserva cancelada.");
+
                     btn.closest(".reservation-card").remove();
                     const activeList = document.getElementById("activeList");
                     if (!activeList.querySelector(".reservation-card")) {
                         activeList.innerHTML = `<p class="loading-hint">No tienes reservas activas.</p>`;
                     }
+
+                    location.reload();
 
                 } catch (e) {
                     console.error(e);
@@ -213,7 +250,6 @@
                 btn.textContent = "Comprobando...";
 
                 try {
-                    // 1. Comprobar huecos disponibles en Firestore
                     const actRef  = doc(db, "activities", activityId);
                     const actSnap = await getDoc(actRef);
                     if (!actSnap.exists()) {
@@ -229,7 +265,6 @@
                         return;
                     }
 
-                    // 2. Comprobar que no tiene ya una reserva activa
                     const existingSnap = await getDocs(query(
                         collection(db, "reservations"),
                         where("userId", "==", userId),
@@ -243,7 +278,6 @@
                         return;
                     }
 
-                    // 3. Crear la nueva reserva
                     await addDoc(collection(db, "reservations"), {
                         userId,
                         activityId,
@@ -254,14 +288,30 @@
                         createdAt: serverTimestamp()
                     });
 
-                    // 4. Reducir un hueco
                     await updateDoc(actRef, { availableSlots: currentSlots - 1 });
 
                     btn.textContent = "✓ Registrado";
                     btn.classList.add("signup-btn--done");
 
-                    // Recargar para que aparezca en activas
-                    setTimeout(() => location.reload(), 800);
+                    // Email de confirmación again
+                    const userEmail = sessionStorage.getItem("userEmail") || "";
+                    const userName  = userEmail.split("@")[0] || "Cliente";
+                    const actData   = actSnap.data();
+
+                    await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                        type:              "confirmada de nuevo✅",
+                        user_name:         userName,
+                        user_email:        userEmail,
+                        activity_name:     actData.name     || "—",
+                        activity_date:     actData.date     || "—",
+                        activity_schedule: actData.schedule || "—",
+                        activity_price:    actData.price    || "—",
+                        owner_name:        ownerId,
+                        comment:           "¡Te esperamos!"
+                    });
+
+                    alert("Correo enviado con detalles de reserva.");
+                    location.reload();
 
                 } catch (e) {
                     console.error(e);

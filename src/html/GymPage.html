@@ -379,7 +379,8 @@
                         const userEmail = sessionStorage.getItem("userEmail") || "";
                         const userName  = userEmail.split("@")[0] || "Cliente";
 
-                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                        await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                            type:              "confirmada ✅",
                             user_name:         userName,
                             user_email:        userEmail,
                             activity_name:     actName,
@@ -387,6 +388,7 @@
                             activity_schedule: actSchedule,
                             activity_price:    actPrice,
                             owner_name:        gymName,
+                            comment:           "¡Te esperamos!"
                         });
 
                         alert("Correo enviado con detalles de reserva.");
