@@ -10,77 +10,120 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        /* ── Modal mapa ampliado ── */
         .map-expand-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            z-index: 1000;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            transition: background 0.2s;
+            position: absolute; top: 8px; right: 8px; z-index: 1000;
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; color: #333; transition: background 0.2s;
         }
         .map-expand-btn:hover { background: #f0f0f0; }
         .map-expand-btn svg { width: 16px; height: 16px; }
-
         .map-container { position: relative; }
-
         .map-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 9999;
+            align-items: center; justify-content: center; padding: 20px;
         }
         .map-modal-overlay.active { display: flex; }
-
         .map-modal-inner {
-            width: 100%;
-            max-width: 900px;
-            height: 80vh;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            width: 100%; max-width: 900px; height: 80vh;
+            background: white; border-radius: 16px; overflow: hidden;
+            position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-
-        #mapBig {
-            width: 100%;
-            height: 100%;
-        }
-
+        #mapBig { width: 100%; height: 100%; }
         .map-modal-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            z-index: 10000;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #333;
+            position: absolute; top: 12px; right: 12px; z-index: 10000;
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; color: #333;
         }
         .map-modal-close:hover { background: #f0f0f0; }
+
+        /* ── Panel de filtros ── */
+        .filter-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .filter-panel-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .filter-group {
+            margin-bottom: 12px;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 5px;
+        }
+        .filter-group input[type="text"] {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .filter-group input[type="text"]:focus {
+            border-color: var(--accent, #1a1a1a);
+        }
+        .price-range-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .price-range-row input[type="number"] {
+            width: 100%;
+            padding: 7px 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .price-range-row input[type="number"]:focus {
+            border-color: var(--accent, #1a1a1a);
+        }
+        .price-range-sep {
+            font-size: 0.8rem;
+            color: #999;
+            white-space: nowrap;
+        }
+        .filter-reset-btn {
+            width: 100%;
+            padding: 7px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.15s;
+        }
+        .filter-reset-btn:hover {
+            background: #f5f5f5;
+        }
+        .filter-active-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #e74c3c;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -119,6 +162,35 @@
                 </svg>
                 Usar mi ubicación
             </button>
+        </div>
+
+        <!-- ── Panel de filtros ── -->
+        <div class="filter-panel">
+            <div class="filter-panel-title">
+                Filtros
+                <span id="filterActiveDot" class="filter-active-dot" style="display:none;"></span>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterSport">🏅 Deporte</label>
+                <input type="text" id="filterSport" placeholder="Ej: boxeo, yoga, spinning...">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterMaterial">🏋️ Material</label>
+                <input type="text" id="filterMaterial" placeholder="Ej: mancuernas, bicicletas...">
+            </div>
+
+            <div class="filter-group">
+                <label>💶 Precio de actividades (€)</label>
+                <div class="price-range-row">
+                    <input type="number" id="filterPriceMin" placeholder="Mín" min="0">
+                    <span class="price-range-sep">—</span>
+                    <input type="number" id="filterPriceMax" placeholder="Máx" min="0">
+                </div>
+            </div>
+
+            <button class="filter-reset-btn" id="filterResetBtn">Limpiar filtros</button>
         </div>
 
     </aside>
@@ -183,9 +255,7 @@
 <footer xlu-include-file="components/Footer.html"></footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
-<script>
-    xLuIncludeFile();
-</script>
+<script>xLuIncludeFile();</script>
 
 <script type="module">
     import { initializeApp }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -250,11 +320,9 @@
     function syncMapBig() {
         if (!mapBig) return;
         mapBig.setView(map.getCenter(), map.getZoom());
-        // Añadir marcadores al mapa grande
         mapBig.eachLayer(layer => {
             if (layer instanceof L.Marker) mapBig.removeLayer(layer);
         });
-        // Marcador usuario
         if (userLat !== null) {
             L.marker([userLat, userLng], {
                 icon: L.divIcon({
@@ -266,13 +334,11 @@
                 })
             }).addTo(mapBig).bindPopup("Tu ubicación");
         }
-        // Marcadores resultados
         allResults.forEach(item => {
             const isGym = item.type === "gym";
             const color = isGym ? "#1d3557" : "#c08000";
             const emoji = isGym ? "🏋️" : "👤";
             const page  = isGym ? "GymPage" : "ProfessionalPage";
-
             const marker = L.marker([item.location.lat, item.location.lng], {
                 icon: L.divIcon({
                     className: "",
@@ -280,13 +346,10 @@
                            padding:4px 7px;font-size:11px;font-weight:700;
                            white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);
                            border:2px solid white;cursor:pointer;">
-                           ${emoji} ${item.name}
-                           </div>`,
+                           ${emoji} ${item.name}</div>`,
                     iconAnchor: [0, 0]
                 })
             }).addTo(mapBig);
-
-            // Popup con enlace al perfil
             marker.bindPopup(`
                 <div style="font-family:sans-serif;min-width:160px;">
                     <strong style="font-size:0.95rem;">${item.name}</strong><br>
@@ -298,10 +361,8 @@
                               font-size:0.78rem;font-weight:600;text-decoration:none;">
                         Ver perfil →
                     </a>
-                </div>
-            `);
+                </div>`);
         });
-
         if (userLat !== null && allResults.length > 0) {
             mapBig.fitBounds(
                 [[userLat, userLng], ...allResults.map(r => [r.location.lat, r.location.lng])],
@@ -311,39 +372,30 @@
         setTimeout(() => mapBig.invalidateSize(), 100);
     }
 
-    // ── Botón ampliar ─────────────────────────────────────
     document.getElementById("mapExpandBtn").addEventListener("click", () => {
-        initMapBig();
-        syncMapBig();
+        initMapBig(); syncMapBig();
         document.getElementById("mapModalOverlay").classList.add("active");
     });
-
-    document.getElementById("mapModalClose").addEventListener("click", () => {
-        document.getElementById("mapModalOverlay").classList.remove("active");
-    });
-
+    document.getElementById("mapModalClose").addEventListener("click", () =>
+        document.getElementById("mapModalOverlay").classList.remove("active"));
     document.getElementById("mapModalOverlay").addEventListener("click", (e) => {
-        if (e.target === document.getElementById("mapModalOverlay")) {
+        if (e.target === document.getElementById("mapModalOverlay"))
             document.getElementById("mapModalOverlay").classList.remove("active");
-        }
     });
 
-    // ── Marcadores del mapa pequeño ───────────────────────
     let userMarker = null;
     const resultMarkers = [];
 
     // ── Geolocalización ───────────────────────────────────
     function getLocation() {
         if (!navigator.geolocation) {
-            showStatus("Tu navegador no soporta geolocalización.", true);
-            return;
+            showStatus("Tu navegador no soporta geolocalización.", true); return;
         }
         showStatus("Obteniendo tu ubicación...");
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
-
                 if (userMarker) map.removeLayer(userMarker);
                 userMarker = L.marker([userLat, userLng], {
                     icon: L.divIcon({
@@ -351,21 +403,16 @@
                         html: `<div style="width:16px;height:16px;border-radius:50%;
                                background:#2d6a4f;border:3px solid white;
                                box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
-                        iconSize: [16, 16],
-                        iconAnchor: [8, 8]
+                        iconSize: [16, 16], iconAnchor: [8, 8]
                     })
                 }).addTo(map).bindPopup("Tu ubicación");
-
                 map.setView([userLat, userLng], 14);
                 hideStatus();
                 await searchNearby();
             },
             (err) => {
-                if (err.code === 1) {
-                    showStatus("Permiso de ubicación denegado.", true);
-                } else {
-                    showStatus("No se pudo obtener tu ubicación.", true);
-                }
+                showStatus(err.code === 1
+                    ? "Permiso de ubicación denegado." : "No se pudo obtener tu ubicación.", true);
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
@@ -399,7 +446,6 @@
                     gyms.push(data);
                 }
             });
-
             const pros = [];
             prosSnap.forEach(d => {
                 const data = { id: d.id, type: "professional", ...d.data() };
@@ -412,30 +458,41 @@
 
             allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
 
-            // ── Marcadores mapa pequeño ───────────────────
+            // Para el filtro de precio: cargar actividades de cada resultado
+            // y guardar el precio mínimo en el objeto
+            await Promise.all(allResults.map(async item => {
+                try {
+                    const actSnap = await getDocs(query(
+                        collection(db, "activities"),
+                        where("ownerId", "==", item.id)
+                    ));
+                    const prices = [];
+                    actSnap.forEach(d => {
+                        const p = d.data().price;
+                        if (p !== undefined && p !== null) prices.push(parseFloat(p));
+                    });
+                    item._prices = prices; // array de precios de sus actividades
+                } catch { item._prices = []; }
+            }));
+
+            // Marcadores mapa pequeño
             resultMarkers.forEach(m => map.removeLayer(m));
             resultMarkers.length = 0;
-
             allResults.forEach(item => {
                 const isGym = item.type === "gym";
                 const color = isGym ? "#1d3557" : "#c08000";
                 const emoji = isGym ? "🏋️" : "👤";
                 const page  = isGym ? "GymPage" : "ProfessionalPage";
-
                 const marker = L.marker([item.location.lat, item.location.lng], {
                     icon: L.divIcon({
                         className: "",
                         html: `<div style="background:${color};color:white;border-radius:8px;
                                padding:4px 7px;font-size:11px;font-weight:700;
                                white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);
-                               border:2px solid white;">
-                               ${emoji} ${item.name}
-                               </div>`,
+                               border:2px solid white;">${emoji} ${item.name}</div>`,
                         iconAnchor: [0, 0]
                     })
                 }).addTo(map);
-
-                // Popup con enlace al perfil en mapa pequeño
                 marker.bindPopup(`
                     <div style="font-family:sans-serif;min-width:140px;">
                         <strong style="font-size:0.9rem;">${item.name}</strong><br>
@@ -446,9 +503,7 @@
                                   font-size:0.75rem;font-weight:600;text-decoration:none;">
                             Ver perfil →
                         </a>
-                    </div>
-                `);
-
+                    </div>`);
                 resultMarkers.push(marker);
             });
 
@@ -478,21 +533,61 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    // ── Filtrar resultados ────────────────────────────────
+    function getFilterValues() {
+        return {
+            sport:    document.getElementById("filterSport").value.trim().toLowerCase(),
+            material: document.getElementById("filterMaterial").value.trim().toLowerCase(),
+            priceMin: parseFloat(document.getElementById("filterPriceMin").value) || null,
+            priceMax: parseFloat(document.getElementById("filterPriceMax").value) || null,
+        };
+    }
+
     function filterResults(results) {
         const searchText = document.getElementById("searchInput").value.toLowerCase();
+        const { sport, material, priceMin, priceMax } = getFilterValues();
+
+        // Indicador visual de filtros activos
+        const hasFilters = sport || material || priceMin !== null || priceMax !== null;
+        document.getElementById("filterActiveDot").style.display = hasFilters ? "inline-block" : "none";
+
         return results.filter(item => {
-            const matchFilter = activeFilter === "todos" || item.type === activeFilter;
-            const matchText = !searchText ||
-                item.name?.toLowerCase().includes(searchText) ||
-                item.description?.toLowerCase().includes(searchText);
-            return matchFilter && matchText;
+            const desc = (item.description || "").toLowerCase();
+
+            // Chip de tipo
+            if (activeFilter !== "todos" && item.type !== activeFilter) return false;
+
+            // Barra de búsqueda general
+            if (searchText && !item.name?.toLowerCase().includes(searchText) &&
+                !desc.includes(searchText)) return false;
+
+            // Filtro deporte — busca en la descripción
+            if (sport && !desc.includes(sport)) return false;
+
+            // Filtro material — busca en la descripción
+            if (material && !desc.includes(material)) return false;
+
+            // Filtro precio — comprueba si alguna actividad del gym cumple el rango
+            if (priceMin !== null || priceMax !== null) {
+                const prices = item._prices || [];
+                if (prices.length === 0) return false; // sin actividades → no cumple
+                const hasMatch = prices.some(p => {
+                    if (priceMin !== null && p < priceMin) return false;
+                    if (priceMax !== null && p > priceMax) return false;
+                    return true;
+                });
+                if (!hasMatch) return false;
+            }
+
+            return true;
         });
     }
 
+    // ── Renderizar tarjetas ───────────────────────────────
     function renderResults(results) {
         const list = document.getElementById("resultsList");
         if (results.length === 0) {
-            list.innerHTML = `<p class="no-results">No se encontraron resultados cerca de ti.</p>`;
+            list.innerHTML = `<p class="no-results">No se encontraron resultados con esos filtros.</p>`;
             return;
         }
         list.innerHTML = results.map(item => {
@@ -502,6 +597,17 @@
             const distance   = item.distanceKm != null ? `${item.distanceKm.toFixed(1)} km` : "";
             const rating     = item.rating ? `★ ${Number(item.rating).toFixed(1)}` : "★ —";
             const page       = isGym ? "GymPage" : "ProfessionalPage";
+
+            // Rango de precios de actividades
+            let priceTag = "";
+            if (item._prices && item._prices.length > 0) {
+                const min = Math.min(...item._prices);
+                const max = Math.max(...item._prices);
+                priceTag = min === max
+                    ? `<span class="result-price">desde ${min}€</span>`
+                    : `<span class="result-price">${min}€ – ${max}€</span>`;
+            }
+
             return `
             <div class="result-card">
                 <div class="result-photo">
@@ -528,6 +634,7 @@
                             ${distance}
                         </span>` : ""}
                         <span class="result-rating">${rating}</span>
+                        ${priceTag}
                     </div>
                 </div>
                 <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
@@ -543,16 +650,33 @@
         });
     }
 
+    // ── Helpers ───────────────────────────────────────────
     function showStatus(msg, isError = false) {
         const el = document.getElementById("statusMsg");
         el.textContent = msg;
         el.style.display = "block";
-        el.style.color = isError ? "var(--danger, #c0392b)" : "var(--text-muted, #999)";
+        el.style.color = isError ? "var(--danger,#c0392b)" : "var(--text-muted,#999)";
     }
     function hideStatus() {
         document.getElementById("statusMsg").style.display = "none";
     }
 
+    // ── Eventos filtros laterales ─────────────────────────
+    ["filterSport", "filterMaterial", "filterPriceMin", "filterPriceMax"].forEach(id => {
+        document.getElementById(id).addEventListener("input", () =>
+            renderResults(filterResults(allResults)));
+    });
+
+    document.getElementById("filterResetBtn").addEventListener("click", () => {
+        document.getElementById("filterSport").value = "";
+        document.getElementById("filterMaterial").value = "";
+        document.getElementById("filterPriceMin").value = "";
+        document.getElementById("filterPriceMax").value = "";
+        document.getElementById("filterActiveDot").style.display = "none";
+        renderResults(filterResults(allResults));
+    });
+
+    // ── Eventos búsqueda y chips ──────────────────────────
     document.getElementById("useLocationBtn").addEventListener("click", getLocation);
     document.getElementById("searchLocationBtn").addEventListener("click", getLocation);
     document.getElementById("searchSubmitBtn").addEventListener("click", () =>
