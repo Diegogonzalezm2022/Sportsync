@@ -100,13 +100,19 @@
     const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
+    // DETERMINAR COLECCIÓN (gyms o professionals)
+    const params = new URLSearchParams(window.location.search);
+    const typeParam = params.get("type"); // gym o professional
+    const collectionName = typeParam === "gym" ? "gyms" : "professionals";
+
     const ownerId = sessionStorage.getItem("userId");
     let scheduleData = { days: "", from: "08:00", to: "20:00" };
     let galleryImages = [];
     let profilePhotoBase64 = null;
 
     async function init() {
-        const snap = await getDoc(doc(db, "gyms", ownerId));
+        // Usamos collectionName dinámico
+        const snap = await getDoc(doc(db, collectionName, ownerId));
         if (snap.exists()) {
             const d = snap.data();
             document.getElementById("inputName").value = d.name || "";
@@ -153,7 +159,10 @@
             schedule: scheduleData
         };
         if (profilePhotoBase64) upd.photoURL = profilePhotoBase64;
-        await updateDoc(doc(db, "gyms", ownerId), upd);
+
+        // Usamos collectionName dinámico
+        await updateDoc(doc(db, collectionName, ownerId), upd);
+
         btn.disabled = false; btn.textContent = "Guardar Perfil y Horario";
         document.getElementById("saveMsg").style.display = "block";
     };
@@ -190,7 +199,8 @@
     };
 
     document.getElementById("saveGalleryBtn").onclick = async () => {
-        await updateDoc(doc(db, "gyms", ownerId), { gallery: galleryImages });
+        // Usamos collectionName dinámico
+        await updateDoc(doc(db, collectionName, ownerId), { gallery: galleryImages });
         alert("Galería guardada en Firebase");
     };
 
@@ -215,7 +225,9 @@
             price: document.getElementById("actPrice").value,
             slots: document.getElementById("actSlots").value,
             availableSlots: document.getElementById("actSlots").value,
-            ownerId, createdAt: serverTimestamp()
+            ownerId,
+            ownerType: typeParam, // Guardamos si es gym o professional
+            createdAt: serverTimestamp()
         });
         loadActivities();
     };

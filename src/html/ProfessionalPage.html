@@ -3,52 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Profile</title>
-    <link rel="stylesheet" href="../css/ProfessionalPage.css">
-    <link rel="stylesheet" href="../css/components/Header.css">
+    <title>Perfil Profesional</title>
+    <link rel="stylesheet" href="../css/GymPage.css"> <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        .edit-mode-btn { margin-top: 10px; padding: 8px 15px; cursor: pointer; border-radius: 5px; border: none; background: var(--accent, #f39c12); color: white; font-weight: bold; }
-        .save-btn { background: #27ae60; display: none; }
-        .editing { border: 1px dashed #f39c12; padding: 5px; background: #fffdf0; color: #333 !important; min-height: 20px; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: #333; }
-        .modal-content h2 { margin-bottom: 15px; color: #f39c12; }
-        .modal-form { display: flex; flex-direction: column; gap: 10px; }
-        .modal-form label { font-weight: bold; font-size: 0.9rem; text-align: left; }
-        .modal-form input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .signup-btn--full { background: #d6d6d6 !important; color: #888 !important; cursor: not-allowed; }
+        .edit-mode-btn { margin-top:10px; padding:8px 15px; cursor:pointer; border-radius:5px; border:none; background:#f39c12; color:white; font-weight:bold; }
+        .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
+        .star--active { color: #f1c40f !important; }
     </style>
 </head>
-<body>
-
-<header xlu-include-file="components/Header.html"></header>
+<body class="page--gym"> <header xlu-include-file="components/Header.html"></header>
 
 <main class="profile-page-main">
-
     <button class="back-btn" onclick="history.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
 
     <section class="top-section">
         <div class="profile-photo-block">
-            <div class="profile-photo">
-                <svg class="photo-x" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="0" y1="0" x2="200" y2="160" stroke="#ccc" stroke-width="1.2"/>
-                    <line x1="200" y1="0" x2="0" y2="160" stroke="#ccc" stroke-width="1.2"/>
+            <div class="profile-photo" id="profilePhotoBlock" style="position:relative;overflow:hidden; background:#eee;">
+                <svg class="photo-x" id="photoXSvg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="0" y1="0" x2="200" y2="160" stroke="#ccc" stroke-width="1.2"/><line x1="200" y1="0" x2="0" y2="160" stroke="#ccc" stroke-width="1.2"/>
                 </svg>
-                <span class="photo-caption" id="photoCaption">Perfil de un Profesional</span>
+                <span class="photo-caption" id="photoCaption">Foto de Perfil</span>
+                <img id="profilePhotoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
             </div>
             <div class="schedule-block">
-                <span class="schedule-label">Horario:</span>
+                <span class="schedule-label">Disponibilidad:</span>
                 <div class="schedule-box">
-                    <span class="schedule-days" id="scheduleDays" contenteditable="false">—</span>
-                    <span class="schedule-hours" id="scheduleHours" contenteditable="false">—</span>
+                    <span class="schedule-days" id="scheduleDays">—</span>
+                    <span class="schedule-hours" id="scheduleHours"></span>
                 </div>
             </div>
         </div>
@@ -57,60 +42,29 @@
             <div class="info-row info-row--top">
                 <div class="info-field">
                     <span class="info-label">Nombre del profesional:</span>
-                    <div class="info-value info-value--name" id="profileName" contenteditable="false">—</div>
+                    <div class="info-value info-value--name" id="profileName">—</div>
                 </div>
                 <div class="rating-block">
                     <span class="info-label">Valoración:</span>
                     <div class="stars" id="starsContainer">
-                        <span class="star" data-value="1">★</span>
-                        <span class="star" data-value="2">★</span>
-                        <span class="star" data-value="3">★</span>
-                        <span class="star" data-value="4">★</span>
-                        <span class="star" data-value="5">★</span>
+                        <span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span>
                     </div>
                     <span class="rating-hint" id="ratingHint">Valora este profesional</span>
                 </div>
             </div>
             <div class="info-field">
-                <span class="info-label">Descripción del Profesional:</span>
-                <div class="info-value info-value--desc" id="profileDesc" contenteditable="false">—</div>
+                <span class="info-label">Sobre mí / Descripción:</span>
+                <div class="info-value info-value--desc" id="profileDesc">—</div>
             </div>
             <div class="info-field">
-                <span class="info-label">Información de contacto:</span>
-                <div class="contact-lines" id="contactLines" contenteditable="false">—</div>
+                <span class="info-label">Contacto:</span>
+                <div class="contact-lines" id="contactLines">—</div>
             </div>
-            <div id="ownerControls" style="display:none;">
-                <button id="editBtn" class="edit-mode-btn">Editar perfil</button>
-                <button id="saveBtn" class="edit-mode-btn save-btn">Guardar cambios</button>
+            <div id="ownerControls" style="display:none; margin-top:10px;">
+                <button class="edit-mode-btn" id="editBtn">✏️ Editar Perfil Profesional</button>
             </div>
         </div>
     </section>
-
-    <div id="createActivityWrapper" style="display:none; text-align: center; margin: 20px 0;">
-        <button id="openModalBtn" class="edit-mode-btn" style="background: #27ae60;">+ Crear nueva actividad</button>
-    </div>
-
-    <div id="activityModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Nueva Actividad</h2>
-            <div class="modal-form">
-                <label>Nombre:</label>
-                <input type="text" id="actName" placeholder="Personal Training, Pilates...">
-                <label>Horario:</label>
-                <input type="text" id="actSchedule" placeholder="09:00 - 10:00">
-                <label>Fecha:</label>
-                <input type="date" id="actDate">
-                <label>Precio (€):</label>
-                <input type="number" id="actPrice" placeholder="0">
-                <label>Cupo de personas:</label>
-                <input type="number" id="actSlots" placeholder="5">
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button id="saveActivityBtn" class="edit-mode-btn" style="background: #27ae60; flex:1;">Crear</button>
-                    <button id="closeModalBtn" class="edit-mode-btn" style="background: #e74c3c; flex:1;">Cancelar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
@@ -118,10 +72,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <div class="gallery-carousel" id="galleryCarousel">
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Foto</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Foto</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Foto</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Foto</span></div>
             </div>
             <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
@@ -131,23 +81,16 @@
 
     <section class="date-filter-section">
         <div class="date-btn-group">
-            <button class="date-btn" id="dateFromBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span id="dateFromLabel">Fecha desde</span>
-            </button>
+            <button class="date-btn" id="dateFromBtn"><span id="dateFromLabel">Fecha desde</span></button>
             <input type="date" id="dateFromInput" class="date-input-hidden">
-            <button class="date-btn" id="dateToBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span id="dateToLabel">Fecha hasta</span>
-            </button>
+            <button class="date-btn" id="dateToBtn"><span id="dateToLabel">Fecha hasta</span></button>
             <input type="date" id="dateToInput" class="date-input-hidden">
         </div>
     </section>
 
     <section class="activities-section" id="activitiesSection">
-        <p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>
+        <p>Cargando clases...</p>
     </section>
-
 </main>
 
 <footer xlu-include-file="components/Footer.html"></footer>
@@ -156,271 +99,157 @@
 <script>xLuIncludeFile();</script>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp }
-        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs, query, where, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    // ── EmailJS config ──────────────────────────────────────────
-    const EMAILJS_PUBLIC_KEY  = "bOhMQRr1h4BzhaNUT";
-    const EMAILJS_SERVICE_ID  = "service_ak2mcnm";
-    const EMAILJS_TEMPLATE_ID = "template_9ipkoyk";
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-    // ────────────────────────────────────────────────────────────
+    emailjs.init("bOhMQRr1h4BzhaNUT");
 
-    const userId    = sessionStorage.getItem("userId");
-    const role      = sessionStorage.getItem("userRole");
-    const params    = new URLSearchParams(window.location.search);
-    const ownerId   = params.get("id");
+    const resp = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await resp.json();
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-    if (!userId) window.location.href = "Login.html";
-    if (role === "gym" && !params.get("id")) window.location.href = "GymPage.html";
-
-    const response = await fetch("../assets/firebaseConfig.json");
-    const firebaseConfig = await response.json();
-    const app  = initializeApp(firebaseConfig);
-    const db   = getFirestore(app);
-    const auth = getAuth(app);
-
+    const userId  = sessionStorage.getItem("userId");
+    const params  = new URLSearchParams(window.location.search);
+    const ownerId = params.get("id") || sessionStorage.getItem("userId");
     const isOwner = (userId === ownerId);
 
-    const nameEl    = document.getElementById("profileName");
-    const descEl    = document.getElementById("profileDesc");
-    const contactEl = document.getElementById("contactLines");
-    const daysEl    = document.getElementById("scheduleDays");
-    const hoursEl   = document.getElementById("scheduleHours");
-
-    if (ownerId) {
+    async function loadData() {
+        // CAMBIO: Buscamos en "professionals"
         const proSnap = await getDoc(doc(db, "professionals", ownerId));
         if (proSnap.exists()) {
-            const data = proSnap.data();
-            nameEl.textContent = data.name        || "—";
-            descEl.textContent = data.description || "—";
-            contactEl.innerHTML = data.contactInfo || "—";
-            if (data.schedule) {
-                daysEl.textContent  = typeof data.schedule === "string" ? data.schedule : (data.schedule.days || "—");
-                hoursEl.textContent = (data.schedule.from && data.schedule.to) ? `${data.schedule.from}–${data.schedule.to}` : "";
+            const d = proSnap.data();
+            document.getElementById("profileName").textContent = d.name || "—";
+            document.getElementById("profileDesc").textContent = d.description || "—";
+            document.getElementById("contactLines").textContent = d.contactInfo || "—";
+
+            // Horario
+            if (d.schedule) {
+                if (typeof d.schedule === 'object') {
+                    document.getElementById("scheduleDays").textContent = d.schedule.days || "—";
+                    document.getElementById("scheduleHours").textContent = (d.schedule.from && d.schedule.to) ? `${d.schedule.from}–${d.schedule.to}` : "";
+                } else {
+                    document.getElementById("scheduleDays").textContent = d.schedule;
+                }
             }
-            if (isOwner) {
-                document.getElementById("ownerControls").style.display = "block";
-                document.getElementById("createActivityWrapper").style.display = "block";
+
+            // Foto Perfil
+            if (d.photoURL) {
+                const img = document.getElementById("profilePhotoImg");
+                img.src = d.photoURL;
+                img.style.display = "block";
+                document.getElementById("photoCaption").style.display = "none";
+                document.getElementById("photoXSvg").style.display = "none";
             }
-            if (data.rating) {
-                const rounded = Math.round(data.rating);
+
+            // Galería
+            if (d.gallery && d.gallery.length > 0) {
+                document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
+                    <div class="gallery-slot"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>
+                `).join("");
+            }
+
+            // Rating
+            if (d.rating) {
+                const rounded = Math.round(d.rating);
                 document.querySelectorAll(".star").forEach(s => {
                     if (+s.dataset.value <= rounded) s.classList.add("star--active");
                 });
-                document.getElementById("ratingHint").textContent = `${data.rating.toFixed(1)} / 5`;
+                document.getElementById("ratingHint").textContent = `${d.rating.toFixed(1)} / 5`;
+            }
+
+            if (isOwner) {
+                document.getElementById("ownerControls").style.display = "block";
+                // Redirige a edición como 'professional'
+                document.getElementById("editBtn").onclick = () => window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
+            } else {
+                setupRating();
             }
         }
+        loadActivities();
     }
-
-    if (isOwner) {
-        const editBtn = document.getElementById("editBtn");
-        const saveBtn = document.getElementById("saveBtn");
-        const fields  = [nameEl, descEl, contactEl, daysEl, hoursEl];
-
-        editBtn.addEventListener("click", () => {
-            const isEditing = nameEl.contentEditable === "true";
-            fields.forEach(el => { el.contentEditable = !isEditing; el.classList.toggle("editing", !isEditing); });
-            editBtn.textContent   = isEditing ? "Editar perfil" : "Cancelar";
-            saveBtn.style.display = isEditing ? "none" : "inline-block";
-        });
-
-        saveBtn.addEventListener("click", async () => {
-            saveBtn.disabled = true;
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                try {
-                    await updateDoc(doc(db, "professionals", ownerId), {
-                        name: nameEl.textContent,
-                        description: descEl.textContent,
-                        contactInfo: contactEl.textContent,
-                        schedule: {
-                            days: daysEl.textContent,
-                            from: hoursEl.textContent.split("–")[0] || "",
-                            to:   hoursEl.textContent.split("–")[1] || ""
-                        },
-                        location: { lat: position.coords.latitude, lng: position.coords.longitude }
-                    });
-                    alert("Perfil actualizado");
-                    location.reload();
-                } catch (e) { alert("Error guardando."); saveBtn.disabled = false; }
-            });
-        });
-
-        const modal           = document.getElementById("activityModal");
-        const openModalBtn    = document.getElementById("openModalBtn");
-        const closeModalBtn   = document.getElementById("closeModalBtn");
-        const saveActivityBtn = document.getElementById("saveActivityBtn");
-
-        openModalBtn.onclick  = () => modal.classList.add("active");
-        closeModalBtn.onclick = () => modal.classList.remove("active");
-
-        saveActivityBtn.addEventListener("click", async () => {
-            const aName  = document.getElementById("actName").value;
-            const aSched = document.getElementById("actSchedule").value;
-            const aDate  = document.getElementById("actDate").value;
-            const aPrice = document.getElementById("actPrice").value;
-            const aSlots = document.getElementById("actSlots").value;
-            if (!aName || !aSched || !aDate) return alert("Rellena Nombre, Horario y Fecha");
-            saveActivityBtn.disabled = true;
-            try {
-                await addDoc(collection(db, "activities"), {
-                    name: aName, schedule: aSched, date: aDate,
-                    price: parseFloat(aPrice) || 0,
-                    slots: parseInt(aSlots) || 0,
-                    availableSlots: parseInt(aSlots) || 0,
-                    ownerId, ownerType: "professional",
-                    createdAt: serverTimestamp()
-                });
-                alert("Actividad creada");
-                location.reload();
-            } catch (e) { alert("Error al crear"); saveActivityBtn.disabled = false; }
-        });
-    }
-
-    const activitiesSection = document.getElementById("activitiesSection");
-    let allActivities = [];
-    let myActivityIds = new Set();
 
     async function loadActivities(fromDate = null, toDate = null) {
-        activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>`;
-        try {
-            const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
-            allActivities = [];
-            snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
+        const container = document.getElementById("activitiesSection");
+        const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
 
-            const mySnap = await getDocs(query(collection(db, "reservations"),
-                where("userId", "==", userId), where("status", "==", "active")));
-            myActivityIds = new Set();
-            mySnap.forEach(d => myActivityIds.add(d.data().activityId));
+        // Mis reservas para marcar botones
+        const mySnap = await getDocs(query(collection(db, "reservations"), where("userId", "==", userId), where("status", "==", "active")));
+        const myIds = new Set();
+        mySnap.forEach(d => myIds.add(d.data().activityId));
 
-            let filtered = allActivities;
-            if (fromDate || toDate) {
-                filtered = allActivities.filter(a => {
-                    if (!a.date) return true;
-                    const actDate = new Date(a.date);
-                    if (fromDate && actDate < new Date(fromDate)) return false;
-                    if (toDate   && actDate > new Date(toDate))   return false;
-                    return true;
-                });
-            }
-            renderActivities(filtered);
-        } catch (e) {
-            activitiesSection.innerHTML = `<p style="color:red;">Error al cargar actividades.</p>`;
+        let acts = [];
+        snap.forEach(d => acts.push({ id: d.id, ...d.data() }));
+
+        if (fromDate || toDate) {
+            acts = acts.filter(a => {
+                const ad = new Date(a.date);
+                if (fromDate && ad < new Date(fromDate)) return false;
+                if (toDate && ad > new Date(toDate)) return false;
+                return true;
+            });
         }
-    }
 
-    function renderActivities(activities) {
-        if (activities.length === 0) {
-            activitiesSection.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay actividades.</p>`;
-            return;
-        }
-        activitiesSection.innerHTML = activities.map(a => {
-            const alreadySignedUp = myActivityIds.has(a.id);
-            const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
+        if (acts.length === 0) { container.innerHTML = "<p>No hay actividades disponibles.</p>"; return; }
+
+        container.innerHTML = acts.map(a => {
+            const done = myIds.has(a.id);
+            const full = (a.availableSlots ?? a.slots ?? 0) <= 0;
             return `
             <div class="activity-card">
                 <div class="activity-info">
-                    <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule}</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date}</span></div>
+                    <strong>${a.name}</strong><br>
+                    <small>${a.date} | ${a.schedule}</small>
                 </div>
                 <div class="activity-right">
-                    <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots}</span></div>
+                    <span>${a.price}€</span><br>
+                    <small>Cupo: ${a.availableSlots ?? a.slots}</small>
                 </div>
-                ${isOwner
-                ? `<span class="activity-owner-badge">Tu actividad</span>`
-                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${noSlots && !alreadySignedUp ? 'signup-btn--full' : ''}"
-                        data-id="${a.id}"
-                        data-name="${a.name}"
-                        data-date="${a.date}"
-                        data-schedule="${a.schedule}"
-                        data-price="${a.price}"
-                        ${alreadySignedUp || noSlots ? 'disabled' : ''}>
-                        ${alreadySignedUp ? '✓' : noSlots ? 'Completo' : 'Apuntarme'}
-                       </button>`
-            }
+                ${isOwner ? '<span>(Tuya)</span>' : `
+                    <button class="signup-btn ${done ? 'signup-btn--done' : ''} ${full && !done ? 'signup-btn--full' : ''}"
+                        ${done || full ? 'disabled' : ''} onclick="window.book('${a.id}', '${a.name}', '${a.date}', '${a.schedule}', '${a.price}')">
+                        ${done ? '✓' : full ? 'Lleno' : 'Apuntarme'}
+                    </button>
+                `}
             </div>`;
         }).join("");
-
-        if (!isOwner) {
-            activitiesSection.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
-                btn.onclick = async () => {
-                    const actId       = btn.dataset.id;
-                    const actName     = btn.dataset.name;
-                    const actDate     = btn.dataset.date;
-                    const actSchedule = btn.dataset.schedule;
-                    const actPrice    = btn.dataset.price;
-
-                    btn.disabled = true;
-                    btn.textContent = "Comprobando...";
-                    try {
-                        const actRef  = doc(db, "activities", actId);
-                        const actSnap = await getDoc(actRef);
-                        if (!actSnap.exists()) { alert("Actividad no encontrada."); btn.disabled = false; return; }
-                        const cur = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
-                        if (cur <= 0) {
-                            btn.textContent = "Completo";
-                            btn.classList.add("signup-btn--full");
-                            return;
-                        }
-
-                        // 1. Crear reserva
-                        await addDoc(collection(db, "reservations"), {
-                            userId, activityId: actId, gymOrProId: ownerId,
-                            ownerType: "professional", status: "active",
-                            paid: false, createdAt: serverTimestamp()
-                        });
-
-                        // 2. Reducir cupo
-                        await updateDoc(actRef, { availableSlots: cur - 1 });
-
-                        // 3. Obtener nombre del profesional
-                        const proSnap2 = await getDoc(doc(db, "professionals", ownerId));
-                        const proName  = proSnap2.exists() ? proSnap2.data().name : "Profesional";
-
-                        // 4. Enviar email de confirmación
-                        const userEmail = sessionStorage.getItem("userEmail") || "";
-                        const userName  = userEmail.split("@")[0] || "Cliente";
-
-                        await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
-                            type:              "confirmada ✅",
-                            user_name:         userName,
-                            user_email:        userEmail,
-                            activity_name:     actName,
-                            activity_date:     actDate,
-                            activity_schedule: actSchedule,
-                            activity_price:    actPrice,
-                            owner_name:        proName,
-                            comment:           "¡Te esperamos!"
-                        });
-
-                        alert("Correo enviado con detalles de reserva.");
-                        location.reload();
-                    } catch (e) {
-                        console.error("Error:", e);
-                        alert("Error al realizar la reserva");
-                        btn.disabled = false;
-                        btn.textContent = "Apuntarme";
-                    }
-                };
-            });
-        }
     }
 
-    const starsContainer = document.getElementById("starsContainer");
-    const stars = starsContainer.querySelectorAll(".star");
-    if (!isOwner) {
-        stars.forEach(star => {
+    window.book = async (id, name, date, time, price) => {
+        try {
+            const ref = doc(db, "activities", id);
+            const s = await getDoc(ref);
+            const slots = s.data().availableSlots ?? s.data().slots;
+            if (slots > 0) {
+                await addDoc(collection(db, "reservations"), {
+                    userId, activityId: id, gymOrProId: ownerId,
+                    ownerType: "professional", status: "active",
+                    paid: false, createdAt: serverTimestamp()
+                });
+                await updateDoc(ref, { availableSlots: slots - 1 });
+
+                // EmailJS opcional
+                emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                    user_email: sessionStorage.getItem("userEmail"),
+                    activity_name: name,
+                    owner_name: document.getElementById("profileName").textContent
+                });
+
+                alert("Reserva completada");
+                location.reload();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    function setupRating() {
+        document.querySelectorAll(".star").forEach(star => {
             star.onclick = async () => {
                 const val = +star.dataset.value;
-                const targetRef = doc(db, "professionals", ownerId);
-                const snap = await getDoc(targetRef);
+                const ref = doc(db, "professionals", ownerId);
+                const snap = await getDoc(ref);
                 if (snap.exists()) {
                     const { rating = 0, ratingCount = 0 } = snap.data();
-                    await updateDoc(targetRef, {
+                    await updateDoc(ref, {
                         rating: ((rating * ratingCount) + val) / (ratingCount + 1),
                         ratingCount: ratingCount + 1
                     });
@@ -430,13 +259,13 @@
         });
     }
 
+    // Carousel y Filtros
+    document.getElementById("carouselLeft").onclick = () => document.getElementById("galleryCarousel").scrollBy({left:-140, behavior:'smooth'});
+    document.getElementById("carouselRight").onclick = () => document.getElementById("galleryCarousel").scrollBy({left:140, behavior:'smooth'});
     document.getElementById("dateFromInput").onchange = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);
-    document.getElementById("dateToInput").onchange   = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);
+    document.getElementById("dateToInput").onchange = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);
 
-    document.getElementById("carouselLeft").onclick  = () => document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
-    document.getElementById("carouselRight").onclick = () => document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" });
-
-    if (ownerId) loadActivities();
+    loadData();
 </script>
 </body>
 </html>
