@@ -60,6 +60,7 @@
             <input type="text" id="actName" placeholder="Actividad">
             <input type="date" id="actDate">
             <input type="text" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)">
+            <input type="date" id="actMaxCancelDate">
             <input type="number" id="actPrice" placeholder="Precio (€)">
             <input type="number" id="actSlots" placeholder="Cupo">
             <button id="createActBtn">Crear Actividad</button>
@@ -205,6 +206,7 @@
     };
 
     // Actividades
+    // TODO: Mejorar diseño para diferenciar fechas de realización y cancelación.
     async function loadActivities() {
         const list = document.getElementById("activitiesList");
         const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
@@ -221,6 +223,7 @@
         await addDoc(collection(db, "activities"), {
             name: document.getElementById("actName").value,
             date: document.getElementById("actDate").value,
+            maxCancelDate: document.getElementById("actMaxCancelDate").value,
             schedule: document.getElementById("actTime").value,
             price: document.getElementById("actPrice").value,
             slots: document.getElementById("actSlots").value,
