@@ -3,499 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil Profesional</title>
+    <title>Editar Perfil</title>
     <link rel="stylesheet" href="../css/EditProfessionalPage.css">
     <link rel="stylesheet" href="../css/components/Header.css">
     <link rel="stylesheet" href="../css/components/Footer.css">
-    <script src="../javascript/scripts/xlu-include-file.js"></script>
+    <style>
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; }
+        .gallery-slot { position:relative; width:100px; height:100px; background:#eee; flex-shrink:0; margin-right:10px; }
+        .gallery-slot img { width:100%; height:100%; object-fit:cover; }
+        .del-img { position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:12px; }
+    </style>
 </head>
 <body>
 
 <header xlu-include-file="components/Header.html"></header>
 
 <main class="profile-main">
-
-    <!-- Back button -->
     <button class="back-btn" onclick="history.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
 
-    <!-- ===== SECTION 1: Profile Info ===== -->
     <section class="profile-info-section">
-
-        <!-- Left: profile photo -->
         <div class="profile-photo-wrapper">
-            <div class="profile-photo" id="profilePhotoBox">
+            <div class="profile-photo" id="profilePhotoBox" style="position:relative; cursor:pointer; background:#eee;">
                 <input type="file" id="profilePhotoInput" accept="image/*" hidden>
-                <div class="profile-photo-inner" id="profilePhotoInner">
-                    <!-- X lines -->
-                    <svg class="photo-x-lines" viewBox="0 0 160 140" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="0" y1="0" x2="160" y2="140" stroke="#bbb" stroke-width="1"/>
-                        <line x1="160" y1="0" x2="0" y2="140" stroke="#bbb" stroke-width="1"/>
-                    </svg>
-                    <span class="photo-label">Añade foto de perfil</span>
-                </div>
-                <img id="profilePhotoPreview" class="profile-photo-preview" src="" alt="Profile photo">
-                <button class="photo-edit-btn" onclick="document.getElementById('profilePhotoInput').click()" title="Cambiar foto">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                </button>
+                <img id="profilePhotoPreview" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <div id="photoPlaceholder">Añadir Foto</div>
             </div>
-
-            <!-- Schedule block below photo -->
             <div class="schedule-block">
-                <span class="schedule-label">Horario:</span>
-                <button class="schedule-btn" id="scheduleBtn">Planea tu horario</button>
+                <span class="schedule-label">Horario General:</span>
+                <button class="schedule-btn" id="scheduleBtn">Configurar Horario</button>
             </div>
         </div>
 
-        <!-- Right: text fields -->
         <div class="profile-fields">
-
-            <div class="field-group">
-                <label class="field-label" for="inputName">Añade un nombre:</label>
-                <input type="text" id="inputName" class="field-input" placeholder="Nombre del gimnasio o profesional">
-            </div>
-
-            <div class="field-group">
-                <label class="field-label" for="inputDesc">Añade una descripción:</label>
-                <textarea id="inputDesc" class="field-textarea" placeholder="Descripción de tus servicios, especialidades..."></textarea>
-            </div>
-
-            <div class="field-group">
-                <label class="field-label">Añade información de contacto:</label>
-                <input type="text" class="field-input field-input--contact" placeholder="Teléfono">
-                <input type="text" class="field-input field-input--contact" placeholder="Email">
-                <input type="text" class="field-input field-input--contact" placeholder="Dirección">
-            </div>
-
-            <div class="save-row">
-                <button class="save-btn" id="saveProfileBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                        <polyline points="17 21 17 13 7 13 7 21"/>
-                        <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Guardar cambios
-                </button>
-            </div>
-
+            <input type="text" id="inputName" class="field-input" placeholder="Nombre">
+            <textarea id="inputDesc" class="field-textarea" placeholder="Descripción"></textarea>
+            <input type="text" id="inputContact" class="field-input" placeholder="Contacto">
+            <button class="save-btn" id="saveProfileBtn">Guardar Perfil y Horario</button>
+            <p id="saveMsg" style="display:none; color:green;">✓ Guardado correctamente</p>
         </div>
     </section>
 
-    <!-- ===== SECTION 2: Photo Gallery ===== -->
     <section class="gallery-section">
-        <div class="gallery-header">
-            <span class="gallery-title">Galería</span>
-            <button class="gallery-add-btn" id="galleryAddBtn" title="Añadir foto">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-            </button>
-            <input type="file" id="galleryInput" accept="image/*" multiple hidden>
-        </div>
-
-        <div class="gallery-carousel-wrapper">
-            <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
-            </button>
-
-            <div class="gallery-carousel" id="galleryCarousel">
-                <!-- Photo slots injected by JS, 4 defaults -->
-                <div class="gallery-slot" data-index="0">
-                    <div class="gallery-slot-inner">
-                        <svg class="slot-x-lines" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="0" y1="0" x2="120" y2="120" stroke="#bbb" stroke-width="1"/>
-                            <line x1="120" y1="0" x2="0" y2="120" stroke="#bbb" stroke-width="1"/>
-                        </svg>
-                        <span class="slot-label">Añade foto</span>
-                        <img class="slot-preview" src="" alt="">
-                    </div>
-                    <button class="slot-delete-btn" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14H6L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4h6v2"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="gallery-slot" data-index="1">
-                    <div class="gallery-slot-inner">
-                        <svg class="slot-x-lines" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="0" y1="0" x2="120" y2="120" stroke="#bbb" stroke-width="1"/>
-                            <line x1="120" y1="0" x2="0" y2="120" stroke="#bbb" stroke-width="1"/>
-                        </svg>
-                        <span class="slot-label">Añade foto</span>
-                        <img class="slot-preview" src="" alt="">
-                    </div>
-                    <button class="slot-delete-btn" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14H6L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4h6v2"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="gallery-slot" data-index="2">
-                    <div class="gallery-slot-inner">
-                        <svg class="slot-x-lines" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="0" y1="0" x2="120" y2="120" stroke="#bbb" stroke-width="1"/>
-                            <line x1="120" y1="0" x2="0" y2="120" stroke="#bbb" stroke-width="1"/>
-                        </svg>
-                        <span class="slot-label">Añade foto</span>
-                        <img class="slot-preview" src="" alt="">
-                    </div>
-                    <button class="slot-delete-btn" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14H6L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4h6v2"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="gallery-slot" data-index="3">
-                    <div class="gallery-slot-inner">
-                        <svg class="slot-x-lines" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="0" y1="0" x2="120" y2="120" stroke="#bbb" stroke-width="1"/>
-                            <line x1="120" y1="0" x2="0" y2="120" stroke="#bbb" stroke-width="1"/>
-                        </svg>
-                        <span class="slot-label">Añade foto</span>
-                        <img class="slot-preview" src="" alt="">
-                    </div>
-                    <button class="slot-delete-btn" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14H6L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4h6v2"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M9 18l6-6-6-6"/>
-                </svg>
-            </button>
-        </div>
+        <h3>Galería</h3>
+        <div style="display:flex; overflow-x:auto; padding:10px 0;" id="galleryCarousel"></div>
+        <button class="save-btn" id="addGalleryBtn">Añadir Foto a Galería</button>
+        <button class="save-btn" id="saveGalleryBtn" style="background:#2ecc71;">Actualizar Galería en Firebase</button>
     </section>
 
-    <!-- ===== SECTION 3: Activities ===== -->
-    <section class="activities-section" id="activitiesSection">
-
-        <!-- Create activity form -->
+    <section class="activities-section">
+        <h3>Actividades</h3>
         <div class="activity-form">
-            <div class="activity-form-fields">
-                <div class="activity-field-row">
-                    <label class="activity-label">Nombre de actividad:</label>
-                    <input type="text" class="activity-input" id="activityName" placeholder="Ej. Spinning">
-                </div>
-                <div class="activity-field-row">
-                    <label class="activity-label">Horario de actividad:</label>
-                    <input type="text" class="activity-input" id="activitySchedule" placeholder="Lun/Mié/Vie 10:00">
-                </div>
-                <div class="activity-field-row">
-                    <label class="activity-label">Cancelación hasta:</label>
-                    <input type="text" class="activity-input" id="activityCancelDate" placeholder="48h antes">
-                </div>
-            </div>
-            <div class="activity-form-fields">
-                <div class="activity-field-row">
-                    <label class="activity-label">Precio:</label>
-                    <input type="text" class="activity-input activity-input--short" id="activityPrice" placeholder="€">
-                </div>
-                <div class="activity-field-row">
-                    <label class="activity-label">Cupo máximo:</label>
-                    <input type="number" class="activity-input activity-input--short" id="activitySlots" placeholder="10" min="1">
-                </div>
-            </div>
-            <button class="create-activity-btn" id="createActivityBtn">Crear actividad</button>
+            <input type="text" id="actName" placeholder="Actividad">
+            <input type="date" id="actDate">
+            <input type="text" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)">
+            <input type="number" id="actPrice" placeholder="Precio (€)">
+            <input type="number" id="actSlots" placeholder="Cupo">
+            <button id="createActBtn">Crear Actividad</button>
         </div>
-
-        <!-- Activities list -->
-        <div class="activities-list" id="activitiesList">
-            <!-- Populated by JS -->
-            <div class="no-activities-hint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span>Aún no hay actividades. ¡Crea la primera!</span>
-            </div>
-        </div>
-
-        <button class="add-activity-btn" id="addActivityBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Añadir actividad
-        </button>
-
+        <div id="activitiesList"></div>
     </section>
-
 </main>
 
-<!-- Schedule modal -->
 <div class="modal-overlay" id="scheduleModal">
     <div class="modal">
-        <div class="modal-header">
-            <span class="modal-title">Planea tu horario</span>
-            <button class="modal-close" id="scheduleModalClose">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
+        <h4>Horario de Apertura</h4>
+        <div id="dayChecks">
+            <label><input type="checkbox" value="Lun"> Lun</label>
+            <label><input type="checkbox" value="Mar"> Mar</label>
+            <label><input type="checkbox" value="Mié"> Mié</label>
+            <label><input type="checkbox" value="Jue"> Jue</label>
+            <label><input type="checkbox" value="Vie"> Vie</label>
+            <label><input type="checkbox" value="Sáb"> Sáb</label>
+            <label><input type="checkbox" value="Dom"> Dom</label>
         </div>
-        <div class="modal-body">
-            <p class="modal-hint">Selecciona los días y horarios en que estás disponible.</p>
-            <div class="schedule-days">
-                <label class="day-check"><input type="checkbox" value="Lun"> Lunes</label>
-                <label class="day-check"><input type="checkbox" value="Mar"> Martes</label>
-                <label class="day-check"><input type="checkbox" value="Mié"> Miércoles</label>
-                <label class="day-check"><input type="checkbox" value="Jue"> Jueves</label>
-                <label class="day-check"><input type="checkbox" value="Vie"> Viernes</label>
-                <label class="day-check"><input type="checkbox" value="Sáb"> Sábado</label>
-                <label class="day-check"><input type="checkbox" value="Dom"> Domingo</label>
-            </div>
-            <div class="schedule-time-row">
-                <label class="time-label">Desde</label>
-                <input type="time" class="time-input" id="scheduleFrom" value="08:00">
-                <label class="time-label">Hasta</label>
-                <input type="time" class="time-input" id="scheduleTo" value="20:00">
-            </div>
-            <button class="modal-save-btn" id="scheduleSaveBtn">Guardar horario</button>
-        </div>
+        <input type="time" id="timeFrom" value="08:00"> a <input type="time" id="timeTo" value="20:00">
+        <button id="closeScheduleModal">Aplicar</button>
     </div>
 </div>
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
-<script>
-    xLuIncludeFile();
+<script src="../javascript/scripts/xlu-include-file.js"></script>
+<script>xLuIncludeFile();</script>
+<script type="module" src="../javascript/app/header.js"></script>
 
-    /* ---- Profile photo preview ---- */
-    document.getElementById('profilePhotoInput').addEventListener('change', function () {
-        const file = this.files[0];
-        if (!file) return;
+<script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const resp = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await resp.json();
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const ownerId = sessionStorage.getItem("userId");
+    let scheduleData = { days: "", from: "08:00", to: "20:00" };
+    let galleryImages = [];
+    let profilePhotoBase64 = null;
+
+    async function init() {
+        const snap = await getDoc(doc(db, "gyms", ownerId));
+        if (snap.exists()) {
+            const d = snap.data();
+            document.getElementById("inputName").value = d.name || "";
+            document.getElementById("inputDesc").value = d.description || "";
+            document.getElementById("inputContact").value = d.contactInfo || "";
+
+            if (d.photoURL) {
+                const p = document.getElementById("profilePhotoPreview");
+                p.src = d.photoURL; p.style.display = "block";
+                document.getElementById("photoPlaceholder").style.display = "none";
+            }
+
+            if (d.schedule && typeof d.schedule === 'object') {
+                scheduleData = d.schedule;
+                document.getElementById("scheduleBtn").textContent = `${d.schedule.days} (${d.schedule.from}-${d.schedule.to})`;
+            }
+
+            galleryImages = d.gallery || [];
+            renderGallery();
+        }
+        loadActivities();
+    }
+
+    // Perfil y Foto
+    document.getElementById("profilePhotoBox").onclick = () => document.getElementById("profilePhotoInput").click();
+    document.getElementById("profilePhotoInput").onchange = (e) => {
         const reader = new FileReader();
-        reader.onload = e => {
-            const preview = document.getElementById('profilePhotoPreview');
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            document.getElementById('profilePhotoInner').style.opacity = '0';
+        reader.onload = (ev) => {
+            profilePhotoBase64 = ev.target.result;
+            const p = document.getElementById("profilePhotoPreview");
+            p.src = profilePhotoBase64; p.style.display = "block";
+            document.getElementById("photoPlaceholder").style.display = "none";
         };
-        reader.readAsDataURL(file);
-    });
+        reader.readAsDataURL(e.target.files[0]);
+    };
 
-    document.getElementById('profilePhotoBox').addEventListener('click', function (e) {
-        if (!e.target.closest('.photo-edit-btn')) {
-            document.getElementById('profilePhotoInput').click();
-        }
-    });
+    document.getElementById("saveProfileBtn").onclick = async () => {
+        const btn = document.getElementById("saveProfileBtn");
+        btn.disabled = true; btn.textContent = "Guardando...";
+        const upd = {
+            name: document.getElementById("inputName").value,
+            description: document.getElementById("inputDesc").value,
+            contactInfo: document.getElementById("inputContact").value,
+            schedule: scheduleData
+        };
+        if (profilePhotoBase64) upd.photoURL = profilePhotoBase64;
+        await updateDoc(doc(db, "gyms", ownerId), upd);
+        btn.disabled = false; btn.textContent = "Guardar Perfil y Horario";
+        document.getElementById("saveMsg").style.display = "block";
+    };
 
-    /* ---- Gallery slots ---- */
-    document.querySelectorAll('.gallery-slot').forEach(slot => {
-        slot.querySelector('.gallery-slot-inner').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    const img = slot.querySelector('.slot-preview');
-                    img.src = ev.target.result;
-                    img.style.display = 'block';
-                    slot.querySelector('.gallery-slot-inner svg').style.display = 'none';
-                    slot.querySelector('.slot-label').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            };
-            input.click();
-        });
+    // Horario Modal
+    document.getElementById("scheduleBtn").onclick = () => document.getElementById("scheduleModal").classList.add("active");
+    document.getElementById("closeScheduleModal").onclick = () => {
+        const days = Array.from(document.querySelectorAll("#dayChecks input:checked")).map(i => i.value).join("/");
+        scheduleData = { days, from: document.getElementById("timeFrom").value, to: document.getElementById("timeTo").value };
+        document.getElementById("scheduleBtn").textContent = `${days} (${scheduleData.from}-${scheduleData.to})`;
+        document.getElementById("scheduleModal").classList.remove("active");
+    };
 
-        slot.querySelector('.slot-delete-btn').addEventListener('click', e => {
-            e.stopPropagation();
-            const img = slot.querySelector('.slot-preview');
-            img.src = '';
-            img.style.display = 'none';
-            slot.querySelector('.gallery-slot-inner svg').style.display = '';
-            slot.querySelector('.slot-label').style.display = '';
-        });
-    });
-
-    /* ---- Gallery add button ---- */
-    document.getElementById('galleryAddBtn').addEventListener('click', () => {
-        const carousel = document.getElementById('galleryCarousel');
-        const index = carousel.querySelectorAll('.gallery-slot').length;
-        const slot = document.createElement('div');
-        slot.className = 'gallery-slot';
-        slot.dataset.index = 'index';
-        slot.innerHTML = `
-            <div class="gallery-slot-inner">
-                <svg class="slot-x-lines" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="0" y1="0" x2="120" y2="120" stroke="#bbb" stroke-width="1"/>
-                    <line x1="120" y1="0" x2="0" y2="120" stroke="#bbb" stroke-width="1"/>
-                </svg>
-                <span class="slot-label">Añade foto</span>
-                <img class="slot-preview" src="" alt="">
+    // Galería
+    function renderGallery() {
+        const cont = document.getElementById("galleryCarousel");
+        cont.innerHTML = galleryImages.map((img, i) => `
+            <div class="gallery-slot">
+                <img src="${img}">
+                <button class="del-img" onclick="window.delImg(${i})">X</button>
             </div>
-            <button class="slot-delete-btn" title="Eliminar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14H6L5 6"/>
-                    <path d="M10 11v6M14 11v6"/>
-                    <path d="M9 6V4h6v2"/>
-                </svg>
-            </button>`;
-        carousel.appendChild(slot);
-
-        slot.querySelector('.gallery-slot-inner').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = 'image/*';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    const img = slot.querySelector('.slot-preview');
-                    img.src = ev.target.result;
-                    img.style.display = 'block';
-                    slot.querySelector('svg.slot-x-lines').style.display = 'none';
-                    slot.querySelector('.slot-label').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            };
-            input.click();
-        });
-
-        slot.querySelector('.slot-delete-btn').addEventListener('click', e => {
-            e.stopPropagation();
-            slot.remove();
-        });
-
-        carousel.scrollLeft = carousel.scrollWidth;
-    });
-
-    /* ---- Carousel arrows ---- */
-    document.getElementById('carouselLeft').addEventListener('click', () => {
-        document.getElementById('galleryCarousel').scrollBy({ left: -140, behavior: 'smooth' });
-    });
-    document.getElementById('carouselRight').addEventListener('click', () => {
-        document.getElementById('galleryCarousel').scrollBy({ left: 140, behavior: 'smooth' });
-    });
-
-    /* ---- Save changes toast ---- */
-    document.getElementById('saveProfileBtn').addEventListener('click', () => {
-        showToast('Cambios guardados ✓');
-    });
-
-    /* ---- Schedule modal ---- */
-    document.getElementById('scheduleBtn').addEventListener('click', () => {
-        document.getElementById('scheduleModal').classList.add('active');
-    });
-    document.getElementById('scheduleModalClose').addEventListener('click', () => {
-        document.getElementById('scheduleModal').classList.remove('active');
-    });
-    document.getElementById('scheduleModal').addEventListener('click', function (e) {
-        if (e.target === this) this.classList.remove('active');
-    });
-    document.getElementById('scheduleSaveBtn').addEventListener('click', () => {
-        const days = [...document.querySelectorAll('.day-check input:checked')].map(c => c.value);
-        const from = document.getElementById('scheduleFrom').value;
-        const to = document.getElementById('scheduleTo').value;
-        if (days.length) {
-            document.getElementById('scheduleBtn').textContent = `${days.join(', ')} · ${from}–${to}`;
-        }
-        document.getElementById('scheduleModal').classList.remove('active');
-        showToast('Horario guardado ✓');
-    });
-
-    /* ---- Create / Add activity ---- */
-    let activities = [];
-
-    function renderActivities() {
-        const list = document.getElementById('activitiesList');
-        if (activities.length === 0) {
-            list.innerHTML = `<div class="no-activities-hint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span>Aún no hay actividades. ¡Crea la primera!</span>
-            </div>`;
-            return;
-        }
-        list.innerHTML = activities.map((a, i) => `
-            <div class="activity-item">
-                <div class="activity-item-info">
-                    <span class="activity-item-name">${a.name}</span>
-                    <span class="activity-item-meta">${a.schedule} · ${a.slots} plazas · ${a.price ? a.price + '€' : 'Gratis'}</span>
-                    ${a.cancelDate ? `<span class="activity-item-cancel">Cancelación hasta: ${a.cancelDate}</span>` : ''}
-                </div>
-                <button class="activity-item-delete" onclick="deleteActivity(${i})" title="Eliminar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14H6L5 6"/>
-                        <path d="M9 6V4h6v2"/>
-                    </svg>
-                </button>
-            </div>`).join('');
+        `).join("");
     }
+    window.delImg = (i) => { galleryImages.splice(i, 1); renderGallery(); };
 
-    function deleteActivity(i) {
-        activities.splice(i, 1);
-        renderActivities();
+    document.getElementById("addGalleryBtn").onclick = () => {
+        const input = document.createElement("input"); input.type = "file";
+        input.onchange = (e) => {
+            const r = new FileReader();
+            r.onload = (ev) => { galleryImages.push(ev.target.result); renderGallery(); };
+            r.readAsDataURL(e.target.files[0]);
+        };
+        input.click();
+    };
+
+    document.getElementById("saveGalleryBtn").onclick = async () => {
+        await updateDoc(doc(db, "gyms", ownerId), { gallery: galleryImages });
+        alert("Galería guardada en Firebase");
+    };
+
+    // Actividades
+    async function loadActivities() {
+        const list = document.getElementById("activitiesList");
+        const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
+        list.innerHTML = snap.docs.map(d => `
+            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
+                <span>${d.data().name} (${d.data().date})</span>
+                <button onclick="window.delAct('${d.id}')">Eliminar</button>
+            </div>
+        `).join("");
     }
+    window.delAct = async (id) => { if(confirm("¿Borrar?")) { await deleteDoc(doc(db, "activities", id)); loadActivities(); } };
 
-    document.getElementById('createActivityBtn').addEventListener('click', () => {
-        const name = document.getElementById('activityName').value.trim();
-        if (!name) { showToast('Introduce un nombre de actividad', true); return; }
-        activities.push({
-            name,
-            schedule: document.getElementById('activitySchedule').value || '—',
-            cancelDate: document.getElementById('activityCancelDate').value,
-            price: document.getElementById('activityPrice').value,
-            slots: document.getElementById('activitySlots').value || '—'
+    document.getElementById("createActBtn").onclick = async () => {
+        await addDoc(collection(db, "activities"), {
+            name: document.getElementById("actName").value,
+            date: document.getElementById("actDate").value,
+            schedule: document.getElementById("actTime").value,
+            price: document.getElementById("actPrice").value,
+            slots: document.getElementById("actSlots").value,
+            availableSlots: document.getElementById("actSlots").value,
+            ownerId, createdAt: serverTimestamp()
         });
-        ['activityName','activitySchedule','activityCancelDate','activityPrice','activitySlots'].forEach(id => {
-            document.getElementById(id).value = '';
-        });
-        renderActivities();
-        showToast('Actividad creada ✓');
-    });
+        loadActivities();
+    };
 
-    document.getElementById('addActivityBtn').addEventListener('click', () => {
-        document.getElementById('activityName').focus();
-        document.getElementById('activityName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    /* ---- Toast ---- */
-    function showToast(msg, isError = false) {
-        const t = document.createElement('div');
-        t.className = 'toast' + (isError ? ' toast--error' : '');
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.classList.add('toast--show'), 10);
-        setTimeout(() => { t.classList.remove('toast--show'); setTimeout(() => t.remove(), 300); }, 2500);
-    }
+    init();
 </script>
 </body>
 </html>
