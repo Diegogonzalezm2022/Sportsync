@@ -45,12 +45,13 @@ Durante este sprint se han sentado las bases del sistema, logrando implementar y
 Se completaron 48 puntos de historia, lo que representa un 71% más de lo previsto. El exceso se debió a la inclusión de tareas no planificadas pero necesarias para el Producto Mínimo Viable.
 
 Tras la retrospectiva se reajustó el esfuerzo de varias historias debido a una mejor comprensión de su complejidad. Subieron de puntuación las tareas de:
-Pagar
+* Pagar
 * Valorar actividad
 * Localizar Centro
 * Contratar Profesionales
 * Dar de alta equipamiento
 * Filtrar búsqueda
+
 Por el contrario, bajaron de puntuación las tareas de:
 * Compartir rutinas
 * Historial de reservas
