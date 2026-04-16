@@ -41,6 +41,23 @@ Durante este sprint se han sentado las bases del sistema, logrando implementar y
 * Control de aforo: El sistema actualiza automáticamente los huecos disponibles tanto al reservar (HU20) como al cancelar (HU21).
 * Creación de servicios: Los centros y profesionales pueden crear actividades (HU25).-Límite de cancelaciones: Se estableció un control por fecha límite que impide cancelar reservas fuera de plazo (HU18).
 
+# ⭐ Retrospectiva del Sprint Zero:
+Se completaron 48 puntos de historia, lo que representa un 71% más de lo previsto. El exceso se debió a la inclusión de tareas no planificadas pero necesarias para el Producto Mínimo Viable.
+
+Tras la retrospectiva se reajustó el esfuerzo de varias historias debido a una mejor comprensión de su complejidad. Subieron de puntuación las tareas de:
+Pagar
+* Valorar actividad
+* Localizar Centro
+* Contratar Profesionales
+* Dar de alta equipamiento
+* Filtrar búsqueda
+Por el contrario, bajaron de puntuación las tareas de:
+* Compartir rutinas
+* Historial de reservas
+
+También se dividieron funcionalidades grandes en tareas específicas para mejorar el control. Valorar Actividad se desglosó en Comentar y Calificar, mientras que el sistema de búsqueda se dividió en filtros por fecha, precio, deporte y materiales.
+Además, se añadieron más criterios de validación para cubrir casos que se habían pasado por alto inicialmente. Se detectaron historias incompletas por falta de foco en lo prioritario y desviaciones del plan original, lo que indica que es necesaria una mejor planificación en futuros sprints.
+
 # 💻 Tecnologías
 * HTML5 (Estructura y Formularios)
 * CSS3 (Estilos del código)
