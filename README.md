@@ -28,6 +28,7 @@ funcionalidades dinámicas de JavaScript sobre una base estable. Por último, la
 redacción de los archivos .feature (Gherkin) fueron tareas para asegurar la calidad del código y el cumplimiento de los objetivos.
 
 * **Enlace Figma:** https://www.figma.com/design/932AGbsgEWwMm1Z0YmgsVN/PS_Grupo10?node-id=0-1&p=f&t=6bSn1NRW8zx32zGa-0
+* **PDF con Mockups:** [PS_Grupo10.pdf](https://github.com/user-attachments/files/26791607/PS_Grupo10.pdf)
 * **Enlace Miro:** https://miro.com/app/board/uXjVG1yS6hY=/
 * **Enlace Trello:** https://trello.com/b/YhTRWdFz/sport-sync
 
