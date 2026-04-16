@@ -30,13 +30,14 @@ body {
 
 
 .form-section {
-    background-color: #dcdcdc;
+    background-color: lightseagreen;
     flex-direction: column;
 }
 
 .form-section h2 {
     margin-bottom: 20px;
     font-size: 1.8rem;
+    color: white;
 }
 
 
@@ -44,6 +45,7 @@ body {
     display: flex;
     flex-direction: column;
     width: 260px;
+    color: white;
 }
 
 .register-form label {
@@ -65,12 +67,16 @@ body {
     padding: 8px;
     border-radius: 20px;
     border: none;
-    background-color: #cfcfcf;
+    background-color: rgb(118 255 220 / 70%);;
     cursor: pointer;
 }
 
 .btn-register:hover {
-    background-color: #bfbfbf;
+    background-color: palegreen;
+    transition-duration: 0.2s;
+    transform: scale(1.02);
+    font-weight: bold;
+
 }
 
 .photo-section {

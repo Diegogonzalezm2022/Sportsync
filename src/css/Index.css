@@ -65,8 +65,8 @@ body {
     cursor: pointer;
     font-weight: bold;
     font-size: 1.1rem;
-    color: #444;
-    background-color: rgba(224, 224, 224, 0.9); /* Un poco de transparencia queda elegante */
+    color: black;
+    background-color: rgb(118 255 220 / 70%); /* Un poco de transparencia queda elegante */
     transition: all 0.3s ease;
 }
 

@@ -28,8 +28,9 @@ body {
 
 /* Lado izquierdo */
 .left {
-    background-color: #dcdcdc;
+    background-color: lightseagreen;
     flex-direction: column;
+    color: white;
 }
 
 .left h2 {
@@ -62,12 +63,16 @@ body {
     padding: 8px;
     border-radius: 20px;
     border: none;
-    background-color: #cfcfcf;
+    background-color: rgb(118 255 220 / 70%);
     cursor: pointer;
 }
 
 .btn:hover {
-    background-color: #bfbfbf;
+    background-color: palegreen;
+    cursor: pointer;
+    transition-duration: 0.2s;
+    transform: scale(1.02);
+    font-weight: bold;
 }
 
 /* Links */
@@ -77,18 +82,19 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: white;
 }
 
 .links a {
     text-decoration: none;
-    color: #555;
+    color: white;
     margin-top: 3px;
     cursor: pointer;
 }
 
 .links a:hover {
     text-decoration: underline;
-    color: #555;
+    color: white;
     margin-top: 3px;
     cursor: pointer;
 }

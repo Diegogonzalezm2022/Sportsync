@@ -12,7 +12,7 @@
     /*background-color: lightgrey;*/
     border: 1px solid #000;
     margin: 0;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgb(118 255 220 / 70%);
     backdrop-filter: blur(10px);
 }
 
@@ -71,7 +71,7 @@
 .menu-icon:hover {
     font-size: 1.5rem;
     cursor: pointer;
-    color: grey
+    color: white;
 }
 
 /*Pop-up del header*/
