@@ -115,7 +115,6 @@
     const isOwner = (userId === ownerId);
 
     async function loadData() {
-        // CAMBIO: Buscamos en "professionals"
         const proSnap = await getDoc(doc(db, "professionals", ownerId));
         if (proSnap.exists()) {
             const d = proSnap.data();
@@ -123,7 +122,6 @@
             document.getElementById("profileDesc").textContent = d.description || "—";
             document.getElementById("contactLines").textContent = d.contactInfo || "—";
 
-            // Horario
             if (d.schedule) {
                 if (typeof d.schedule === 'object') {
                     document.getElementById("scheduleDays").textContent = d.schedule.days || "—";
@@ -133,7 +131,6 @@
                 }
             }
 
-            // Foto Perfil
             if (d.photoURL) {
                 const img = document.getElementById("profilePhotoImg");
                 img.src = d.photoURL;
@@ -142,14 +139,12 @@
                 document.getElementById("photoXSvg").style.display = "none";
             }
 
-            // Galería
             if (d.gallery && d.gallery.length > 0) {
                 document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
                     <div class="gallery-slot"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>
                 `).join("");
             }
 
-            // Rating
             if (d.rating) {
                 const rounded = Math.round(d.rating);
                 document.querySelectorAll(".star").forEach(s => {
@@ -160,9 +155,17 @@
 
             if (isOwner) {
                 document.getElementById("ownerControls").style.display = "block";
-                // Redirige a edición como 'professional'
+                document.getElementById("starsContainer").style.pointerEvents = "none";
+                document.getElementById("ratingHint").textContent = "Tu perfil";
                 document.getElementById("editBtn").onclick = () => window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
             } else {
+                // Mostrar estrellas del voto previo del usuario si existe
+                if (!isOwner && d.ratings && d.ratings[userId]) {
+                    const myPrev = d.ratings[userId];
+                    document.querySelectorAll(".star").forEach(s =>
+                        s.classList.toggle("star--active", +s.dataset.value <= myPrev));
+                    document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
+                }
                 setupRating();
             }
         }
@@ -173,7 +176,6 @@
         const container = document.getElementById("activitiesSection");
         const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
 
-        // Mis reservas para marcar botones
         const mySnap = await getDocs(query(collection(db, "reservations"), where("userId", "==", userId), where("status", "==", "active")));
         const myIds = new Set();
         mySnap.forEach(d => myIds.add(d.data().activityId));
@@ -228,7 +230,6 @@
                 });
                 await updateDoc(ref, { availableSlots: slots - 1 });
 
-                // EmailJS opcional
                 emailjs.send("service_ak2mcnm", "template_czzg7qg", {
                     user_email: sessionStorage.getItem("userEmail"),
                     activity_name: name,
@@ -242,16 +243,43 @@
     };
 
     function setupRating() {
-        document.querySelectorAll(".star").forEach(star => {
+        const stars = document.querySelectorAll(".star");
+        stars.forEach(star => {
+            // Efecto Hover
+            star.addEventListener("mouseover", () =>
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
+
+            star.addEventListener("mouseout", () => {
+                const text = document.getElementById("ratingHint").textContent;
+                const match = text.match(/[\d.]+/);
+                const cur = match ? Math.round(parseFloat(match[0])) : 0;
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
+            });
+
             star.onclick = async () => {
                 const val = +star.dataset.value;
                 const ref = doc(db, "professionals", ownerId);
                 const snap = await getDoc(ref);
                 if (snap.exists()) {
-                    const { rating = 0, ratingCount = 0 } = snap.data();
+                    const data = snap.data();
+                    const ratings    = data.ratings    || {};
+                    const prevRating = ratings[userId] || null;
+                    let { rating = 0, ratingCount = 0 } = data;
+
+                    if (prevRating !== null) {
+                        const totalSinAnterior = (rating * ratingCount) - prevRating;
+                        rating = ratingCount > 1
+                            ? (totalSinAnterior + val) / ratingCount
+                            : val;
+                    } else {
+                        rating = ((rating * ratingCount) + val) / (ratingCount + 1);
+                        ratingCount = ratingCount + 1;
+                    }
+
                     await updateDoc(ref, {
-                        rating: ((rating * ratingCount) + val) / (ratingCount + 1),
-                        ratingCount: ratingCount + 1
+                        rating,
+                        ratingCount,
+                        [`ratings.${userId}`]: val
                     });
                     location.reload();
                 }
@@ -259,7 +287,6 @@
         });
     }
 
-    // Carousel y Filtros
     document.getElementById("carouselLeft").onclick = () => document.getElementById("galleryCarousel").scrollBy({left:-140, behavior:'smooth'});
     document.getElementById("carouselRight").onclick = () => document.getElementById("galleryCarousel").scrollBy({left:140, behavior:'smooth'});
     document.getElementById("dateFromInput").onchange = () => loadActivities(document.getElementById("dateFromInput").value, document.getElementById("dateToInput").value);

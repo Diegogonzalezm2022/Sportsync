@@ -186,11 +186,22 @@
         } else {
             // Estrellas para usuarios
             const stars = document.querySelectorAll(".star");
+
+            // Mostrar estrellas del voto previo del usuario si existe
+            if (!isOwner && d.ratings && d.ratings[userId]) {
+                const myPrev = d.ratings[userId];
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= myPrev));
+                document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
+            }
+
             stars.forEach(star => {
                 star.addEventListener("mouseover", () =>
                     stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
                 star.addEventListener("mouseout", () => {
-                    const cur = Math.round(parseFloat(document.getElementById("ratingHint").textContent) || 0);
+                    // Extrae el número sin importar el texto previo
+                    const text = document.getElementById("ratingHint").textContent;
+                    const match = text.match(/[\d.]+/);
+                    const cur = match ? Math.round(parseFloat(match[0])) : 0;
                     stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
                 });
                 star.onclick = async () => {
@@ -198,10 +209,28 @@
                     const ref = doc(db, "gyms", ownerId);
                     const snap = await getDoc(ref);
                     if (snap.exists()) {
-                        const { rating = 0, ratingCount = 0 } = snap.data();
+                        const data = snap.data();
+                        const ratings    = data.ratings    || {};
+                        const prevRating = ratings[userId] || null;
+                        let { rating = 0, ratingCount = 0 } = data;
+
+                        if (prevRating !== null) {
+                            // Restar la puntuación anterior del usuario
+                            const totalSinAnterior = (rating * ratingCount) - prevRating;
+                            // El count no cambia porque sigue siendo el mismo usuario
+                            rating = ratingCount > 1
+                                ? (totalSinAnterior + val) / ratingCount
+                                : val;
+                        } else {
+                            // Primera vez que vota este usuario
+                            rating = ((rating * ratingCount) + val) / (ratingCount + 1);
+                            ratingCount = ratingCount + 1;
+                        }
+
                         await updateDoc(ref, {
-                            rating: ((rating * ratingCount) + val) / (ratingCount + 1),
-                            ratingCount: ratingCount + 1
+                            rating,
+                            ratingCount,
+                            [`ratings.${userId}`]: val
                         });
                         location.reload();
                     }
