@@ -5,14 +5,11 @@ let app;
 try {
     app = getApp();
 } catch {
-    app = initializeApp({
-        apiKey: "AIzaSyBe7Muffm1j7b8apziWK13B_54q6DCaUT0",
-        authDomain: "proyecto2026ps.firebaseapp.com",
-        projectId: "proyecto2026ps",
-        storageBucket: "proyecto2026ps.firebasestorage.app",
-        messagingSenderId: "124816158835",
-        appId: "1:124816158835:web:39a68c1772fa3427a33a06"
-    });
+
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+
+    app = initializeApp(firebaseConfig);
 }
 
 const auth = getAuth(app);
