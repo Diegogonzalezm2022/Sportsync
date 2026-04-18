@@ -416,12 +416,12 @@ body {
 .chip-gym:hover {
     padding: 5px 14px;
     border-radius: 20px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--accent);
     background: var(--surface);
+    color: var(--accent);
     font-size: 0.78rem;
     font-weight: 500;
     background-color: #d8f3dc;
-    border-color: black;
     cursor: pointer;
     font-family: inherit;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
@@ -443,10 +443,10 @@ body {
 .chip-professional:hover {
     padding: 5px 14px;
     border-radius: 20px;
-    border: 1px solid var(--border);
+    border: 1px solid #1d3557;
     background: var(--accent-trainer-light);
+    color: #1d3557;
     font-size: 0.78rem;
-    border-color: black;
     font-weight: 500;
     cursor: pointer;
     font-family: inherit;

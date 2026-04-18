@@ -6,7 +6,7 @@
 }
 
 :root {
-    --bg: #f4f4f2;
+    --bg: #e6fff9;
     --surface: #ffffff;
     --surface-2: #ebebeb;
     --border: #d6d6d6;
@@ -57,18 +57,14 @@ body {
 
 /* ---------- Back button ---------- */
 .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     background: none;
-    border: none;
+    border: black;
     cursor: pointer;
-    font-family: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 1.5rem;
     color: var(--text-secondary);
-    padding: 4px 0;
+    padding: 10px 0;
     width: fit-content;
+    font-family: monospace;
     transition: color 0.2s;
 }
 
@@ -80,7 +76,7 @@ body {
    ======================================== */
 .top-section {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-lg);
     padding: 22px;
     display: grid;
@@ -99,8 +95,7 @@ body {
 .profile-photo {
     width: 100%;
     aspect-ratio: 4 / 3;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-md);
     position: relative;
     overflow: hidden;
@@ -114,6 +109,7 @@ body {
     inset: 0;
     width: 100%;
     height: 100%;
+    background-color: white;
 }
 
 .photo-caption {
@@ -141,8 +137,8 @@ body {
 }
 
 .schedule-box {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: white;
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-sm);
     padding: 10px 12px;
     display: flex;
@@ -193,8 +189,8 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: white;
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-sm);
     padding: 7px 12px;
     min-width: 140px;
@@ -204,8 +200,8 @@ body {
     font-size: 0.84rem;
     color: var(--text-secondary);
     line-height: 1.5;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: white;
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-sm);
     padding: 10px 12px;
 }
@@ -248,6 +244,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 1px solid lightseagreen;
 }
 
 .contact-item {
@@ -269,8 +268,8 @@ body {
    GALLERY
    ======================================== */
 .gallery-section {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: white;
+    border: 1px solid lightseagreen;
     border-radius: var(--radius-lg);
     padding: 16px;
     box-shadow: var(--shadow-sm);
@@ -287,20 +286,20 @@ body {
     height: 32px;
     flex-shrink: 0;
     border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    border: 1px solid black;
+    background-color: black;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: white;
     transition: background 0.2s, color 0.2s;
 }
 
 .carousel-arrow:hover {
-    background: var(--text-primary);
+    background-color: #2d6a4f;
     color: #fff;
-    border-color: var(--text-primary);
+    border-color: lightseagreen;
 }
 
 .carousel-arrow svg { width: 16px; height: 16px; }
@@ -372,13 +371,13 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 22px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background-color: black;
+    color: white;
+    border: 1px solid black;
     border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--text-secondary);
     cursor: pointer;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
     min-width: 140px;
@@ -388,8 +387,10 @@ body {
 .date-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 .date-btn:hover {
-    background: var(--surface-2);
-    border-color: var(--text-secondary);
+    background-color: #2d6a4f;
+    cursor: pointer;
+    color: white;
+    border-color: lightseagreen;
 }
 
 .date-btn--active {
@@ -401,11 +402,23 @@ body {
 /* ========================================
    ACTIVITIES
    ======================================== */
+
+
+
 .activities-section {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    border-radius: var(--radius-md);
 }
+
+.activities-section-message{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
 
 .activity-card {
     background: var(--surface);
@@ -470,7 +483,9 @@ body {
     transition: background 0.2s, transform 0.1s;
 }
 
-.signup-btn:hover { background: var(--accent); }
+.signup-btn:hover {
+    background: #2d6a4f;
+}
 
 .signup-btn:active { transform: scale(0.97); }
 

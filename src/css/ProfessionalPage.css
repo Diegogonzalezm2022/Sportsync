@@ -57,18 +57,14 @@ body {
 
 /* ---------- Back button ---------- */
 .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     background: none;
-    border: none;
+    border: black;
     cursor: pointer;
-    font-family: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 1.5rem;
     color: var(--text-secondary);
-    padding: 4px 0;
+    padding: 10px 0;
     width: fit-content;
+    font-family: monospace;
     transition: color 0.2s;
 }
 
@@ -90,15 +86,11 @@ body {
 }
 
 /* --- Profile photo --- */
-.profile-photo-block {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
 
+/* Foto de perfil más pequeña */
 .profile-photo {
-    width: 100%;
-    aspect-ratio: 4 / 3;
+    width: 150px;
+    height: 150px;
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -107,7 +99,30 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
+
+.profile-photo img {
+    width: 50%;
+    height: 50%;
+    object-fit: cover;
+
+}
+
+.profile-photo svg {
+    width: 50px;
+    height: 50px;
+}
+
+
+
+
+.profile-photo-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
 
 .photo-x {
     position: absolute;
@@ -407,6 +422,12 @@ body {
     gap: 10px;
 }
 
+.activities-section p {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .activity-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -470,7 +491,9 @@ body {
     transition: background 0.2s, transform 0.1s;
 }
 
-.signup-btn:hover { background: var(--accent); }
+.signup-btn:hover {
+    background: #2d6a4f;
+}
 
 .signup-btn:active { transform: scale(0.97); }
 
