@@ -7,7 +7,7 @@
     align-items: center;
     padding: 20px;
     flex-shrink: 0; /* Evita que el footer se aplaste si hay mucho contenido arriba */
-    background-color: rgb(118 255 220 / 70%);;
+    background-color: rgb(118 255 220 / 70%);
     backdrop-filter: blur(10px);
     height: 100px;
 }
