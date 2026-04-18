@@ -46,6 +46,8 @@ body {
     font-size: 2.5rem;
     margin-bottom: 40px;
     text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7); /* Para que resalte sobre la foto */
+    font-weight: bold;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* GRUPO DE BOTONES */
@@ -66,7 +68,7 @@ body {
     font-weight: bold;
     font-size: 1.1rem;
     color: black;
-    background-color: rgb(118 255 220 / 70%); /* Un poco de transparencia queda elegante */
+    background-color: rgb(118 255 241 / 70%); /* Un poco de transparencia queda elegante */
     transition: all 0.3s ease;
 }
 

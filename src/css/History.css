@@ -1,5 +1,6 @@
 body{
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #e6fff9;
 }
 
 .reservations-main {
@@ -23,21 +24,27 @@ body{
 
 .section-header h2 {
     font-size: 1.2rem;
-    font-weight: normal;
+    font-weight: bold;
+    color: black;
     margin: 0;
 }
 
 .back-btn {
     background: none;
-    border: none;
-    font-size: 1.5rem;
+    border: black;
     cursor: pointer;
-    padding: 0 5px;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    padding: 10px 0;
+    width: fit-content;
+    font-family: monospace;
+    transition: color 0.2s;
 }
 
 
+
 .cards-container {
-    background-color: #dcdcdc;
+    background-color: lightseagreen;
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -45,9 +52,31 @@ body{
     gap: 20px;
 }
 
+.delete-card-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: lightgrey;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+.delete-card-btn:hover {
+    background: #e74c3c;
+    color: white;
+}
 
 .reservation-card {
-    background-color: #ffffff;
+    background-color: white;
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -57,6 +86,11 @@ body{
     gap: 15px;
 }
 
+.cards-container-car {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+}
 
 .card-info {
     flex: 2;
@@ -105,7 +139,8 @@ body{
 
 
 .action-btn {
-    background-color: #dcdcdc;
+    background-color: black;
+    color: white;
     border: none;
     border-radius: 8px;
     padding: 8px 16px;
@@ -115,7 +150,7 @@ body{
 }
 
 .action-btn:hover {
-    background-color: #c0c0c0;
+    background-color: #2d6a4f;
 }
 
 .icon-btn {

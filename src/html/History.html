@@ -10,28 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>emailjs.init("bOhMQRr1h4BzhaNUT");</script>
     <style>
-        .delete-card-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: none;
-            background: #e0e0e0;
-            color: #888;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            transition: background 0.15s, color 0.15s;
-        }
-        .delete-card-btn:hover {
-            background: #e74c3c;
-            color: white;
-        }
         .reservation-card {
             position: relative;
         }
@@ -46,13 +24,13 @@
         <button class="back-btn" onclick="history.back()">&#8592;</button>
         <h2>Reservas activas:</h2>
     </div>
-    <div class="cards-container" id="activeList">
+    <div class="cards-container-car" id="activeList">
         <p class="loading-hint">Cargando...</p>
     </div>
 
     <div class="section-header past-header">
         <h2>Reservas pasadas:</h2>
-        <button id="deleteAllPastBtn" title="Eliminar todas las reservas pasadas" style="background:none;border:none;cursor:pointer;color:#888;display:flex;align-items:center;padding:4px;border-radius:6px;transition:color 0.15s;">
+        <button id="deleteAllPastBtn" title="Eliminar todas las reservas pasadas" style="background:none;border:none;cursor:pointer;color:black;display:flex;align-items:center;padding:4px;border-radius:6px;transition:color 0.15s;">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14H6L5 6"/>

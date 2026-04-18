@@ -2,19 +2,21 @@
 
 body{
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #e6fff9;
 }
 /* ---------- Main Section ---------- */
 .team-section {
     padding: 40px 20px 60px;
     max-width: 600px;
     margin: 0 auto;
+    background-color: #e6fff9;
 }
 
 /* ---------- Title ---------- */
 .team-title {
     text-align: center;
     font-size: 1.6rem;
-    font-weight: 700;
+    font-weight: bold;
     margin-bottom: 32px;
     color: #1a1a1a;
 }
@@ -80,10 +82,10 @@ body{
 
 .member-desc {
     font-size: 0.78rem;
-    color: #555;
     line-height: 1.4;
     margin: 0;
     max-width: 160px;
+    color: black;
 }
 
 /* ---------- Responsive ---------- */

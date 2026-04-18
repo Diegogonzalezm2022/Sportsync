@@ -8,7 +8,7 @@
 
 body {
     height: 100vh;
-    background-color: #e6e6e6;
+    background-color: white;
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -28,13 +28,14 @@ body {
 
 /* Lado izquierdo */
 .left {
-    background-color: lightseagreen;
+    background-color: #e6fff9;
     flex-direction: column;
     color: white;
 }
 
 .left h2 {
     margin-bottom: 20px;
+    color: black;
 }
 
 /* Formulario */
@@ -47,6 +48,8 @@ body {
 .form label {
     font-size: 0.8rem;
     margin-top: 10px;
+    font-weight: bold;
+    color: black;
 }
 
 .form input {
@@ -63,16 +66,17 @@ body {
     padding: 8px;
     border-radius: 20px;
     border: none;
-    background-color: rgb(118 255 220 / 70%);
+    background-color: black;
+    color: white;
     cursor: pointer;
 }
 
 .btn:hover {
-    background-color: palegreen;
+    background-color: #2d6a4f;
     cursor: pointer;
     transition-duration: 0.2s;
-    transform: scale(1.02);
     font-weight: bold;
+    color: white;
 }
 
 /* Links */
