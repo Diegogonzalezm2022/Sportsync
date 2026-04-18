@@ -145,8 +145,8 @@
 
             <div class="filter-chips">
                 <button class="chip chip--active" data-filter="todos">Todos</button>
-                <button class="chip-gym" data-filter="gym">Gimnasios</button>
-                <button class="chip-professional" data-filter="professional">Entrenadores</button>
+                <button class="chip" data-filter="gym">Gimnasios</button>
+                <button class="chip" data-filter="professional">Entrenadores</button>
             </div>
         </div>
 
@@ -186,7 +186,6 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // ── Cargar datos del usuario ──────────────────────────
     const userSnap = await getDoc(doc(db, "users", userId));
     if (userSnap.exists()) {
         const data = userSnap.data();
@@ -214,13 +213,11 @@
     let allResults = [];
     let activeFilter = "todos";
 
-    // ── Mapa pequeño ──────────────────────────────────────
     const map = L.map("map").setView([28.1235, -15.4362], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap"
     }).addTo(map);
 
-    // ── Mapa grande (modal) ───────────────────────────────
     let mapBig = null;
     let mapBigInitialized = false;
 
@@ -302,7 +299,6 @@
     let userMarker = null;
     const resultMarkers = [];
 
-    // ── Geolocalización ───────────────────────────────────
     function getLocation() {
         if (!navigator.geolocation) {
             showStatus("Tu navegador no soporta geolocalización.", true); return;
@@ -334,7 +330,6 @@
         );
     }
 
-    // ── Buscar en Firestore ───────────────────────────────
     async function searchNearby() {
         showStatus("Buscando cerca de ti...");
         const radiusKm = 50;
@@ -374,8 +369,6 @@
 
             allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
 
-            // Para el filtro de precio: cargar actividades de cada resultado
-            // y guardar el precio mínimo en el objeto
             await Promise.all(allResults.map(async item => {
                 try {
                     const actSnap = await getDocs(query(
@@ -387,11 +380,10 @@
                         const p = d.data().price;
                         if (p !== undefined && p !== null) prices.push(parseFloat(p));
                     });
-                    item._prices = prices; // array de precios de sus actividades
+                    item._prices = prices;
                 } catch { item._prices = []; }
             }));
 
-            // Marcadores mapa pequeño
             resultMarkers.forEach(m => map.removeLayer(m));
             resultMarkers.length = 0;
             allResults.forEach(item => {
@@ -449,7 +441,6 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // ── Filtrar resultados ────────────────────────────────
     function getFilterValues() {
         return {
             sport:    document.getElementById("filterSport").value.trim().toLowerCase(),
@@ -463,30 +454,23 @@
         const searchText = document.getElementById("searchInput").value.toLowerCase();
         const { sport, material, priceMin, priceMax } = getFilterValues();
 
-        // Indicador visual de filtros activos
         const hasFilters = sport || material || priceMin !== null || priceMax !== null;
         document.getElementById("filterActiveDot").style.display = hasFilters ? "inline-block" : "none";
 
         return results.filter(item => {
             const desc = (item.description || "").toLowerCase();
 
-            // Chip de tipo
             if (activeFilter !== "todos" && item.type !== activeFilter) return false;
 
-            // Barra de búsqueda general
             if (searchText && !item.name?.toLowerCase().includes(searchText) &&
                 !desc.includes(searchText)) return false;
 
-            // Filtro deporte — busca en la descripción
             if (sport && !desc.includes(sport)) return false;
-
-            // Filtro material — busca en la descripción
             if (material && !desc.includes(material)) return false;
 
-            // Filtro precio — comprueba si alguna actividad del gym cumple el rango
             if (priceMin !== null || priceMax !== null) {
                 const prices = item._prices || [];
-                if (prices.length === 0) return false; // sin actividades → no cumple
+                if (prices.length === 0) return false;
                 const hasMatch = prices.some(p => {
                     if (priceMin !== null && p < priceMin) return false;
                     if (priceMax !== null && p > priceMax) return false;
@@ -499,7 +483,6 @@
         });
     }
 
-    // ── Renderizar tarjetas ───────────────────────────────
     function renderResults(results) {
         const list = document.getElementById("resultsList");
         if (results.length === 0) {
@@ -514,18 +497,16 @@
             const rating     = item.rating ? `★ ${Number(item.rating).toFixed(1)}` : "★ —";
             const page       = isGym ? "GymPage" : "ProfessionalPage";
 
-            // Foto de perfil o placeholder
             const photoHTML = item.photoURL
                 ? `<img src="${item.photoURL}" alt="${item.name}"
-                style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+                    style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
                 : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="4"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <path d="M21 15l-5-5L5 21"/>
-               </svg>`;
+                    stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="4"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                   </svg>`;
 
-            // Rango de precios
             let priceTag = "";
             if (item._prices && item._prices.length > 0) {
                 const min = Math.min(...item._prices);
@@ -536,34 +517,34 @@
             }
 
             return `
-        <div class="result-card">
-            <div class="result-photo">
-                <span class="result-photo-placeholder">
-                    ${photoHTML}
-                </span>
-            </div>
-            <div class="result-info">
-                <div class="result-header">
-                    <span class="result-name">${item.name}</span>
-                    <span class="result-badge ${badgeClass}">${badgeText}</span>
+            <div class="result-card">
+                <div class="result-photo">
+                    <span class="result-photo-placeholder">
+                        ${photoHTML}
+                    </span>
                 </div>
-                <p class="result-desc">${item.description || ""}</p>
-                <div class="result-meta">
-                    ${distance ? `<span class="result-distance">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                            <circle cx="12" cy="9" r="2.5"/>
-                        </svg>
-                        ${distance}
-                    </span>` : ""}
-                    <span class="result-rating">${rating}</span>
-                    ${priceTag}
+                <div class="result-info">
+                    <div class="result-header">
+                        <span class="result-name">${item.name}</span>
+                        <span class="result-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <p class="result-desc">${item.description || ""}</p>
+                    <div class="result-meta">
+                        ${distance ? `<span class="result-distance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                <circle cx="12" cy="9" r="2.5"/>
+                            </svg>
+                            ${distance}
+                        </span>` : ""}
+                        <span class="result-rating">${rating}</span>
+                        ${priceTag}
+                    </div>
                 </div>
-            </div>
-            <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
-                Ver perfil
-            </button>
-        </div>`;
+                <button class="result-book-btn" data-page="${page}" data-id="${item.id}">
+                    Ver perfil
+                </button>
+            </div>`;
         }).join("");
 
         list.querySelectorAll(".result-book-btn").forEach(btn => {
@@ -573,7 +554,6 @@
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────
     function showStatus(msg, isError = false) {
         const el = document.getElementById("statusMsg");
         el.textContent = msg;
@@ -584,7 +564,6 @@
         document.getElementById("statusMsg").style.display = "none";
     }
 
-    // ── Eventos filtros laterales ─────────────────────────
     ["filterSport", "filterMaterial", "filterPriceMin", "filterPriceMax"].forEach(id => {
         document.getElementById(id).addEventListener("input", () =>
             renderResults(filterResults(allResults)));
@@ -599,7 +578,6 @@
         renderResults(filterResults(allResults));
     });
 
-    // ── Eventos búsqueda y chips ──────────────────────────
     document.getElementById("useLocationBtn").addEventListener("click", getLocation);
     document.getElementById("searchLocationBtn").addEventListener("click", getLocation);
     document.getElementById("searchSubmitBtn").addEventListener("click", () =>
@@ -615,6 +593,8 @@
         document.getElementById("searchClearBtn").classList.add("hidden");
         renderResults(filterResults(allResults));
     });
+
+    // ── Chips — CORREGIDO: todos usan clase "chip" ────────
     document.querySelectorAll(".chip").forEach(chip => {
         chip.addEventListener("click", () => {
             document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
