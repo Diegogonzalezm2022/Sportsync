@@ -12,6 +12,44 @@
         .edit-mode-btn { margin-top:10px; padding:8px 15px; cursor:pointer; border-radius:5px; border:none; background:#f39c12; color:white; font-weight:bold; }
         .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
         .star--active { color: #f1c40f !important; }
+
+        /* ── Comentarios ── */
+        .comments-section { margin: 24px 0; }
+        .comments-toggle-btn {
+            background: none; border: 1.5px solid #ddd; border-radius: 8px;
+            padding: 7px 16px; font-size: 0.85rem; cursor: pointer; color: #555;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .comments-toggle-btn:hover { border-color: #aaa; color: #222; }
+        .comments-box { margin-top: 14px; }
+        .comment-form { display: flex; gap: 8px; margin-bottom: 16px; }
+        .comment-input {
+            flex: 1; padding: 9px 12px; border: 1.5px solid #ddd;
+            border-radius: 8px; font-size: 0.85rem; outline: none;
+            font-family: inherit;
+        }
+        .comment-input:focus { border-color: #888; }
+        .comment-submit-btn {
+            padding: 9px 16px; border: none; border-radius: 8px;
+            background: #1a1a1a; color: white; font-size: 0.85rem;
+            cursor: pointer; white-space: nowrap;
+        }
+        .comment-submit-btn:hover { background: #333; }
+        .comment-list { display: flex; flex-direction: column; gap: 10px; }
+        .comment-item {
+            background: #f8f8f8; border-radius: 10px;
+            padding: 10px 14px; font-size: 0.85rem;
+        }
+        .comment-author { font-weight: 600; color: #333; margin-bottom: 3px; font-size: 0.8rem; }
+        .comment-text { color: #444; line-height: 1.4; }
+        .comment-date { font-size: 0.72rem; color: #aaa; margin-top: 4px; }
+        .no-comments { font-size: 0.83rem; color: #aaa; font-style: italic; }
+        .comment-delete-btn {
+            background: none; border: none; cursor: pointer;
+            color: #ccc; font-size: 0.75rem; float: right;
+            padding: 0; line-height: 1;
+        }
+        .comment-delete-btn:hover { color: #e74c3c; }
     </style>
 </head>
 <body class="page--gym">
@@ -99,7 +137,24 @@
 
     <section class="activities-section" id="activitiesSection">
         <div class="activities-section-message">
-        <p style="font-size:0.85rem;color:#999;">Cargando actividades...</p></div>
+            <p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>
+        </div>
+    </section>
+
+    <!-- ── Sección comentarios ── -->
+    <section class="comments-section">
+        <button class="comments-toggle-btn" id="commentsToggleBtn">
+            💬 Ver comentarios
+        </button>
+        <div class="comments-box" id="commentsBox" style="display:none;">
+            <div class="comment-form" id="commentForm" style="display:none;">
+                <textarea class="comment-input" id="commentInput" placeholder="Escribe tu comentario..." rows="2"></textarea>
+                <button class="comment-submit-btn" id="commentSubmitBtn">Publicar</button>
+            </div>
+            <div class="comment-list" id="commentList">
+                <p class="no-comments">Cargando comentarios...</p>
+            </div>
+        </div>
     </section>
 
 </main>
@@ -112,7 +167,7 @@
 
 <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, collection, getDocs, query, where, updateDoc, addDoc, serverTimestamp }
+    import { getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, query, where, updateDoc, serverTimestamp}
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     emailjs.init("bOhMQRr1h4BzhaNUT");
@@ -156,7 +211,6 @@
             document.getElementById("profilePhotoImg").src = d.photoURL;
             document.getElementById("profilePhotoImg").style.display = "block";
             document.getElementById("photoCaption").style.display = "none";
-            document.getElementById("photoXSvg").style.display = "none";
         }
 
         if (d.gallery && d.gallery.length > 0) {
@@ -181,11 +235,9 @@
             document.getElementById("starsContainer").style.pointerEvents = "none";
             document.getElementById("ratingHint").textContent = "Tu perfil";
         } else {
-            // Estrellas para usuarios
             const stars = document.querySelectorAll(".star");
 
-            // Mostrar estrellas del voto previo del usuario si existe
-            if (!isOwner && d.ratings && d.ratings[userId]) {
+            if (d.ratings && d.ratings[userId]) {
                 const myPrev = d.ratings[userId];
                 stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= myPrev));
                 document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
@@ -195,7 +247,6 @@
                 star.addEventListener("mouseover", () =>
                     stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
                 star.addEventListener("mouseout", () => {
-                    // Extrae el número sin importar el texto previo
                     const text = document.getElementById("ratingHint").textContent;
                     const match = text.match(/[\d.]+/);
                     const cur = match ? Math.round(parseFloat(match[0])) : 0;
@@ -210,33 +261,120 @@
                         const ratings    = data.ratings    || {};
                         const prevRating = ratings[userId] || null;
                         let { rating = 0, ratingCount = 0 } = data;
-
                         if (prevRating !== null) {
-                            // Restar la puntuación anterior del usuario
                             const totalSinAnterior = (rating * ratingCount) - prevRating;
-                            // El count no cambia porque sigue siendo el mismo usuario
-                            rating = ratingCount > 1
-                                ? (totalSinAnterior + val) / ratingCount
-                                : val;
+                            rating = ratingCount > 1 ? (totalSinAnterior + val) / ratingCount : val;
                         } else {
-                            // Primera vez que vota este usuario
                             rating = ((rating * ratingCount) + val) / (ratingCount + 1);
                             ratingCount = ratingCount + 1;
                         }
-
-                        await updateDoc(ref, {
-                            rating,
-                            ratingCount,
-                            [`ratings.${userId}`]: val
-                        });
+                        await updateDoc(ref, { rating, ratingCount, [`ratings.${userId}`]: val });
                         location.reload();
                     }
                 };
             });
+
+            // Mostrar formulario de comentario solo a usuarios no dueños
+            document.getElementById("commentForm").style.display = "flex";
         }
 
         loadActivities();
     }
+
+    // ── Comentarios ───────────────────────────────────────
+    let commentsLoaded = false;
+
+    document.getElementById("commentsToggleBtn").addEventListener("click", async () => {
+        const box = document.getElementById("commentsBox");
+        const btn = document.getElementById("commentsToggleBtn");
+        const visible = box.style.display !== "none";
+        box.style.display = visible ? "none" : "block";
+        btn.textContent = visible ? "💬 Ver comentarios" : "💬 Ocultar comentarios";
+        if (!visible && !commentsLoaded) {
+            await loadComments();
+            commentsLoaded = true;
+        }
+    });
+
+    async function loadComments() {
+        const list = document.getElementById("commentList");
+        try {
+            const snap = await getDocs(query(
+                collection(db, "comments"),
+                where("targetId", "==", ownerId),
+                where("targetType", "==", "gym")
+            ));
+            if (snap.empty) {
+                list.innerHTML = `<p class="no-comments">Aún no hay comentarios. ¡Sé el primero!</p>`;
+                return;
+            }
+            const comments = [];
+            snap.forEach(d => comments.push({ id: d.id, ...d.data() }));
+            comments.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            list.innerHTML = "";
+            comments.forEach(c => {
+                const date = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("es-ES") : "";
+                const canDelete = (c.userId === userId) || isOwner;
+                const div = document.createElement("div");
+                div.className = "comment-item";
+                div.innerHTML = `
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                <div class="comment-author">${c.username || "Usuario"}</div>
+                <div class="comment-text">${c.text}</div>
+                <div class="comment-date">${date}</div>`;
+                list.appendChild(div);
+            });
+
+            list.querySelectorAll(".comment-delete-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    if (!confirm("¿Eliminar este comentario?")) return;
+                    await deleteDoc(doc(db, "comments", btn.dataset.id));
+                    btn.closest(".comment-item").remove();
+                    if (!list.querySelector(".comment-item"))
+                        list.innerHTML = `<p class="no-comments">Aún no hay comentarios.</p>`;
+                });
+            });
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = `<p class="no-comments">Error al cargar comentarios.</p>`;
+        }
+    }
+
+    document.getElementById("commentSubmitBtn").addEventListener("click", async () => {
+        const input = document.getElementById("commentInput");
+        const text  = input.value.trim();
+        if (!text) return;
+
+        const btn = document.getElementById("commentSubmitBtn");
+        btn.disabled = true; btn.textContent = "Publicando...";
+
+        try {
+            // Obtener nombre del usuario
+            const userSnap = await getDoc(doc(db, "users", userId));
+            const username = userSnap.exists()
+                ? (userSnap.data().username || userSnap.data().name || "Usuario")
+                : "Usuario";
+
+            await addDoc(collection(db, "comments"), {
+                targetId:   ownerId,
+                targetType: "gym",
+                userId,
+                username,
+                text,
+                createdAt: serverTimestamp()
+            });
+
+            input.value = "";
+            commentsLoaded = false;
+            await loadComments();
+            commentsLoaded = true;
+        } catch (e) {
+            console.error(e);
+            alert("Error al publicar el comentario.");
+        }
+        btn.disabled = false; btn.textContent = "Publicar";
+    });
 
     // ── Actividades ───────────────────────────────────────
     let allActivities = [];
@@ -245,14 +383,12 @@
     async function loadActivities(fromDate = null, toDate = null) {
         const container = document.getElementById("activitiesSection");
         container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>`;
-
         try {
             const snap = await getDocs(query(
                 collection(db, "activities"), where("ownerId", "==", ownerId)));
             allActivities = [];
             snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
 
-            // Reservas activas del usuario para marcar botones
             const mySnap = await getDocs(query(
                 collection(db, "reservations"),
                 where("userId", "==", userId),
@@ -283,7 +419,6 @@
             container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay actividades.</p>`;
             return;
         }
-
         container.innerHTML = activities.map(a => {
             const alreadySignedUp = myActivityIds.has(a.id);
             const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
@@ -310,7 +445,6 @@
             </div>`;
         }).join("");
 
-        // Listeners de reserva (solo para usuarios)
         if (!isOwner) {
             container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
                 btn.onclick = async () => {
@@ -318,35 +452,20 @@
                     btn.disabled = true;
                     btn.textContent = "Comprobando...";
                     try {
-                        // Comprobar huecos en Firestore
                         const actRef  = doc(db, "activities", actId);
                         const actSnap = await getDoc(actRef);
-                        if (!actSnap.exists()) {
-                            alert("Actividad no encontrada.");
-                            btn.disabled = false;
-                            return;
-                        }
+                        if (!actSnap.exists()) { alert("Actividad no encontrada."); btn.disabled = false; return; }
                         const cur = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
-                        if (cur <= 0) {
-                            btn.textContent = "Completo";
-                            btn.classList.add("signup-btn--full");
-                            return;
-                        }
+                        if (cur <= 0) { btn.textContent = "Completo"; btn.classList.add("signup-btn--full"); return; }
 
-                        // Comprobar duplicado
                         const existSnap = await getDocs(query(
                             collection(db, "reservations"),
                             where("userId", "==", userId),
                             where("activityId", "==", actId),
                             where("status", "==", "active")
                         ));
-                        if (!existSnap.empty) {
-                            btn.textContent = "✓ Apuntado";
-                            btn.classList.add("signup-btn--done");
-                            return;
-                        }
+                        if (!existSnap.empty) { btn.textContent = "✓ Apuntado"; btn.classList.add("signup-btn--done"); return; }
 
-                        // Crear reserva
                         await addDoc(collection(db, "reservations"), {
                             userId, activityId: actId, gymOrProId: ownerId,
                             ownerType: "gym", status: "active",
@@ -354,11 +473,9 @@
                         });
                         await updateDoc(actRef, { availableSlots: cur - 1 });
 
-                        // Email de confirmación
                         const gymSnap2 = await getDoc(doc(db, "gyms", ownerId));
                         const gymName  = gymSnap2.exists() ? gymSnap2.data().name : "Gimnasio";
                         const userEmail = sessionStorage.getItem("userEmail") || "";
-
                         try {
                             await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
                                 type: "confirmada ✅",
@@ -371,15 +488,12 @@
                                 owner_name: gymName,
                                 comment: "¡Te esperamos!"
                             });
-                        } catch (emailErr) {
-                            console.warn("Email no enviado:", emailErr);
-                        }
-                        alert("Reserva confirmada. Échale un vistazo a tu correo.");
+                        } catch (emailErr) { console.warn("Email no enviado:", emailErr); }
 
+                        alert("Reserva confirmada. Échale un vistazo a tu correo.");
                         btn.textContent = "✓ Apuntado";
                         btn.classList.add("signup-btn--done");
                         myActivityIds.add(actId);
-
                     } catch (e) {
                         console.error(e);
                         alert("Error al realizar la reserva.");
@@ -391,7 +505,6 @@
         }
     }
 
-    // ── Filtros de fecha ──────────────────────────────────
     document.getElementById("dateFromInput").onchange = function () {
         loadActivities(this.value, document.getElementById("dateToInput").value);
     };
@@ -411,7 +524,6 @@
         if (this.value) document.getElementById("dateToLabel").textContent = `${d}/${m}/${y}`;
     });
 
-    // ── Carousel ──────────────────────────────────────────
     document.getElementById("carouselLeft").onclick  = () =>
         document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
     document.getElementById("carouselRight").onclick = () =>
