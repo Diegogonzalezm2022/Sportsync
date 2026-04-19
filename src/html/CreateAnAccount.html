@@ -58,14 +58,14 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import FirebaseDb from "../javascript/app/FirebaseDb.js";
 
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
 
+    const db = await FirebaseDb.create()
     // Leer el rol elegido en RegisterAs.html (guardado en sessionStorage)
     const role = sessionStorage.getItem("registerRole") || "user";
 
@@ -99,16 +99,14 @@
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
-
             // Guardar datos sin rol todavía
-            await setDoc(doc(db, "users", uid), {
+
+            await db.addUser({
                 name,
                 surname,
                 username,
-                email,
-                createdAt: serverTimestamp()
-                // NO guardamos role aquí, lo elegirá en el popup
-            });
+                email
+            }, uid);
 
             sessionStorage.setItem("userId", uid);
             sessionStorage.setItem("userEmail", email);
@@ -128,5 +126,6 @@
     });
 </script>
 <script type="module" src="../javascript/app/Header.js"></script>
+<script type="module" src="../javascript/app/FirebaseDb.js"></script>
 </body>
 </html>
