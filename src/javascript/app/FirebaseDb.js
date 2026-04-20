@@ -1,6 +1,6 @@
 // FirebaseDb.js
-const { initializeApp } = require('@firebase/app');
-const {
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import {
     getFirestore,
     collection,
     addDoc,
@@ -11,12 +11,13 @@ const {
     query,
     where,
     updateDoc,
-    serverTimestamp
-} = require('@firebase/firestore');
+    serverTimestamp,
+    setDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 
-const firebaseConfig = require('../../assets/firebaseConfig.json');
+const firebaseConfig = await fetch('../assets/firebaseConfig.json');
 
-class FirebaseDb {
+export default class FirebaseDb {
 
     constructor() {
         this.db = null;
@@ -30,7 +31,11 @@ class FirebaseDb {
     }
 
     async _init() {
-        this.app = initializeApp(firebaseConfig);
+        try {
+            this.app = getApp();
+        } catch (error) {
+            this.app = initializeApp(firebaseConfig);
+        }
         this.db = getFirestore(this.app);
     }
 
@@ -131,6 +136,31 @@ class FirebaseDb {
         return docRef.id;
     }
 
+    async addUser(userData, userId= null) {
+        const usersRef = collection(this.db, "users");
+        if (!userId) {
+            const docRef = await addDoc(usersRef, {
+                ...userData,
+                createdAt: serverTimestamp()
+            })
+            return docRef.id
+        } else {
+            await setDoc(doc(this.db, "users", userId), {
+                ...userData,
+                createdAt: serverTimestamp()
+            });
+            return userId
+        }
+    }
+
+    async setUserRole(userId, role) {
+        const userRef = await doc(this.db, "users", userId);
+        await updateDoc(userRef, {
+            role: role,
+            }
+        )
+    }
+
     async addMaterial(materialData) {
         const materialsRef = collection(this.db, "materials");
         const docRef = await addDoc(materialsRef, {
@@ -196,5 +226,3 @@ class FirebaseDb {
         });
     }
 }
-
-module.exports = FirebaseDb;
