@@ -137,7 +137,28 @@ body {
     font-size: 0.85rem;
     margin-bottom: 12px;
 }
+.links a {
+    text-decoration: none;
+    color: #2d6a4f;
+    margin-top: 3px;
+    cursor: pointer;
+}
 
+.links a:hover {
+    text-decoration: underline;
+    color: #1a4a35;
+    margin-top: 3px;
+    cursor: pointer;
+}
+
+.links {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #2d6a4f;
+}
 /* ===== Role popup ===== */
 .role-overlay {
     position: fixed;
