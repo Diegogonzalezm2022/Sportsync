@@ -505,24 +505,36 @@
         }
     }
 
-    document.getElementById("dateFromInput").onchange = function () {
-        loadActivities(this.value, document.getElementById("dateToInput").value);
-    };
-    document.getElementById("dateToInput").onchange = function () {
-        loadActivities(document.getElementById("dateFromInput").value, this.value);
-    };
     document.getElementById("dateFromBtn").onclick = () =>
         document.getElementById("dateFromInput").showPicker?.() || document.getElementById("dateFromInput").click();
     document.getElementById("dateToBtn").onclick = () =>
         document.getElementById("dateToInput").showPicker?.() || document.getElementById("dateToInput").click();
-    document.getElementById("dateFromInput").addEventListener("change", function () {
+
+    document.getElementById("dateFromInput").onchange = function () {
+        const toVal = document.getElementById("dateToInput").value;
+        if (toVal && this.value > toVal) {
+            alert("La fecha desde no puede ser mayor que la fecha hasta.");
+            this.value = "";
+            document.getElementById("dateFromLabel").textContent = "Fecha desde";
+            return;
+        }
         const [y, m, d] = this.value.split("-");
         if (this.value) document.getElementById("dateFromLabel").textContent = `${d}/${m}/${y}`;
-    });
-    document.getElementById("dateToInput").addEventListener("change", function () {
+        loadActivities(this.value, toVal);
+    };
+
+    document.getElementById("dateToInput").onchange = function () {
+        const fromVal = document.getElementById("dateFromInput").value;
+        if (fromVal && this.value < fromVal) {
+            alert("La fecha hasta no puede ser menor que la fecha desde.");
+            this.value = "";
+            document.getElementById("dateToLabel").textContent = "Fecha hasta";
+            return;
+        }
         const [y, m, d] = this.value.split("-");
         if (this.value) document.getElementById("dateToLabel").textContent = `${d}/${m}/${y}`;
-    });
+        loadActivities(fromVal, this.value);
+    };
 
     document.getElementById("carouselLeft").onclick  = () =>
         document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
