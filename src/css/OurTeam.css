@@ -88,15 +88,53 @@ body{
     color: black;
 }
 
-/* ---------- Responsive ---------- */
+/* Responsive - Tablet */
+@media (max-width: 600px) {
+    .team-section {
+        padding: 30px 15px 40px;
+    }
+
+    .team-title {
+        font-size: 1.4rem;
+        margin-bottom: 24px;
+    }
+
+    .team-grid {
+        gap: 24px 16px;
+    }
+
+    .photo-placeholder {
+        max-width: 160px;
+    }
+}
+
+/* Responsive - Móvil */
 @media (max-width: 400px) {
+    .team-section {
+        padding: 25px 12px 35px;
+    }
+
+    .team-title {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+
     .team-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 24px 12px;
+        gap: 20px 10px;
     }
 
     .photo-placeholder {
         max-width: 140px;
+    }
+
+    .member-name {
+        font-size: 0.85rem;
+    }
+
+    .member-desc {
+        font-size: 0.7rem;
+        max-width: 130px;
     }
 }
 
