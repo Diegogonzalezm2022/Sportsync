@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="../css/components/Footer.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        .edit-mode-btn { margin-top:10px; padding:8px 15px; cursor:pointer; border-radius:5px; border:none; background:#f39c12; color:white; font-weight:bold; }
         .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
         .star--active { color: #f1c40f !important; }
 
@@ -104,6 +103,7 @@
             </div>
             <div id="ownerControls" style="display:none; margin-top:10px;">
                 <button class="edit-mode-btn" id="editBtn">✏️ Editar Gimnasio</button>
+                <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
         </div>
     </section>
@@ -232,6 +232,8 @@
             document.getElementById("ownerControls").style.display = "block";
             document.getElementById("editBtn").onclick = () =>
                 window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=gym`;
+            document.getElementById("editBtnVet").onclick = () =>
+                window.location.href = `ViewReservation.html?id=${ownerId}&type=gym`;
             document.getElementById("starsContainer").style.pointerEvents = "none";
             document.getElementById("ratingHint").textContent = "Tu perfil";
         } else {

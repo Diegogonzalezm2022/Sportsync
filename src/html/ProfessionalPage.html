@@ -104,6 +104,7 @@
             </div>
             <div id="ownerControls" style="display:none; margin-top:10px;">
                 <button class="edit-mode-btn" id="editBtn">✏️ Editar Perfil Profesional</button>
+                <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
         </div>
     </section>
@@ -221,6 +222,8 @@
             document.getElementById("ownerControls").style.display = "block";
             document.getElementById("starsContainer").style.pointerEvents = "none";
             document.getElementById("ratingHint").textContent = "Tu perfil";
+            document.getElementById("editBtnVet").onclick = () =>
+                window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
             document.getElementById("editBtn").onclick = () =>
                 window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
         } else {
