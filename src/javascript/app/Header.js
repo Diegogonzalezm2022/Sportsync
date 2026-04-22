@@ -2,16 +2,19 @@ import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 let app;
-try {
-    app = getApp();
-} catch {
 
-    const response = await fetch("../assets/firebaseConfig.json");
-    const firebaseConfig = await response.json();
-
-    app = initializeApp(firebaseConfig);
+async function initFirebase() {
+    try {
+        app = getApp();
+    } catch {
+        const response = await fetch("../assets/firebaseConfig.json");
+        const firebaseConfig = await response.json();
+        app = initializeApp(firebaseConfig);
+    }
+    return app;
 }
 
+await initFirebase();
 const auth = getAuth(app);
 
 function waitForElement(selector, callback) {
