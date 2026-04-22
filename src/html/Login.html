@@ -13,20 +13,20 @@
 
 <main class="container">
     <section class="left">
-        <h2>Login</h2>
+        <h2>Inicio de sesión</h2>
         <div id="loginError" class="login-error" style="display:none; color: red; margin-bottom: 10px;"></div>
         <div class="form">
             <label for="user">Email:</label>
-            <input id="user" type="email" placeholder="example@mail.com">
+            <input id="user" type="email" placeholder="ejemplo@mail.com">
 
-            <label for="password">Password:</label>
+            <label for="password">Contraseña:</label>
             <input id="password" type="password" placeholder="********">
 
-            <button class="btn btn-login" id="loginBtn">Login</button>
+            <button class="btn btn-login" id="loginBtn">Iniciar Sesión</button>
 
             <div class="links">
-                <a href="ForgotYourPassword.html">Forgot your password?</a>
-                <a href="CreateAnAccount.html">Register</a>
+                <a href="ForgotYourPassword.html">¿Olvidaste tu contraseña?</a>
+                <a href="CreateAnAccount.html">Registrarte</a>
             </div>
         </div>
     </section>
@@ -40,11 +40,11 @@
 
 <div class="role-overlay" id="roleOverlay">
     <div class="role-popup">
-        <h2 class="role-title">Who are you?</h2>
+        <h2 class="role-title">¿Quién eres?</h2>
         <div class="role-options">
-            <button class="role-btn role-btn--gym" data-role="gym">Im a gym</button>
-            <button class="role-btn role-btn--professional" data-role="professional">Im a professional</button>
-            <button class="role-btn role-btn--user" data-role="user">Im a user</button>
+            <button class="role-btn role-btn--gym" data-role="gym">Soy un gimnasio</button>
+            <button class="role-btn role-btn--professional" data-role="professional">Soy un profesional</button>
+            <button class="role-btn role-btn--user" data-role="user">Soy un usuario</button>
         </div>
     </div>
 </div>
@@ -53,33 +53,23 @@
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
 <script>
-    if (typeof xLuIncludeFile === 'function') {
-        xLuIncludeFile();
-    }
+    if (typeof xLuIncludeFile === 'function') xLuIncludeFile();
 </script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import FirebaseDb from "../javascript/app/FirebaseDb.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBe7Muffm1j7b8apziWK13B_54q6DCaUT0",
-        authDomain: "proyecto2026ps.firebaseapp.com",
-        projectId: "proyecto2026ps",
-        storageBucket: "proyecto2026ps.firebasestorage.app",
-        messagingSenderId: "124816158835",
-        appId: "1:124816158835:web:39a68c1772fa3427a33a06",
-        measurementId: "G-0G1XLG4TN2"
-    };
+    const response = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db = await FirebaseDb.create()
 
     let loggedUid = null;
 
-    // 1. FUNCIÓN REDIRECT (Global dentro del módulo)
     function redirectByRole(role, ownId) {
         if (role === "gym")
             window.location.href = `GymPage.html?id=${ownId}`;
@@ -89,80 +79,106 @@
             window.location.href = "ActivitySearch.html";
     }
 
-    // 2. LÓGICA DE LOGIN
-    const loginBtn = document.getElementById("loginBtn");
-    if (loginBtn) {
-        loginBtn.addEventListener("click", async () => {
-            const email = document.getElementById("user").value.trim();
-            const password = document.getElementById("password").value;
-            const errorEl = document.getElementById("loginError");
-
-            errorEl.style.display = "none";
-
-            if (!email || !password) {
-                errorEl.textContent = "Por favor rellena todos los campos.";
-                errorEl.style.display = "block";
-                return;
-            }
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                loggedUid = userCredential.user.uid;
-
-                sessionStorage.setItem("userId", loggedUid);
-                sessionStorage.setItem("userEmail", email);
-
-                const userSnap = await getDoc(doc(db, "users", loggedUid));
-                const userData = userSnap.exists() ? userSnap.data() : {};
-
-                if (userData.role) {
-                    sessionStorage.setItem("userRole", userData.role);
-                    // Si es negocio, el ownerId es su propio UID
-                    const oId = (userData.role === "gym" || userData.role === "professional") ? loggedUid : null;
-                    if (oId) sessionStorage.setItem("ownerId", oId);
-
-                    redirectByRole(userData.role, oId);
-                } else {
-                    // Si no tiene rol, mostramos el popup
-                    document.getElementById("roleOverlay").classList.add("active");
-                }
-
-            } catch (e) {
-                console.error("Error en login:", e);
-                errorEl.style.display = "block";
-                errorEl.textContent = "Email o contraseña incorrectos.";
-            }
+    // ── Obtener ubicación como promesa ────────────────────
+    function getLocationPromise() {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) { resolve(null); return; }
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                ()  => resolve(null),
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
         });
     }
 
-    // Soporte para tecla Enter
-    document.getElementById("password").addEventListener("keydown", e => {
-        if (e.key === "Enter") loginBtn.click();
+    // ── Login ─────────────────────────────────────────────
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+        const email    = document.getElementById("user").value.trim();
+        const password = document.getElementById("password").value;
+        const errorEl  = document.getElementById("loginError");
+        errorEl.style.display = "none";
+
+        if (!email || !password) {
+            errorEl.textContent = "Por favor rellena todos los campos.";
+            errorEl.style.display = "block";
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            loggedUid = userCredential.user.uid;
+
+            sessionStorage.setItem("userId", loggedUid);
+            sessionStorage.setItem("userEmail", email);
+
+            const userData = await db.getUser(loggedUid);
+
+            if (userData.role) {
+                sessionStorage.setItem("userRole", userData.role);
+                const oId = (userData.role === "gym" || userData.role === "professional") ? loggedUid : null;
+                if (oId) sessionStorage.setItem("ownerId", oId);
+                redirectByRole(userData.role, oId);
+            } else {
+                document.getElementById("roleOverlay").classList.add("active");
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById("loginError").textContent = "Email o contraseña incorrectos.";
+            document.getElementById("loginError").style.display = "block";
+        }
     });
 
-    // 3. SELECCIÓN DE ROL (Para nuevos usuarios)
+    document.getElementById("password").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("loginBtn").click();
+    });
+
+    // ── Selección de rol ──────────────────────────────────
     document.querySelectorAll(".role-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             const role = btn.dataset.role;
             if (!loggedUid) return;
 
+            // Deshabilitar botones mientras procesa
+            document.querySelectorAll(".role-btn").forEach(b => b.disabled = true);
+
             try {
-                await updateDoc(doc(db, "users", loggedUid), { role });
+                await db.setUserRole(loggedUid, role);
                 sessionStorage.setItem("userRole", role);
 
                 if (role === "gym" || role === "professional") {
+                    /*
                     const colName = role === "gym" ? "gyms" : "professionals";
-                    const userSnap = await getDoc(doc(db, "users", loggedUid));
-                    const uData = userSnap.exists() ? userSnap.data() : {};
-
+                    */
+                    const uData = db.getUser(loggedUid);
+                    /* ¿Es importante que dueño de gimnasio y gimnasio tengan el mismo Id?
                     await setDoc(doc(db, colName, loggedUid), {
                         name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
                         description: "",
                         contactInfo: "",
                         schedule: "",
+                        type: role,
                         ownerId: loggedUid,
                         createdAt: serverTimestamp()
                     });
+                    */
+                    if (role === "gym") {
+                        await db.addGym({
+                            name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
+                            description: "",
+                            contactInfo: "",
+                            schedule: "",
+                            ownerId: loggedUid,
+                        }, loggedUid)
+                    } else if (role === "professional") {
+                        await db.addProfessional({
+                            name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
+                            description: "",
+                            contactInfo: "",
+                            schedule: "",
+                            ownerId: loggedUid,
+                        }, loggedUid)
+                    }
+
                     sessionStorage.setItem("ownerId", loggedUid);
                 }
 
@@ -170,9 +186,11 @@
                 redirectByRole(role, loggedUid);
             } catch (error) {
                 console.error("Error al asignar rol:", error);
+                document.querySelectorAll(".role-btn").forEach(b => b.disabled = false);
             }
         });
     });
 </script>
+<script type="module" src="../javascript/app/Header.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // FirebaseDb.js
-const { initializeApp } = require('@firebase/app');
-const {
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import {
     getFirestore,
     collection,
     addDoc,
@@ -11,12 +11,13 @@ const {
     query,
     where,
     updateDoc,
-    serverTimestamp
-} = require('@firebase/firestore');
+    serverTimestamp,
+    setDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 
-const firebaseConfig = require('../../assets/firebaseConfig.json');
+const firebaseConfig = await fetch('../assets/firebaseConfig.json');
 
-class FirebaseDb {
+export default class FirebaseDb {
 
     constructor() {
         this.db = null;
@@ -30,7 +31,11 @@ class FirebaseDb {
     }
 
     async _init() {
-        this.app = initializeApp(firebaseConfig);
+        try {
+            this.app = getApp();
+        } catch (error) {
+            this.app = initializeApp(firebaseConfig);
+        }
         this.db = getFirestore(this.app);
     }
 
@@ -109,26 +114,91 @@ class FirebaseDb {
         return gyms;
     }
 
-    async addGym(gymData) {
-        const gymsRef = collection(this.db, "gyms");
-        const docRef = await addDoc(gymsRef, {
-            ...gymData,
-            rating: 0,
-            ratingCount: 0,
-            createdAt: serverTimestamp()
-        });
-        return docRef.id;
+    async addGym(gymData, ownerId=null) {
+        if (!ownerId) {
+            const gymsRef = collection(this.db, "gyms");
+            const docRef = await addDoc(gymsRef, {
+                ...gymData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return docRef.id;
+        } else {
+            const docRef = await setDoc(doc(this.db, "gyms", ownerId), {
+                ...gymData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return ownerId;
+        }
     }
 
-    async addProfessional(proData) {
-        const prosRef = collection(this.db, "professionals");
-        const docRef = await addDoc(prosRef, {
-            ...proData,
+    async addProfessional(proData, ownerId=null) {
+        if (!ownerId) {
+            const prosRef = collection(this.db, "professionals");
+            const docRef = await addDoc(prosRef, {
+                ...proData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return docRef.id;
+        } else {
+            const docRef = await setDoc(doc(this.db, "professionals", ownerId), {
+                ...proData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return ownerId;
+        }
+    }
+
+    async addUser(userData, userId= null) {
+        const usersRef = collection(this.db, "users");
+        if (!userId) {
+            const docRef = await addDoc(usersRef, {
+                ...userData,
+                createdAt: serverTimestamp()
+            })
+            return docRef.id
+        } else {
+            await setDoc(doc(this.db, "users", userId), {
+                ...userData,
+                createdAt: serverTimestamp()
+            });
+            return userId
+        }
+    }
+
+    async setUserRole(userId, role) {
+        const userRef = await doc(this.db, "users", userId);
+        await updateDoc(userRef, {
+            role: role,
+            }
+        )
+    }
+
+    async getUser(userId) {
+        const userRef = await doc(this.db, "users", userId);
+        if (userRef) {
+            const userDoc = await getDoc(userRef);
+            return userDoc.data()
+        } else {
+            return {};
+        }
+    }
+
+    async addMaterial(materialData) {
+        const materialsRef = collection(this.db, "materials");
+        const docRef = await addDoc(materialsRef, {
+            ...materialData,
             rating: 0,
             ratingCount: 0,
             createdAt: serverTimestamp()
-        });
-        return docRef.id;
+        })
     }
 
     async addActivity(ownerId, ownerType, activityData) {
@@ -186,5 +256,3 @@ class FirebaseDb {
         });
     }
 }
-
-module.exports = FirebaseDb;
