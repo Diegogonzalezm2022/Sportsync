@@ -55,14 +55,15 @@ body {
     gap: 18px;
 }
 
+
 /* ---------- Back button ---------- */
 .back-btn {
     background: none;
-    border: black;
-    cursor: pointer;
+    border: none;
     font-size: 1.5rem;
     color: var(--text-secondary);
-    padding: 10px 0;
+    cursor: pointer;
+    border: black;
     width: fit-content;
     font-family: monospace;
     transition: color 0.2s;
@@ -513,7 +514,18 @@ body {
 }
 
 
+
 .edit-mode-btn{
+    margin-top: 10px;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    background-color: black;
+    color: white;
+}
+
+.edit-mode-btn:hover{
     margin-top: 10px;
     padding: 8px 15px;
     cursor: pointer;
@@ -524,7 +536,18 @@ body {
     font-weight: bold;
 }
 
+
 .edit-mode-btn-vetar{
+    margin-top: 10px;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    background: black;
+    color: white;
+}
+
+.edit-mode-btn-vetar:hover{
     margin-top: 10px;
     padding: 8px 15px;
     cursor: pointer;
@@ -534,7 +557,6 @@ body {
     color: white;
     font-weight: bold;
 }
-
 /* ========================================
    Responsive
    ======================================== */

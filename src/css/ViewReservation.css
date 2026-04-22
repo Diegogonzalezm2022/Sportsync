@@ -25,7 +25,7 @@
 }
 
 body {
-    background-color: var(--bg);
+    background-color: #e6fff9;;
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     color: var(--text-primary);
     min-height: 100vh;
@@ -64,7 +64,7 @@ body {
    Activity Group
    ======================================== */
 .activity-group {
-    background: var(--surface-2);
+    background: lightseagreen;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 12px;
@@ -135,16 +135,28 @@ body {
     color: var(--text-primary);
 }
 
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: black;
+    width: fit-content;
+    font-family: monospace;
+    transition: color 0.2s;
+}
+
 /* ---------- Veto button ---------- */
 .veto-btn {
     padding: 6px 16px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    background: var(--surface-2);
+    background-color: black;
     font-family: inherit;
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: white;
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
