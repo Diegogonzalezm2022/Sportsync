@@ -162,3 +162,47 @@ body{
     color: white;
     font-weight: bold;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-main {
+        padding: 20px;
+    }
+
+    .profile-form {
+        padding: 0 10px;
+    }
+
+    .inline-group {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-main {
+        padding: 15px 10px;
+    }
+
+    .profile-header {
+        margin-bottom: 20px;
+    }
+
+    .avatar-circle {
+        width: 60px;
+        height: 60px;
+    }
+
+    .profile-form {
+        gap: 15px;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .save-btn {
+        width: 100%;
+    }
+}

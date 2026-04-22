@@ -199,3 +199,47 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 30px 15px;
+    }
+
+    #profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .photo-placeholder {
+        width: 120px;
+        height: 120px;
+    }
+
+    .profile-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-details {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 20px 10px;
+    }
+
+    .photo-placeholder {
+        width: 100px;
+        height: 100px;
+    }
+
+    .data-box {
+        font-size: 13px;
+    }
+
+    .btn-reserv, .btn-edit-profile button {
+        width: 100%;
+    }
+}
