@@ -180,3 +180,37 @@ body{
 .empty-stars {
     visibility: hidden;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reservations-main {
+        padding: 15px;
+    }
+
+    .reservation-card {
+        flex-direction: column;
+    }
+
+    .card-actions {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .cards-container {
+        padding: 15px;
+    }
+
+    .reservation-card {
+        padding: 15px;
+    }
+
+    .action-btn {
+        width: 100%;
+    }
+
+    .card-actions.past-actions {
+        align-items: flex-start;
+    }
+}

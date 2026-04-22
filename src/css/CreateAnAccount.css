@@ -116,3 +116,46 @@ body {
     font-size: 0.85rem;
     margin-bottom: 12px;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .register-container {
+        flex-direction: column;
+    }
+
+    .form-section,
+    .photo-section {
+        width: 100%;
+        height: 50vh;
+    }
+
+    .form-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .register-form {
+        width: 80%;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-section {
+        padding: 20px;
+    }
+
+    .form-section h2 {
+        font-size: 1.3rem;
+    }
+
+    .register-form {
+        width: 100%;
+    }
+
+    .register-form input {
+        padding: 10px 12px;
+    }
+
+    .btn-register {
+        width: 100%;
+    }
+}
