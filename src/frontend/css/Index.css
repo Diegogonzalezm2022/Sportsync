@@ -18,7 +18,7 @@ body {
     min-height: 100vh; /* Ocupa siempre el 100% de la ventana */
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     /* Imagen de Fondo */
-    background-image: url('../assets/imagenes/imagen_principal_index.jpeg');
+    background-image: url('../../assets/imagenes/imagen_principal_index.jpeg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
