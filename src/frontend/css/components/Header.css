@@ -115,7 +115,7 @@
     height: 40px;
     border-radius: 50%;
     background-size: cover;
-    background: url('../assets/dummy_picture.jpeg');
+    background: url('../../../assets/imagenes/logo_SportSync.png');
 }
 
 .popup-nav {
