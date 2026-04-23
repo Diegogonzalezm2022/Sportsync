@@ -52,8 +52,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc }
-        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import FirebaseDb from "../javascript/app/FirebaseDb.js";
 
     const userId = sessionStorage.getItem("userId");
     if (!userId) window.location.href = "Login.html";
@@ -61,17 +60,11 @@
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const db  = await FirebaseDb.create()
 
     // ── Cargar reservas del usuario ───────────────────────
     async function loadReservations() {
-        const snap = await getDocs(query(
-            collection(db, "reservations"),
-            where("userId", "==", userId)
-        ));
-
-        const reservations = [];
-        snap.forEach(d => reservations.push({ id: d.id, ...d.data() }));
+        const reservations = await db.getUserReservations(userId);
 
         // Cargar nombres de gym/profesional y actividad para cada reserva
         const enriched = await Promise.all(reservations.map(async r => {
@@ -80,19 +73,20 @@
 
             // Nombre del gym o profesional
             try {
-                const colName = r.ownerType === "gym" ? "gyms" : "professionals";
-                const ownerSnap = await getDoc(doc(db, colName, r.gymOrProId));
-                if (ownerSnap.exists()) ownerName = ownerSnap.data().name || r.gymOrProId;
+                if (r.ownerType === "gym") {
+                    ownerName = await db.getGym(r.gymOrProId).name
+                } else {
+                    ownerName = await db.getProfessional(r.gymOrProId).name
+                }
             } catch {}
 
             // Nombre de la actividad
             try {
-                const actSnap = await getDoc(doc(db, "activities", r.activityId));
-                if (actSnap.exists()) {
-                    const actData = actSnap.data();
-                    activityName = actData.name || r.activityId;
-                    r.activitySchedule = actData.schedule || "—";
-                    r.activityPrice    = actData.price    || "—";
+                const activity = await db.getActivity(r.activityId)
+                if (activity) {
+                    activityName = activity.name || r.activityId;
+                    r.activitySchedule = activity.schedule || "—";
+                    r.activityPrice    = activity.price    || "—";
                 }
             } catch {}
 
@@ -141,7 +135,7 @@
             btn.addEventListener("click", async () => {
                 if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
                 try {
-                    await updateDoc(doc(db, "reservations", btn.dataset.id), { status: "cancelled" });
+                    await db.cancelReservation(btn.dataset.id);
                     btn.closest(".reservation-card").remove();
                     const activeList = document.getElementById("activeList");
                     if (!activeList.querySelector(".reservation-card")) {
@@ -194,7 +188,7 @@
         list.querySelectorAll(".stars").forEach(starsEl => {
             const spans      = starsEl.querySelectorAll("span");
             const targetId   = starsEl.dataset.targetId;
-            const ownerType  = starsEl.dataset.ownerType;
+            const ownerType  = r.ownerType
             let selected     = 0;
 
             spans.forEach(s => {
@@ -204,16 +198,7 @@
                     selected = +s.dataset.value;
                     highlight(selected);
                     try {
-                        const colName    = ownerType === "gym" ? "gyms" : "professionals";
-                        const targetRef  = doc(db, colName, targetId);
-                        const targetSnap = await getDoc(targetRef);
-                        if (targetSnap.exists()) {
-                            const { rating = 0, ratingCount = 0 } = targetSnap.data();
-                            await updateDoc(targetRef, {
-                                rating: ((rating * ratingCount) + selected) / (ratingCount + 1),
-                                ratingCount: ratingCount + 1
-                            });
-                        }
+                        await db.rateTarget(targetId, ownerType, selected);
                     } catch (e) { console.error(e); }
                 });
             });

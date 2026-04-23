@@ -343,7 +343,7 @@
                     const actId = btn.dataset.id;
                     btn.disabled = true;
                     try {
-                        await addDoc(collection(db, "reservations"), { userId, activityId: actId, gymOrProId: ownerId, status: "active", createdAt: serverTimestamp() });
+                        await addDoc(collection(db, "reservations"), { userId, activityId: actId, gymOrProId: ownerId, status: "active", createdAt: serverTimestamp(), ownerType: "gym" });
                         const actRef = doc(db, "activities", actId);
                         const actSnap = await getDoc(actRef);
                         if(actSnap.exists()){
