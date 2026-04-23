@@ -9,19 +9,46 @@
     <link rel="stylesheet" href="../css/components/Footer.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        /* Estilos para el modo edición */
-        .edit-mode-btn { margin-top: 10px; padding: 8px 15px; cursor: pointer; border-radius: 5px; border: none; background: #f39c12; color: white; font-weight: bold; }
-        .save-btn { background: #27ae60; display: none; }
-        .editing { border: 1px dashed #f39c12; padding: 5px; background: #fffdf0; color: #333 !important; min-height: 20px; }
+        .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
+        .star--active { color: #f1c40f !important; }
 
-        /* Estilos para el Modal de Actividades */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: #333; }
-        .modal-content h2 { margin-bottom: 15px; color: #f39c12; }
-        .modal-form { display: flex; flex-direction: column; gap: 10px; }
-        .modal-form label { font-weight: bold; font-size: 0.9rem; }
-        .modal-form input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        /* ── Comentarios ── */
+        .comments-section { margin: 24px 0; }
+        .comments-toggle-btn {
+            background: none; border: 1.5px solid #ddd; border-radius: 8px;
+            padding: 7px 16px; font-size: 0.85rem; cursor: pointer; color: #555;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .comments-toggle-btn:hover { border-color: #aaa; color: #222; }
+        .comments-box { margin-top: 14px; }
+        .comment-form { display: flex; gap: 8px; margin-bottom: 16px; }
+        .comment-input {
+            flex: 1; padding: 9px 12px; border: 1.5px solid #ddd;
+            border-radius: 8px; font-size: 0.85rem; outline: none;
+            font-family: inherit;
+        }
+        .comment-input:focus { border-color: #888; }
+        .comment-submit-btn {
+            padding: 9px 16px; border: none; border-radius: 8px;
+            background: #1a1a1a; color: white; font-size: 0.85rem;
+            cursor: pointer; white-space: nowrap;
+        }
+        .comment-submit-btn:hover { background: #333; }
+        .comment-list { display: flex; flex-direction: column; gap: 10px; }
+        .comment-item {
+            background: #f8f8f8; border-radius: 10px;
+            padding: 10px 14px; font-size: 0.85rem;
+        }
+        .comment-author { font-weight: 600; color: #333; margin-bottom: 3px; font-size: 0.8rem; }
+        .comment-text { color: #444; line-height: 1.4; }
+        .comment-date { font-size: 0.72rem; color: #aaa; margin-top: 4px; }
+        .no-comments { font-size: 0.83rem; color: #aaa; font-style: italic; }
+        .comment-delete-btn {
+            background: none; border: none; cursor: pointer;
+            color: #ccc; font-size: 0.75rem; float: right;
+            padding: 0; line-height: 1;
+        }
+        .comment-delete-btn:hover { color: #e74c3c; }
     </style>
 </head>
 <body class="page--gym">
@@ -30,25 +57,20 @@
 
 <main class="profile-page-main">
     <button class="back-btn" onclick="history.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
 
     <section class="top-section">
         <div class="profile-photo-block">
-            <div class="profile-photo">
-                <svg class="photo-x" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="0" y1="0" x2="200" y2="160" stroke="#ccc" stroke-width="1.2"/>
-                    <line x1="200" y1="0" x2="0" y2="160" stroke="#ccc" stroke-width="1.2"/>
-                </svg>
-                <span class="photo-caption">Gym Profile</span>
+            <div class="profile-photo" id="profilePhotoBlock" style="position:relative;overflow:hidden;background-color:white;">
+                <span class="photo-caption" id="photoCaption">Foto de Perfil</span>
+                <img id="profilePhotoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
             </div>
             <div class="schedule-block">
-                <span class="schedule-label">Schedule:</span>
+                <span class="schedule-label">Horario:</span>
                 <div class="schedule-box">
-                    <span class="schedule-days" id="scheduleDays" contenteditable="false">—</span>
-                    <span class="schedule-hours" id="scheduleHours" contenteditable="false">—</span>
+                    <span class="schedule-days" id="scheduleDays">—</span>
+                    <span class="schedule-hours" id="scheduleHours"></span>
                 </div>
             </div>
         </div>
@@ -81,48 +103,17 @@
             </div>
             <div id="ownerControls" style="display:none; margin-top:10px;">
                 <button class="edit-mode-btn" id="editBtn">✏️ Editar Gimnasio</button>
+                <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
         </div>
     </section>
-
-    <div id="createActivityWrapper" style="display:none; text-align: center; margin: 20px 0;">
-        <button id="openModalBtn" class="edit-mode-btn" style="background: #27ae60;">+ Create New Activity</button>
-    </div>
-
-    <div id="activityModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>New Activity</h2>
-            <div class="modal-form">
-                <label>Name:</label>
-                <input type="text" id="actName" placeholder="Yoga, Boxing...">
-                <label>Schedule (Time):</label>
-                <input type="text" id="actSchedule" placeholder="18:00 - 19:30">
-                <label>Date:</label>
-                <input type="date" id="actDate">
-                <label>Price (€):</label>
-                <input type="number" id="actPrice" placeholder="0">
-                <label>Slots:</label>
-                <input type="number" id="actSlots" placeholder="15">
-
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button id="saveActivityBtn" class="edit-mode-btn" style="background: #27ae60; flex:1;">Create</button>
-                    <button id="closeModalBtn" class="edit-mode-btn" style="background: #e74c3c; flex:1;">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
             <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
-            <div class="gallery-carousel" id="galleryCarousel">
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
-                <div class="gallery-slot"><svg class="slot-x" viewBox="0 0 120 120"><line x1="0" y1="0" x2="120" y2="120" stroke="#ccc" stroke-width="1"/><line x1="120" y1="0" x2="0" y2="120" stroke="#ccc" stroke-width="1"/></svg><span class="slot-caption">Gym Photo</span></div>
-            </div>
+            <div class="gallery-carousel" id="galleryCarousel"></div>
             <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
             </button>
@@ -175,94 +166,182 @@
 <script type="module" src="../javascript/app/header.js"></script>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, serverTimestamp }
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, query, where, updateDoc, serverTimestamp}
         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    const userId = sessionStorage.getItem("userId");
-    const role = sessionStorage.getItem("userRole");
-    const params = new URLSearchParams(window.location.search);
-    const ownerId = params.get("id") || sessionStorage.getItem("ownerId");
-    const ownerType = "gym";
+    emailjs.init("bOhMQRr1h4BzhaNUT");
 
-    if (!userId) window.location.href = "Login.html";
-    if (role === "professional" && !params.get("id")) window.location.href = "ProfessionalPage.html";
-
-    const response = await fetch("../assets/firebaseConfig.json");
-    const firebaseConfig = await response.json();
-    const app = initializeApp(firebaseConfig);
+    const resp = await fetch("../assets/firebaseConfig.json");
+    const firebaseConfig = await resp.json();
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
+    const userId  = sessionStorage.getItem("userId");
+    const params  = new URLSearchParams(window.location.search);
+    const ownerId = params.get("id") || sessionStorage.getItem("userId");
     const isOwner = (userId === ownerId);
 
-    const nameEl = document.getElementById("profileName");
-    const descEl = document.getElementById("profileDesc");
-    const contactEl = document.getElementById("contactLines");
-    const daysEl = document.getElementById("scheduleDays");
-    const hoursEl = document.getElementById("scheduleHours");
+    if (!userId) window.location.href = "Login.html";
 
-    // ── Cargar datos del perfil ───────────────────────────
-    if (ownerId) {
+    // ── Cargar datos del gym ──────────────────────────────
+    async function loadData() {
         const gymSnap = await getDoc(doc(db, "gyms", ownerId));
-        if (gymSnap.exists()) {
-            const data = gymSnap.data();
-            nameEl.textContent = data.name || "—";
-            descEl.textContent = data.description || "—";
-            if (data.schedule) {
-                daysEl.textContent = data.schedule.days || data.schedule || "—";
-                hoursEl.textContent = (data.schedule.from && data.schedule.to) ? `${data.schedule.from}–${data.schedule.to}` : "";
-            }
-            contactEl.textContent = data.contactInfo || "—";
+        if (!gymSnap.exists()) {
+            document.getElementById("profileName").textContent = "Perfil no encontrado";
+            return;
+        }
+        const d = gymSnap.data();
 
-            if (isOwner) {
-                document.getElementById("ownerControls").style.display = "block";
-                document.getElementById("createActivityWrapper").style.display = "block";
+        document.getElementById("profileName").textContent  = d.name        || "—";
+        document.getElementById("profileDesc").textContent  = d.description || "—";
+        document.getElementById("contactLines").textContent = d.contactInfo  || "—";
+
+        if (d.schedule) {
+            if (typeof d.schedule === "object") {
+                document.getElementById("scheduleDays").textContent  = d.schedule.days || "—";
+                document.getElementById("scheduleHours").textContent =
+                    (d.schedule.from && d.schedule.to) ? `${d.schedule.from}–${d.schedule.to}` : "";
+            } else {
+                document.getElementById("scheduleDays").textContent = d.schedule;
             }
         }
+
+        if (d.photoURL) {
+            document.getElementById("profilePhotoImg").src = d.photoURL;
+            document.getElementById("profilePhotoImg").style.display = "block";
+            document.getElementById("photoCaption").style.display = "none";
+        }
+
+        if (d.gallery && d.gallery.length > 0) {
+            document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
+                <div class="gallery-slot">
+                    <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                </div>`).join("");
+        }
+
+        if (d.rating) {
+            const rounded = Math.round(d.rating);
+            document.querySelectorAll(".star").forEach(s => {
+                if (+s.dataset.value <= rounded) s.classList.add("star--active");
+            });
+            document.getElementById("ratingHint").textContent = `${d.rating.toFixed(1)} / 5`;
+        }
+
+        if (isOwner) {
+            document.getElementById("ownerControls").style.display = "block";
+            document.getElementById("editBtn").onclick = () =>
+                window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=gym`;
+            document.getElementById("editBtnVet").onclick = () =>
+                window.location.href = `ViewReservation.html?id=${ownerId}&type=gym`;
+            document.getElementById("starsContainer").style.pointerEvents = "none";
+            document.getElementById("ratingHint").textContent = "Tu perfil";
+        } else {
+            const stars = document.querySelectorAll(".star");
+
+            if (d.ratings && d.ratings[userId]) {
+                const myPrev = d.ratings[userId];
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= myPrev));
+                document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
+            }
+
+            stars.forEach(star => {
+                star.addEventListener("mouseover", () =>
+                    stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
+                star.addEventListener("mouseout", () => {
+                    const text = document.getElementById("ratingHint").textContent;
+                    const match = text.match(/[\d.]+/);
+                    const cur = match ? Math.round(parseFloat(match[0])) : 0;
+                    stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
+                });
+                star.onclick = async () => {
+                    const val = +star.dataset.value;
+                    const ref = doc(db, "gyms", ownerId);
+                    const snap = await getDoc(ref);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const ratings    = data.ratings    || {};
+                        const prevRating = ratings[userId] || null;
+                        let { rating = 0, ratingCount = 0 } = data;
+                        if (prevRating !== null) {
+                            const totalSinAnterior = (rating * ratingCount) - prevRating;
+                            rating = ratingCount > 1 ? (totalSinAnterior + val) / ratingCount : val;
+                        } else {
+                            rating = ((rating * ratingCount) + val) / (ratingCount + 1);
+                            ratingCount = ratingCount + 1;
+                        }
+                        await updateDoc(ref, { rating, ratingCount, [`ratings.${userId}`]: val });
+                        location.reload();
+                    }
+                };
+            });
+
+            // Mostrar formulario de comentario solo a usuarios no dueños
+            document.getElementById("commentForm").style.display = "flex";
+        }
+
+        loadActivities();
     }
 
-    // ── Lógica de Edición de Perfil ────────────────────────
-    if (isOwner) {
-        const editBtn = document.getElementById("editBtn");
-        const saveBtn = document.getElementById("saveBtn");
-        const fields = [nameEl, descEl, contactEl, daysEl, hoursEl];
+    // ── Comentarios ───────────────────────────────────────
+    let commentsLoaded = false;
 
-        editBtn.addEventListener("click", () => {
-            const isEditing = nameEl.contentEditable === "true";
-            fields.forEach(el => {
-                el.contentEditable = !isEditing;
-                el.classList.toggle("editing", !isEditing);
-            });
-            editBtn.textContent = isEditing ? "Edit Gym" : "Cancel";
-            saveBtn.style.display = isEditing ? "none" : "inline-block";
-        });
+    document.getElementById("commentsToggleBtn").addEventListener("click", async () => {
+        const box = document.getElementById("commentsBox");
+        const btn = document.getElementById("commentsToggleBtn");
+        const visible = box.style.display !== "none";
+        box.style.display = visible ? "none" : "block";
+        btn.textContent = visible ? "💬 Ver comentarios" : "💬 Ocultar comentarios";
+        if (!visible && !commentsLoaded) {
+            await loadComments();
+            commentsLoaded = true;
+        }
+    });
 
-        saveBtn.addEventListener("click", async () => {
-            saveBtn.disabled = true;
-            try {
-                await updateDoc(doc(db, "gyms", ownerId), {
-                    name: nameEl.textContent,
-                    description: descEl.textContent,
-                    contactInfo: contactEl.textContent,
-                    schedule: {
-                        days: daysEl.textContent,
-                        from: hoursEl.textContent.split('–')[0] || "",
-                        to: hoursEl.textContent.split('–')[1] || ""
-                    }
-                });
-                alert("Gym Profile updated!");
-                location.reload();
-            } catch (e) {
-                alert("Error saving changes.");
-                saveBtn.disabled = false;
+    async function loadComments() {
+        const list = document.getElementById("commentList");
+        try {
+            const snap = await getDocs(query(
+                collection(db, "comments"),
+                where("targetId", "==", ownerId),
+                where("targetType", "==", "gym")
+            ));
+            if (snap.empty) {
+                list.innerHTML = `<p class="no-comments">Aún no hay comentarios. ¡Sé el primero!</p>`;
+                return;
             }
-        });
+            const comments = [];
+            snap.forEach(d => comments.push({ id: d.id, ...d.data() }));
+            comments.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
-        // ── Lógica Modal Crear Actividad ──
-        const modal = document.getElementById("activityModal");
-        const openModalBtn = document.getElementById("openModalBtn");
-        const closeModalBtn = document.getElementById("closeModalBtn");
-        const saveActivityBtn = document.getElementById("saveActivityBtn");
+            list.innerHTML = "";
+            comments.forEach(c => {
+                const date = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("es-ES") : "";
+                const canDelete = (c.userId === userId) || isOwner;
+                const div = document.createElement("div");
+                div.className = "comment-item";
+                div.innerHTML = `
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                <div class="comment-author">${c.username || "Usuario"}</div>
+                <div class="comment-text">${c.text}</div>
+                <div class="comment-date">${date}</div>`;
+                list.appendChild(div);
+            });
+
+            list.querySelectorAll(".comment-delete-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    if (!confirm("¿Eliminar este comentario?")) return;
+                    await deleteDoc(doc(db, "comments", btn.dataset.id));
+                    btn.closest(".comment-item").remove();
+                    if (!list.querySelector(".comment-item"))
+                        list.innerHTML = `<p class="no-comments">Aún no hay comentarios.</p>`;
+                });
+            });
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = `<p class="no-comments">Error al cargar comentarios.</p>`;
+        }
+    }
 
     document.getElementById("commentSubmitBtn").addEventListener("click", async () => {
         const input = document.getElementById("commentInput");

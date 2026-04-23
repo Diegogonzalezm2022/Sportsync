@@ -74,5 +74,49 @@ body {
 
 .btn:hover {
     background-color: #fff;
-    transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
+    transform: scale(1.05);
+}
+
+/* MEDIA QUERIES - RESPONSIVE */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .login-content h1 {
+        font-size: 2rem;
+    }
+
+    .button-group {
+        gap: 15px;
+    }
+
+    .login-content {
+        padding: 15px;
+    }
+
+    .btn {
+        width: 220px;
+        font-size: 1rem;
+    }
+}
+
+/* Móvil */
+@media (max-width: 480px) {
+    .login-content h1 {
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+    }
+
+    .button-group {
+        gap: 12px;
+    }
+
+    .login-content {
+        padding: 10px;
+    }
+
+    .btn {
+        width: 180px;
+        font-size: 0.9rem;
+        padding: 12px;
+    }
 }
