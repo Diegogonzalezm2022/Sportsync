@@ -59,14 +59,14 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, setDoc, serverTimestamp }
-        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import FirebaseDb from "../javascript/app/FirebaseDb.js";
 
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
-    const app  = initializeApp(firebaseConfig);
+
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
+    const db = await FirebaseDb.create()
 
     let loggedUid = null;
 
@@ -111,8 +111,7 @@
             sessionStorage.setItem("userId", loggedUid);
             sessionStorage.setItem("userEmail", email);
 
-            const userSnap = await getDoc(doc(db, "users", loggedUid));
-            const userData = userSnap.exists() ? userSnap.data() : {};
+            const userData = await db.getUser(loggedUid);
 
             if (userData.role) {
                 sessionStorage.setItem("userRole", userData.role);
@@ -143,10 +142,16 @@
             document.querySelectorAll(".role-btn").forEach(b => b.disabled = true);
 
             try {
-                await updateDoc(doc(db, "users", loggedUid), { role });
+                await db.setUserRole(loggedUid, role);
                 sessionStorage.setItem("userRole", role);
 
                 if (role === "gym" || role === "professional") {
+                    /*
+                    const colName = role === "gym" ? "gyms" : "professionals";
+                    */
+                    const uData = db.getUser(loggedUid);
+                    /* ¿Es importante que dueño de gimnasio y gimnasio tengan el mismo Id?
+                    await setDoc(doc(db, colName, loggedUid), {
                     const colName  = role === "gym" ? "gyms" : "professionals";
                     const userSnap = await getDoc(doc(db, "users", loggedUid));
                     const uData    = userSnap.exists() ? userSnap.data() : {};
@@ -168,6 +173,26 @@
                     if (location) docData.location = location;
 
                     await setDoc(doc(db, colName, loggedUid), docData);
+                    });
+                    */
+                    if (role === "gym") {
+                        await db.addGym({
+                            name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
+                            description: "",
+                            contactInfo: "",
+                            schedule: "",
+                            ownerId: loggedUid,
+                        }, loggedUid)
+                    } else if (role === "professional") {
+                        await db.addProfessional({
+                            name: `${uData.name || ""} ${uData.surname || ""}`.trim(),
+                            description: "",
+                            contactInfo: "",
+                            schedule: "",
+                            ownerId: loggedUid,
+                        }, loggedUid)
+                    }
+
                     sessionStorage.setItem("ownerId", loggedUid);
                 }
 

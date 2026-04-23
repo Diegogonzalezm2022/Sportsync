@@ -12,7 +12,8 @@ import {
     where,
     updateDoc,
     serverTimestamp,
-    setDoc
+    setDoc,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 
 const firebaseConfig = await fetch('../assets/firebaseConfig.json');
@@ -114,26 +115,46 @@ export default class FirebaseDb {
         return gyms;
     }
 
-    async addGym(gymData) {
-        const gymsRef = collection(this.db, "gyms");
-        const docRef = await addDoc(gymsRef, {
-            ...gymData,
-            rating: 0,
-            ratingCount: 0,
-            createdAt: serverTimestamp()
-        });
-        return docRef.id;
+    async addGym(gymData, ownerId=null) {
+        if (!ownerId) {
+            const gymsRef = collection(this.db, "gyms");
+            const docRef = await addDoc(gymsRef, {
+                ...gymData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return docRef.id;
+        } else {
+            const docRef = await setDoc(doc(this.db, "gyms", ownerId), {
+                ...gymData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return ownerId;
+        }
     }
 
-    async addProfessional(proData) {
-        const prosRef = collection(this.db, "professionals");
-        const docRef = await addDoc(prosRef, {
-            ...proData,
-            rating: 0,
-            ratingCount: 0,
-            createdAt: serverTimestamp()
-        });
-        return docRef.id;
+    async addProfessional(proData, ownerId=null) {
+        if (!ownerId) {
+            const prosRef = collection(this.db, "professionals");
+            const docRef = await addDoc(prosRef, {
+                ...proData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return docRef.id;
+        } else {
+            const docRef = await setDoc(doc(this.db, "professionals", ownerId), {
+                ...proData,
+                rating: 0,
+                ratingCount: 0,
+                createdAt: serverTimestamp()
+            });
+            return ownerId;
+        }
     }
 
     async addUser(userData, userId= null) {
@@ -161,6 +182,36 @@ export default class FirebaseDb {
         )
     }
 
+    async getUser(userId) {
+        const userRef = await doc(this.db, "users", userId);
+        if (userRef) {
+            const userDoc = await getDoc(userRef);
+            return userDoc.data()
+        } else {
+            return {};
+        }
+    }
+
+    async getGym(gymId) {
+        const gymRef = await doc(this.db, "gyms", gymId);
+        if (gymRef) {
+            const gymDoc = await getDoc(gymRef);
+            return gymDoc.data()
+        } else {
+            return {};
+        }
+    }
+
+    async getProfessional(proId) {
+        const proRef = await doc(this.db, "gyms", proId);
+        if (proRef) {
+            const proDoc = await getDoc(proRef);
+            return proDoc.data()
+        } else {
+            return {};
+        }
+    }
+
     async addMaterial(materialData) {
         const materialsRef = collection(this.db, "materials");
         const docRef = await addDoc(materialsRef, {
@@ -180,6 +231,16 @@ export default class FirebaseDb {
             createdAt: serverTimestamp()
         });
         return docRef.id;
+    }
+
+    async getActivity(activityId) {
+        const activityRef = await doc(this.db, "activities", activityId);
+        if (activityRef) {
+            const activityDoc = await getDoc(activityRef);
+            return activityDoc.data()
+        } else {
+            return {};
+        }
     }
 
     async getUserReservations(userId, status = null) {
@@ -210,6 +271,9 @@ export default class FirebaseDb {
     }
 
     async rateTarget(targetId, targetType, score) {
+        if (targetType !== "gym" && targetType !== "professional") {
+            throw new Error("targetType must be a gym or professional");
+        }
         const colName = targetType === "gym" ? "gyms" : "professionals";
         const targetRef = doc(this.db, colName, targetId);
         const targetSnap = await getDoc(targetRef);

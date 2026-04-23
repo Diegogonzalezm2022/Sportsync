@@ -52,8 +52,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp }
-        from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import FirebaseDb from "../javascript/app/FirebaseDb.js";
 
     const userId = sessionStorage.getItem("userId");
     if (!userId) window.location.href = "Login.html";
@@ -61,16 +60,10 @@
     const response = await fetch("../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const db  = await FirebaseDb.create()
 
     async function loadReservations() {
-        const snap = await getDocs(query(
-            collection(db, "reservations"),
-            where("userId", "==", userId)
-        ));
-
-        const reservations = [];
-        snap.forEach(d => reservations.push({ id: d.id, ...d.data() }));
+        const reservations = await db.getUserReservations(userId);
 
         const enriched = await Promise.all(reservations.map(async r => {
             let ownerName = r.gymOrProId;
@@ -78,9 +71,11 @@
             let availableSlots = null;
 
             try {
-                const colName = r.ownerType === "gym" ? "gyms" : "professionals";
-                const ownerSnap = await getDoc(doc(db, colName, r.gymOrProId));
-                if (ownerSnap.exists()) ownerName = ownerSnap.data().name || r.gymOrProId;
+                if (r.ownerType === "gym") {
+                    ownerName = await db.getGym(r.gymOrProId).name
+                } else {
+                    ownerName = await db.getProfessional(r.gymOrProId).name
+                }
             } catch {}
 
             try {
@@ -173,13 +168,11 @@
                     const activityDate  = btn.dataset.activityDate;
                     const ownerName     = btn.dataset.ownerName;
 
-                    await updateDoc(doc(db, "reservations", reservationId), { status: "cancelled" });
-
-                    const actRef  = doc(db, "activities", activityId);
-                    const actSnap = await getDoc(actRef);
-                    if (actSnap.exists()) {
-                        const currentSlots = actSnap.data().availableSlots ?? 0;
-                        await updateDoc(actRef, { availableSlots: currentSlots + 1 });
+                    await db.cancelReservation(btn.dataset.id);
+                    btn.closest(".reservation-card").remove();
+                    const activeList = document.getElementById("activeList");
+                    if (!activeList.querySelector(".reservation-card")) {
+                        activeList.innerHTML = `<p class="loading-hint">No tienes reservas activas.</p>`;
                     }
 
                     const userEmail = sessionStorage.getItem("userEmail") || "";
@@ -282,63 +275,17 @@
                 const ownerId    = btn.dataset.ownerId;
                 const ownerType  = btn.dataset.ownerType;
 
-                btn.disabled = true;
-                btn.textContent = "Comprobando...";
-
-                try {
-                    const actRef  = doc(db, "activities", activityId);
-                    const actSnap = await getDoc(actRef);
-                    if (!actSnap.exists()) {
-                        alert("Actividad no encontrada.");
-                        btn.disabled = false;
-                        btn.textContent = "Volver a registrarte";
-                        return;
-                    }
-                    const currentSlots = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
-                    if (currentSlots <= 0) {
-                        btn.textContent = "Sin huecos";
-                        btn.classList.add("signup-btn--full");
-                        return;
-                    }
-
-                    const existingSnap = await getDocs(query(
-                        collection(db, "reservations"),
-                        where("userId", "==", userId),
-                        where("activityId", "==", activityId),
-                        where("status", "==", "active")
-                    ));
-                    if (!existingSnap.empty) {
-                        alert("Ya tienes una reserva activa para esta actividad.");
-                        btn.textContent = "Ya apuntado";
-                        btn.classList.add("signup-btn--done");
-                        return;
-                    }
-
-                    await addDoc(collection(db, "reservations"), {
-                        userId, activityId, gymOrProId: ownerId,
-                        ownerType, status: "active",
-                        paid: false, createdAt: serverTimestamp()
-                    });
-                    await updateDoc(actRef, { availableSlots: currentSlots - 1 });
-
-                    btn.textContent = "✓ Registrado";
-                    btn.classList.add("signup-btn--done");
-
-                    const userEmail = sessionStorage.getItem("userEmail") || "";
-                    const userName  = userEmail.split("@")[0] || "Cliente";
-                    const actData   = actSnap.data();
-
-                    await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
-                        type:              "confirmada de nuevo ✅",
-                        user_name:         userName,
-                        user_email:        userEmail,
-                        activity_name:     actData.name     || "—",
-                        activity_date:     actData.date     || "—",
-                        activity_schedule: actData.schedule || "—",
-                        activity_price:    actData.price    || "—",
-                        owner_name:        ownerId,
-                        comment:           "¡Te esperamos!"
-                    });
+            spans.forEach(s => {
+                s.addEventListener("mouseover", () => highlight(+s.dataset.value));
+                s.addEventListener("mouseout",  () => highlight(selected));
+                s.addEventListener("click", async () => {
+                    selected = +s.dataset.value;
+                    highlight(selected);
+                    try {
+                        await db.rateTarget(targetId, ownerType, selected);
+                    } catch (e) { console.error(e); }
+                });
+            });
 
                     alert("Correo enviado con detalles de reserva.");
                     location.reload();
