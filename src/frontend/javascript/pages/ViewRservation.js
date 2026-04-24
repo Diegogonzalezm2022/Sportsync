@@ -1,4 +1,4 @@
-    xLuIncludeFile();
+    await xLuIncludeFile();
 
     function handleVeto(btn) {
     const row = btn.closest('.user-row');
