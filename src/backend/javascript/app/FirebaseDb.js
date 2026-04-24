@@ -1,6 +1,6 @@
 // FirebaseDb.js
-import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import {
+const { initializeApp, getApp } = require("@firebase/app")
+const {
     getFirestore,
     collection,
     addDoc,
@@ -14,11 +14,11 @@ import {
     serverTimestamp,
     setDoc,
     runTransaction
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
+} = require("@firebase/firestore")
 
-const firebaseConfig = await fetch('../assets/firebaseConfig.json');
+const firebaseConfig = require("../../firebaseConfig.json")
 
-export default class FirebaseDb {
+class FirebaseDb {
 
     constructor() {
         this.db = null;
@@ -290,3 +290,5 @@ export default class FirebaseDb {
         });
     }
 }
+
+module.exports = FirebaseDb;
