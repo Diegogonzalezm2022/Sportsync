@@ -2,7 +2,7 @@
     import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    const resp = await fetch("../assets/firebaseConfig.json");
+    const resp = await fetch("../../assets/firebaseConfig.json");
     const firebaseConfig = await resp.json();
     const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     const db  = getFirestore(app);

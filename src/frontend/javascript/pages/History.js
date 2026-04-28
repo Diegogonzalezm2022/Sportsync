@@ -4,7 +4,7 @@ import FirebaseDb from "../../../backend/javascript/app/FirebaseDb.js";
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
 
-const response = await fetch("../assets/firebaseConfig.json");
+const response = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await response.json();
 const app = initializeApp(firebaseConfig);
 const db  = await FirebaseDb.create()

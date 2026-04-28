@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, quer
 
 emailjs.init("bOhMQRr1h4BzhaNUT");
 
-const resp = await fetch("../assets/firebaseConfig.json");
+const resp = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await resp.json();
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
