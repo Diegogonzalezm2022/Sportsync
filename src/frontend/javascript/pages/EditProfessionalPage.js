@@ -193,15 +193,21 @@
 
     // ── Actividades ───────────────────────────────────────
     async function loadActivities() {
-    const list = document.getElementById("activitiesList");
-    const snap = await getDocs(query(
-    collection(db, "activities"), where("ownerId", "==", ownerId)));
-    list.innerHTML = snap.docs.map(d => `
-            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
-                <span>${d.data().name} (${d.data().date})</span>
-                <button onclick="window.delAct('${d.id}')">Eliminar</button>
-            </div>`).join("");
-}
+        const list = document.getElementById("activitiesList");
+        const snap = await getDocs(query(
+            collection(db, "activities"), where("ownerId", "==", ownerId)));
+        list.innerHTML = snap.docs.map(d => {
+            const a = d.data();
+            return `
+        <div style="border-bottom:1px solid #eee; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>
+                <strong>${a.name}</strong> (${a.date})
+                ${a.stripeLink ? `<span style="font-size:0.75rem; color:#27ae60; margin-left:6px;">💳 Pago online</span>` : ""}
+            </span>
+            <button onclick="window.delAct('${d.id}')">Eliminar</button>
+        </div>`;
+        }).join("");
+    }
 
     window.delAct = async (id) => {
     if (confirm("¿Borrar?")) {
@@ -211,19 +217,21 @@
 };
 
     document.getElementById("createActBtn").onclick = async () => {
-    await addDoc(collection(db, "activities"), {
-        name:           document.getElementById("actName").value,
-        date:           document.getElementById("actDate").value,
-        maxCancelDate:  document.getElementById("actMaxCancelDate").value,
-        schedule:       document.getElementById("actTime").value,
-        price:          document.getElementById("actPrice").value,
-        slots:          document.getElementById("actSlots").value,
-        availableSlots: document.getElementById("actSlots").value,
-        ownerId,
-        ownerType:      typeParam,
-        createdAt:      serverTimestamp()
-    });
-    loadActivities();
-};
+        await addDoc(collection(db, "activities"), {
+            name:           document.getElementById("actName").value,
+            date:           document.getElementById("actDate").value,
+            maxCancelDate:  document.getElementById("actMaxCancelDate").value,
+            schedule:       document.getElementById("actTime").value,
+            price:          document.getElementById("actPrice").value,
+            slots:          document.getElementById("actSlots").value,
+            availableSlots: document.getElementById("actSlots").value,
+            stripeLink:     document.getElementById("actStripeLink").value.trim() || null,
+            ownerId,
+            ownerType:      typeParam,
+            createdAt:      serverTimestamp()
+        });
+        document.getElementById("actStripeLink").value = "";
+        loadActivities();
+    };
 
     init();
