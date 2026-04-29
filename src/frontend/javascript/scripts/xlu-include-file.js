@@ -83,5 +83,7 @@ async function xLuIncludeFile() {
             return;
         }
     }
+    // Dispatch custom event when all includes are done
+    window.dispatchEvent(new CustomEvent('xlu-includes-complete'));
 }
 

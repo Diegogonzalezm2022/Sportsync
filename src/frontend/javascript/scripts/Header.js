@@ -27,9 +27,10 @@ function waitForElement(selector, callback) {
 }
 
 
-window.addEventListener('load', () => {
+function initHeader() {
     waitForElement('#auth-action-btn', (authActionBtn) => {
         const authOnlyItems = document.querySelectorAll('.auth-only');
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authOnlyItems.forEach(item => item.style.display = '');
@@ -47,4 +48,14 @@ window.addEventListener('load', () => {
             }
         });
     });
-});
+}
+
+// Listen for the custom event when xLuIncludeFile completes
+window.addEventListener('xlu-includes-complete', initHeader);
+
+// Fallback: if the event already fired or for pages without includes
+if (document.readyState === 'complete') {
+    initHeader();
+} else {
+    window.addEventListener('load', initHeader);
+}
