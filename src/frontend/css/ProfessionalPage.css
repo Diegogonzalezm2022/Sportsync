@@ -170,6 +170,10 @@ body {
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-primary);
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
 }
 
 .schedule-hours {

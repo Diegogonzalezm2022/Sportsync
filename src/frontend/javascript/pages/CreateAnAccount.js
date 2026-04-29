@@ -2,7 +2,7 @@
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import FirebaseDb from "../../../backend/javascript/app/FirebaseDb.js";
 
-    const response = await fetch("../assets/firebaseConfig.json");
+    const response = await fetch("../../assets/firebaseConfig.json");
     const firebaseConfig = await response.json();
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
