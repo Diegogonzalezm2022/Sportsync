@@ -26,23 +26,25 @@ function waitForElement(selector, callback) {
     }
 }
 
-waitForElement('#auth-action-btn', (authActionBtn) => {
-    const authOnlyItems = document.querySelectorAll('.auth-only');
+window.addEventListener('load', () => {
+    waitForElement('#auth-action-btn', (authActionBtn) => {
+        const authOnlyItems = document.querySelectorAll('.auth-only');
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            authOnlyItems.forEach(item => item.style.display = '');
-            authActionBtn.textContent = 'Logout';
-            authActionBtn.onclick = async () => {
-                await signOut(auth);
-                window.location.href = "Index.html";
-            };
-        } else {
-            authOnlyItems.forEach(item => item.style.display = 'none');
-            authActionBtn.textContent = 'Login';
-            authActionBtn.onclick = () => {
-                window.location.href = "Login.html";
-            };
-        }
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authOnlyItems.forEach(item => item.style.display = '');
+                authActionBtn.textContent = 'Logout';
+                authActionBtn.onclick = async () => {
+                    await signOut(auth);
+                    window.location.href = "Index.html";
+                };
+            } else {
+                authOnlyItems.forEach(item => item.style.display = 'none');
+                authActionBtn.textContent = 'Login';
+                authActionBtn.onclick = () => {
+                    window.location.href = "Login.html";
+                };
+            }
+        });
     });
 });
