@@ -12,72 +12,16 @@
 <body>
 
 <header xlu-include-file="components/Header.html"></header>
-
 <main class="view-reservations-main">
-
     <button class="back-btn" onclick="history.back()">&#8592;</button>
 
-    <!-- ===== Activity Group 1 ===== -->
-    <div class="activity-group">
-
-        <div class="activity-summary">
-            <div class="activity-summary-left">
-                <p><strong>Activity name:</strong> Entrenamiento funcional</p>
-                <p><strong>Activity schedule:</strong> Lun/Mié/Vie · 10:00–11:00</p>
-            </div>
-            <div class="activity-summary-right">
-                <p><strong>Price:</strong> 25€</p>
-                <p><strong>Available slots:</strong> 9 / 12</p>
-            </div>
-        </div>
-
-        <div class="users-list">
-            <div class="user-row">
-                <span class="user-name">User1</span>
-                <button class="veto-btn" onclick="handleVeto(this)">Vetar</button>
-            </div>
-            <div class="user-row">
-                <span class="user-name">User2</span>
-                <button class="veto-btn" onclick="handleVeto(this)">Vetar</button>
-            </div>
-            <div class="user-row">
-                <span class="user-name">User3</span>
-                <button class="veto-btn" onclick="handleVeto(this)">Vetar</button>
-            </div>
-        </div>
-
+    <div id="activities-list">
+        <p>Cargando actividades y participantes...</p>
     </div>
-
-    <!-- ===== Activity Group 2 ===== -->
-    <div class="activity-group">
-
-        <div class="activity-summary">
-            <div class="activity-summary-left">
-                <p><strong>Activity name:</strong> Spinning</p>
-                <p><strong>Activity schedule:</strong> Mar/Jue · 18:00–19:00</p>
-            </div>
-            <div class="activity-summary-right">
-                <p><strong>Price:</strong> 15€</p>
-                <p><strong>Available slots:</strong> 18 / 20</p>
-            </div>
-        </div>
-
-        <div class="users-list">
-            <div class="user-row">
-                <span class="user-name">User1</span>
-                <button class="veto-btn" onclick="handleVeto(this)">Vetar</button>
-            </div>
-            <div class="user-row">
-                <span class="user-name">User2</span>
-                <button class="veto-btn" onclick="handleVeto(this)">Vetar</button>
-            </div>
-        </div>
-
-    </div>
-
 </main>
-
 <footer xlu-include-file="components/Footer.html"></footer>
-
+<script src="../javascript/scripts/xlu-include-file.js"></script>
+<script type="module" src="../javascript/pages/ViewReservation.js"></script>
+<script>xLuIncludeFile();</script>
 </body>
 </html>
