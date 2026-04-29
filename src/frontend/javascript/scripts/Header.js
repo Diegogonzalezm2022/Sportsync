@@ -29,7 +29,6 @@ function waitForElement(selector, callback) {
 window.addEventListener('load', () => {
     waitForElement('#auth-action-btn', (authActionBtn) => {
         const authOnlyItems = document.querySelectorAll('.auth-only');
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authOnlyItems.forEach(item => item.style.display = '');
