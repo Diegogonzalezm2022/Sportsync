@@ -7,7 +7,7 @@ async function initFirebase() {
     try {
         app = getApp();
     } catch {
-        const response = await fetch("../assets/firebaseConfig.json");
+        const response = await fetch("../../assets/firebaseConfig.json");
         const firebaseConfig = await response.json();
         app = initializeApp(firebaseConfig);
     }
