@@ -26,6 +26,7 @@ function waitForElement(selector, callback) {
     }
 }
 
+
 window.addEventListener('load', () => {
     waitForElement('#auth-action-btn', (authActionBtn) => {
         const authOnlyItems = document.querySelectorAll('.auth-only');
