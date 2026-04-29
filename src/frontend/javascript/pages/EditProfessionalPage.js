@@ -95,6 +95,7 @@
     renderGallery();
 }
     loadActivities();
+    loadEquipment();
 }
 
     // ── Foto de perfil ────────────────────────────────────
@@ -225,5 +226,60 @@
     });
     loadActivities();
 };
+
+    // ── Actividades ───────────────────────────────────────
+    async function loadEquipment() {
+        const list = document.getElementById("equipmentList");
+
+        const snap = await getDocs(query(
+            collection(db, "equipment"),
+            where("ownerId", "==", ownerId)
+        ));
+
+        list.innerHTML = snap.empty
+            ? "<p>No hay equipamiento todavía</p>"
+            : snap.docs.map(d => `
+            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
+                <div>
+                    <strong>${d.data().name}</strong><br>
+                    ${d.data().date} · ${d.data().time}<br>
+                    Cantidad: ${d.data().quantity} · ${d.data().price}€
+                </div>
+                <button onclick="window.delEquip('${d.id}')">Eliminar</button>
+            </div>
+        `).join("");
+    }
+
+    window.delEquip = async (id) => {
+        if (confirm("¿Eliminar equipamiento?")) {
+            await deleteDoc(doc(db, "equipment", id));
+            loadEquipment();
+        }
+    };
+
+    document.getElementById("createEquipBtn").onclick = async () => {
+
+        await addDoc(collection(db, "equipment"), {
+            name: document.getElementById("equipName").value,
+            date: document.getElementById("equipDate").value,
+            time: document.getElementById("equipTime").value,
+            maxCancelDate: document.getElementById("equipMaxCancelDate").value,
+            price: document.getElementById("equipPrice").value,
+            quantity: document.getElementById("equipQuantity").value,
+            ownerId,
+            ownerType: typeParam,
+            createdAt: serverTimestamp()
+        });
+
+        // limpiar campos
+        document.getElementById("equipName").value = "";
+        document.getElementById("equipDate").value = "";
+        document.getElementById("equipTime").value = "";
+        document.getElementById("equipMaxCancelDate").value = "";
+        document.getElementById("equipPrice").value = "";
+        document.getElementById("equipQuantity").value = "";
+
+        loadEquipment();
+    };
 
     init();
