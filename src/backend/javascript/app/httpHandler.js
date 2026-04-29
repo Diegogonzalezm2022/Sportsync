@@ -5,6 +5,6 @@ const server = http.createServer((req, res) => {
     res.end('Hello World')
 })
 
-server.listen(65500, 'any', () =>{
-    console.log('Server is running on localhost:' + 65500)
+server.listen(8000, 'src-backend', () =>{
+    console.log('Server is running on localhost:' + 8000)
 })

@@ -9,6 +9,6 @@ WORKDIR /home/app
 
 RUN npm install
 
-EXPOSE 65500
+EXPOSE 8000
 
 CMD ["node", "javascript/app/httpHandler.js"]
