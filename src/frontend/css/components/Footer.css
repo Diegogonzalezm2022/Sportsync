@@ -1,4 +1,4 @@
-/* --- CONFIGURACIÓN GENERAL (Reset básico) --- */
+/* --- CONFIGURACIÓN GENERAL --- */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -16,53 +16,55 @@ body {
     width: 100%;
     border-top: 1px solid #333;
     display: flex;
-    justify-content: space-around; /* Volvemos a space-around como tenías al principio */
+    justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 20px 40px;
     background-color: lightseagreen;
     backdrop-filter: blur(10px);
     flex-shrink: 0;
-    /* Quitamos la altura fija para que no se corte en móvil */
     min-height: 100px;
 }
 
-/* --- CONTENEDORES INTERNOS (Sin márgenes fijos) --- */
-.footer-links,
-.footer-contact {
+/* --- CONTENEDORES DE TEXTO --- */
+.footer-links {
     display: flex;
-    color: white;
     gap: 30px;
     flex: 1;
+    justify-content: flex-start;
 }
 
-/* --- ESTILO DE ENLACES (Márgenes fijos ELIMINADOS para responsive) --- */
+.footer-contact {
+    display: flex;
+    gap: 30px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+/* --- ESTILO DE ENLACES --- */
 .footer-links a,
-.footer-contact a,
-.footer-contact .social-media a {
+.footer-contact a {
     text-decoration: none;
     color: white;
-    /* transition: all 0.2s ease-in-out; /* Opcional: suaviza el hover */
+    font-size: 1rem;
 }
 
 .footer-links a:hover,
 .footer-contact a:hover {
-    text-decoration: none;
-    color: white;
     font-weight: bolder;
 }
 
-/* --- LOGO (ESTILO ORIGINAL RESTAURADO) --- */
-/* Esta es la parte que hacía que se viera bien antes, restaurada exactamente */
+/* --- LOGO --- */
 .footer-logo {
     width: 70px;
     height: 70px;
-    border-radius: 100%; /* O 50% */
+    border-radius: 100%;
     border: 1px solid #333;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #ccc;
-    flex-shrink: 0; /* Asegura que el círculo no se aplaste */
+    flex-shrink: 0;
+    margin: 0 40px;
 }
 
 .footer-logo img {
@@ -76,50 +78,42 @@ body {
     background-color: #ccc;
 }
 
-/* --- RESPONSIVE GENERAL (Tablets y pantallas medianas) --- */
+/* --- RESPONSIVE TABLETS (768px) --- */
 @media (max-width: 768px) {
     .main-footer {
         flex-direction: column;
         gap: 20px;
         text-align: center;
         padding: 30px 15px;
-        height: auto; /* Importante para que crezca */
+        height: auto;
     }
 
     .footer-links,
     .footer-contact {
         justify-content: center;
         width: 100%;
-        gap: 20px;
     }
 
-    /* En este punto intermedio, los links aún pueden ir en línea si caben */
+    .footer-logo {
+        margin: 10px 0;
+    }
 }
 
-/* --- RESPONSIVE MÓVIL (AQUÍ ESTÁ LA MAGIA DE "DOS EN DOS") --- */
+/* --- RESPONSIVE MÓVIL (480px) --- */
 @media (max-width: 480px) {
-    .main-footer {
-        padding: 25px 10px;
-    }
-
-    /* Contenedor de links en modo rejilla */
     .footer-links {
         display: flex;
-        flex-wrap: wrap; /* Clave para que salten de línea */
+        flex-wrap: wrap;
         justify-content: center;
         gap: 10px;
-        width: 100%;
     }
 
     .footer-links a {
-        /* Forzamos que cada uno ocupe casi la mitad del ancho */
         flex: 0 0 calc(50% - 10px);
-        text-align: center;
-        font-size: 0.9rem;
-        /* Opcional: un fondo muy sutil para delimitar el área táctil */
-        background: rgba(255, 255, 255, 0.05);
-        padding: 8px 0;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 5px;
         border-radius: 4px;
+        font-size: 0.85rem;
     }
 
     .footer-contact {
@@ -128,11 +122,6 @@ body {
         gap: 12px;
     }
 
-    .footer-contact a {
-        font-size: 0.9rem;
-    }
-
-    /* Reducimos un poco el logo en móviles muy pequeños, manteniendo su estilo */
     .footer-logo,
     .footer-logo img {
         width: 55px;
