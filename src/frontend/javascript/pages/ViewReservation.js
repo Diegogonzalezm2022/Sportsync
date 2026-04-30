@@ -1,6 +1,8 @@
 import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, where, doc, updateDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
+emailjs.init("bOhMQRr1h4BzhaNUT");
 
 // ── Firebase init desde JSON ───────────────────────────────────
 let app;
@@ -105,7 +107,7 @@ async function loadParticipants(activityId) {
         const resSnap = await getDocs(q);
 
         if (resSnap.empty) {
-            listDiv.innerHTML = "<p style='padding:10px; color:gray;'>No hay usuarios inscritos.</p>";
+            listDiv.innerHTML = "<p style='padding:10px; color:black;'>No hay usuarios inscritos.</p>";
             return;
         }
 
@@ -149,9 +151,44 @@ async function handleVeto(reservationId, activityId, btn) {
     if (!confirm("¿Seguro que quieres vetar a este usuario?")) return;
 
     try {
+        // 1. Obtener datos de la reserva para saber el userId
+        const resSnap = await getDoc(doc(db, "reservations", reservationId));
+        const resData = resSnap.data();
+
+        // 2. Obtener datos del usuario vetado
+        const userSnap = await getDoc(doc(db, "users", resData.userId));
+        const userData = userSnap.exists() ? userSnap.data() : null;
+        const userEmail = userData?.email || null;
+        const userName  = userData ? `${userData.name} ${userData.surname || ''}`.trim() : "Usuario";
+
+        // 3. Obtener nombre de la actividad
+        const actSnap = await getDoc(doc(db, "activities", activityId));
+        const actName = actSnap.exists() ? actSnap.data().name : "la actividad";
+
+        // 4. Actualizar Firestore
         await updateDoc(doc(db, "reservations", reservationId), { status: "vetoed" });
         await updateDoc(doc(db, "activities", activityId), { availableSlots: increment(1) });
 
+        // 5. Enviar email al usuario vetado
+        if (userEmail) {
+            try {
+                await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                    type: "vetada ❌",
+                    user_name: userName,
+                    user_email: userEmail,
+                    activity_name: actName,
+                    activity_date: actSnap.data().date || "—",
+                    activity_schedule: actSnap.data().schedule || "—",
+                    activity_price: actSnap.data().price || "—",
+                    owner_name: "",
+                    comment: "Has sido vetado de esta actividad y no podrás volver a inscribirte. Cualquier cuestión, contacte con el gimnasio o profesional correspondiente a su actividad."
+                });
+            } catch (emailErr) {
+                console.warn("Email no enviado:", emailErr);
+            }
+        }
+
+        // 6. Actualizar UI
         btn.textContent = '✓ Vetado';
         btn.disabled    = true;
         btn.closest('.user-row').classList.add('user-row--vetoed');
