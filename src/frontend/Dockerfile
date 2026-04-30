@@ -1,8 +1,9 @@
-FROM nginx:1.29.0-alpine
+FROM httpd:2.4.66-alpine3.23
 
+COPY . /usr/local/apache2/htdocs
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN rm -rf /usr/local/apache2/htdocs/Dockerfile
 
-COPY . /usr/share/nginx/html
+RUN rm -rf /usr/local/apache2/htdocs/index.html
 
 EXPOSE 80

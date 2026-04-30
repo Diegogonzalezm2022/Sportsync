@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="../css/Login.css">
-    <link rel="stylesheet" href="../css/components/Header.css">
-    <link rel="stylesheet" href="../css/components/Footer.css">
+    <link rel="stylesheet" href="css/Login.css">
+    <link rel="stylesheet" href="css/components/Header.css">
+    <link rel="stylesheet" href="css/components/Footer.css">
+    <script type="module" src="javascript/scripts/Header.js"></script>
+    <script type="module" src="javascript/pages/Login.js"></script>
 </head>
 <body>
 <header xlu-include-file="components/Header.html"></header>
@@ -33,7 +35,7 @@
 
     <section class="right">
         <div class="photo-box">
-            <img src="../assets/imagenes/sporty_login_register.png" alt="Sporty Logo">
+            <img src="assets/imagenes/sporty_login_register.png" alt="Sporty Logo">
         </div>
     </section>
 </main>
@@ -51,12 +53,10 @@
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
-<script src="../javascript/scripts/xlu-include-file.js"></script>
+<script src="javascript/scripts/xlu-include-file.js"></script>
 <script>
-    if (typeof xLuIncludeFile === 'function') xLuIncludeFile();
+if (typeof xLuIncludeFile === 'function') xLuIncludeFile();
 </script>
 
-<script type="module" src="../javascript/scripts/Header.js"></script>
-<script type="module" src="../javascript/pages/login.js"></script>
 </body>
 </html>
