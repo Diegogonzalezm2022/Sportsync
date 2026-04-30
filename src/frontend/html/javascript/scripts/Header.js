@@ -35,7 +35,7 @@ waitForElement('#auth-action-btn', (authActionBtn) => {
             authActionBtn.textContent = 'Logout';
             authActionBtn.onclick = async () => {
                 await signOut(auth);
-                window.location.href = "Index.html";
+                window.location.href = "index.html";
             };
         } else {
             authOnlyItems.forEach(item => item.style.display = 'none');
