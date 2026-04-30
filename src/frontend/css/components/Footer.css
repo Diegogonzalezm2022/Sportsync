@@ -1,170 +1,141 @@
-.main-footer {
-    width: 100%;
-    /*background-color: lightgrey; /* Gris claro con ligera transparencia */
-    border-top: 1px solid #333;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 20px;
-    flex-shrink: 0; /* Evita que el footer se aplaste si hay mucho contenido arriba */
-    background-color: lightseagreen;
-    backdrop-filter: blur(10px);
-    height: 100px;
+/* --- CONFIGURACIÓN GENERAL (Reset básico) --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-.footer-links, .footer-contact {
-    display: flex;
-    color: white;
-    gap: 30px;
-    flex: 1;
-}
-
-.footer-links a {
-    text-decoration: none;
-    color: white;
-    margin-left: 100px;
-}
-
-.footer-links a:hover {
-    text-decoration: none;
-    color: white;
-    margin-left: 100px;
-    font-weight: bolder;
-}
-
-.footer-contact a {
-    text-decoration: none;
-    color: white;
-    margin-left: 200px;
-    margin-right: 20px;
-}
-
-.footer-contact a:hover {
-    text-decoration: none;
-    color: white;
-    margin-left: 200px;
-    font-weight: bolder;
-}
-
-.footer-contact .social-media a {
-    text-decoration: none;
-    color: white;
-    margin-left: 100px;
-}
-
-.footer-contact .social-media a:hover {
-    text-decoration: none;
-    color: white;
-    margin-left: 100px;
-    font-weight: bolder;
-}
-
-.footer-logo{
-    width: 70px;
-    height: 70px;
-    border-radius: 100%;
-    border: 1px solid #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #ccc;
-}
-
-.footer-logo img{
-    width: 70px;
-    height: 70px;
-    border-radius: 100%;
-    border: 1px solid #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #ccc;
-}
-
-/* Footer separado del contenido */
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-.reservations-main {
+/* --- MAIN FOOTER --- */
+.main-footer {
+    width: 100%;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-around; /* Volvemos a space-around como tenías al principio */
+    align-items: center;
+    padding: 20px;
+    background-color: lightseagreen;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+    /* Quitamos la altura fija para que no se corte en móvil */
+    min-height: 100px;
+}
+
+/* --- CONTENEDORES INTERNOS (Sin márgenes fijos) --- */
+.footer-links,
+.footer-contact {
+    display: flex;
+    color: white;
+    gap: 30px;
     flex: 1;
 }
 
-.loading-hint {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    padding: 10px 4px;
+/* --- ESTILO DE ENLACES (Márgenes fijos ELIMINADOS para responsive) --- */
+.footer-links a,
+.footer-contact a,
+.footer-contact .social-media a {
+    text-decoration: none;
+    color: white;
+    /* transition: all 0.2s ease-in-out; /* Opcional: suaviza el hover */
 }
 
-/* Responsive - Tablet */
+.footer-links a:hover,
+.footer-contact a:hover {
+    text-decoration: none;
+    color: white;
+    font-weight: bolder;
+}
+
+/* --- LOGO (ESTILO ORIGINAL RESTAURADO) --- */
+/* Esta es la parte que hacía que se viera bien antes, restaurada exactamente */
+.footer-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 100%; /* O 50% */
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+    flex-shrink: 0; /* Asegura que el círculo no se aplaste */
+}
+
+.footer-logo img {
+    width: 70px;
+    height: 70px;
+    border-radius: 100%;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+}
+
+/* --- RESPONSIVE GENERAL (Tablets y pantallas medianas) --- */
 @media (max-width: 768px) {
     .main-footer {
         flex-direction: column;
         gap: 20px;
         text-align: center;
-        padding: 20px 15px;
+        padding: 30px 15px;
+        height: auto; /* Importante para que crezca */
     }
 
-    .footer-links, .footer-contact {
+    .footer-links,
+    .footer-contact {
+        justify-content: center;
+        width: 100%;
         gap: 20px;
     }
 
-    .footer-links a {
-        margin-left: 0;
-    }
-
-    .footer-links a:hover {
-        margin-left: 0;
-    }
-
-    .footer-contact a {
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .footer-contact a:hover {
-        margin-left: 0;
-    }
-
-    .footer-contact .social-media a {
-        margin-left: 0;
-    }
-
-    .footer-contact .social-media a:hover {
-        margin-left: 0;
-    }
+    /* En este punto intermedio, los links aún pueden ir en línea si caben */
 }
 
-
+/* --- RESPONSIVE MÓVIL (AQUÍ ESTÁ LA MAGIA DE "DOS EN DOS") --- */
 @media (max-width: 480px) {
     .main-footer {
-        padding: 15px 10px;
-        height: auto;
-        min-height: 80px;
+        padding: 25px 10px;
     }
 
-    .footer-logo {
-        width: 50px;
-        height: 50px;
+    /* Contenedor de links en modo rejilla */
+    .footer-links {
+        display: flex;
+        flex-wrap: wrap; /* Clave para que salten de línea */
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
     }
 
-    .footer-logo img {
-        width: 50px;
-        height: 50px;
+    .footer-links a {
+        /* Forzamos que cada uno ocupe casi la mitad del ancho */
+        flex: 0 0 calc(50% - 10px);
+        text-align: center;
+        font-size: 0.9rem;
+        /* Opcional: un fondo muy sutil para delimitar el área táctil */
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px 0;
+        border-radius: 4px;
     }
 
-    .footer-links, .footer-contact {
+    .footer-contact {
         flex-direction: column;
+        align-items: center;
         gap: 12px;
     }
 
-    .footer-links a {
+    .footer-contact a {
         font-size: 0.9rem;
     }
 
-    .footer-contact a {
-        font-size: 0.9rem;
+    /* Reducimos un poco el logo en móviles muy pequeños, manteniendo su estilo */
+    .footer-logo,
+    .footer-logo img {
+        width: 55px;
+        height: 55px;
     }
 }
