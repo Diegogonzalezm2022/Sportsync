@@ -1,43 +1,89 @@
-import firebaseConfig from './config';
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, where, doc, updateDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// ── Firebase init desde JSON ───────────────────────────────────
+let app;
+try {
+    app = getApp();
+} catch {
+    const response = await fetch("../../assets/firebaseConfig.json");
+    const firebaseConfig = await response.json();
+    app = initializeApp(firebaseConfig);
+}
 
-async function loadDashboard() {
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── DIAGNÓSTICO: borra esto cuando funcione ────────────────────
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        console.log("NO HAY SESIÓN → redirigiendo");
+        window.location.href = "Login.html";
+        return;
+    }
+
+    console.log("UID de Auth:", user.uid);
+    console.log("Email:", user.email);
+
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+    console.log("Doc existe en users:", userSnap.exists());
+    if (userSnap.exists()) {
+        console.log("Role:", userSnap.data().role);
+    }
+
+    // COMENTADO temporalmente para no redirigir
+    // if (!userSnap.exists() || userSnap.data().role !== "gym") {
+    //     window.location.href = "Index.html";
+    //     return;
+    // }
+
+    loadDashboard(user.uid);
+});
+
+// ── Carga solo las actividades del gimnasio logueado ───────────
+async function loadDashboard(gymUid) {
     const container = document.getElementById('activities-list');
 
     try {
-        // 1. Traer todas las actividades
-        const actSnap = await getDocs(collection(db, "activities"));
-        container.innerHTML = ""; // Limpiar el "Cargando..."
+        // Solo actividades donde ownerId == UID del gimnasio logueado
+        const q = query(
+            collection(db, "activities"),
+            where("ownerId", "==", gymUid),
+            where("ownerType", "==", "gym")
+        );
+        const actSnap = await getDocs(q);
+        container.innerHTML = "";
+
+        if (actSnap.empty) {
+            container.innerHTML = "<p>No tienes actividades creadas aún.</p>";
+            return;
+        }
 
         for (const actDoc of actSnap.docs) {
             const actData = actDoc.data();
-            const actId = actDoc.id;
+            const actId   = actDoc.id;
 
-            // Creamos la estructura de la actividad
             const activitySection = document.createElement('div');
             activitySection.className = 'activity-group';
             activitySection.innerHTML = `
                 <div class="activity-summary">
                     <div class="activity-summary-left">
-                        <p><strong>Activity name:</strong> ${actData.name}</p>
-                        <p><strong>Schedule:</strong> ${actData.schedule?.toDate().toLocaleString() || 'Sin fecha'}</p>
+                        <p><strong>Actividad:</strong> ${actData.name}</p>
+                        <p><strong>Horario:</strong> ${actData.schedule || 'Sin horario'}</p>
+                        <p><strong>Fecha:</strong> ${actData.date || 'Sin fecha'}</p>
                     </div>
                     <div class="activity-summary-right">
-                        <p><strong>Price:</strong> ${actData.price}€</p>
-                        <p><strong>Available slots:</strong> <span id="slots-${actId}">${actData.availableSlots}</span></p>
+                        <p><strong>Precio:</strong> ${actData.price}€</p>
+                        <p><strong>Plazas disponibles:</strong> <span id="slots-${actId}">${actData.availableSlots ?? actData.slots}</span></p>
                     </div>
                 </div>
                 <div class="users-list" id="users-container-${actId}">
-                    <p style="padding:10px; font-size: 0.9em; color: gray;">Buscando participantes...</p>
+                    <p style="padding:10px; font-size:0.9em; color:gray;">Buscando participantes...</p>
                 </div>
             `;
             container.appendChild(activitySection);
 
-            // 2. Traer las reservas de esta actividad
             loadParticipants(actId);
         }
     } catch (e) {
@@ -46,62 +92,77 @@ async function loadDashboard() {
     }
 }
 
+// ── Carga los usuarios inscritos en una actividad ──────────────
 async function loadParticipants(activityId) {
     const listDiv = document.getElementById(`users-container-${activityId}`);
 
-    // Filtramos reservas: solo las de esta actividad y que no estén canceladas/vetadas
-    const q = query(collection(db, "reservations"), where("activityId", "==", activityId), where("status", "==", "active"));
-    const resSnap = await getDocs(q);
+    try {
+        const q = query(
+            collection(db, "reservations"),
+            where("activityId", "==", activityId),
+            where("status", "==", "active")
+        );
+        const resSnap = await getDocs(q);
 
-    if (resSnap.empty) {
-        listDiv.innerHTML = "<p style='padding:10px;'>No hay usuarios inscritos.</p>";
-        return;
-    }
+        if (resSnap.empty) {
+            listDiv.innerHTML = "<p style='padding:10px; color:gray;'>No hay usuarios inscritos.</p>";
+            return;
+        }
 
-    listDiv.innerHTML = ""; // Limpiar
+        listDiv.innerHTML = "";
 
-    for (const resDoc of resSnap.docs) {
-        const resData = resDoc.data();
+        for (const resDoc of resSnap.docs) {
+            const resData  = resDoc.data();
 
-        // 3. Buscar el NOMBRE del usuario usando el userId de la reserva
-        const userSnap = await getDoc(doc(db, "users", resData.userId));
-        const userName = userSnap.exists() ? userSnap.data().name : "Usuario Anónimo";
+            // Buscar nombre del usuario en la colección "users"
+            const userSnap = await getDoc(doc(db, "users", resData.userId));
+            const userData = userSnap.exists() ? userSnap.data() : null;
+            const userName = userData
+                ? `${userData.name} ${userData.surname || ''}`.trim()
+                : "Usuario Anónimo";
 
-        const row = document.createElement('div');
-        row.className = 'user-row';
-        row.innerHTML = `
-            <span class="user-name">${userName}</span>
-            <button class="veto-btn" onclick="handleVeto('${resDoc.id}', '${activityId}', this)">Vetar</button>
-        `;
-        listDiv.appendChild(row);
+            const row = document.createElement('div');
+            row.className = 'user-row';
+            row.innerHTML = `
+                <span class="user-name">${userName}</span>
+                <button class="veto-btn" data-res-id="${resDoc.id}" data-act-id="${activityId}">
+                    🚫 Vetar
+                </button>
+            `;
+
+            // Listener en el botón (evita usar onclick inline con parámetros)
+            row.querySelector('.veto-btn').addEventListener('click', (e) => {
+                const btn = e.currentTarget;
+                handleVeto(btn.dataset.resId, btn.dataset.actId, btn);
+            });
+
+            listDiv.appendChild(row);
+        }
+    } catch (e) {
+        console.error("Error cargando participantes:", e);
+        listDiv.innerHTML = "<p style='color:red;'>Error al cargar participantes.</p>";
     }
 }
 
-// Función para vetar (Backend + UI)
+// ── Vetar usuario ──────────────────────────────────────────────
 async function handleVeto(reservationId, activityId, btn) {
     if (!confirm("¿Seguro que quieres vetar a este usuario?")) return;
 
     try {
-        // Actualizar Firebase
         await updateDoc(doc(db, "reservations", reservationId), { status: "vetoed" });
         await updateDoc(doc(db, "activities", activityId), { availableSlots: increment(1) });
 
-        // UI
         btn.textContent = '✓ Vetado';
-        btn.disabled = true;
+        btn.disabled    = true;
         btn.closest('.user-row').classList.add('user-row--vetoed');
 
-        // Actualizar número de plazas
         const slotSpan = document.getElementById(`slots-${activityId}`);
-        slotSpan.textContent = parseInt(slotSpan.textContent) + 1;
+        if (slotSpan) slotSpan.textContent = parseInt(slotSpan.textContent) + 1;
 
     } catch (e) {
+        console.error(e);
         alert("Error al procesar el veto.");
     }
 }
 
-// Exponer la función al objeto global window
 window.handleVeto = handleVeto;
-
-// Ejecutar al cargar la página
-loadDashboard();
