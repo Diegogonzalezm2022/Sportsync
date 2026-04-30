@@ -30,7 +30,9 @@ body {
     display: flex;
     gap: 30px;
     flex: 1;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    align-items: center;
+    margin-right: 10%;
 }
 
 .footer-contact {
@@ -39,7 +41,7 @@ body {
     gap: 30px;
     flex: 1;
     margin-left: 10%;
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 /* --- ESTILO DE ENLACES --- */
