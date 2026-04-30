@@ -224,11 +224,19 @@
     snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
 
     const mySnap = await getDocs(query(
-    collection(db, "reservations"),
-    where("userId", "==", userId),
-    where("status", "==", "active")));
+        collection(db, "reservations"),
+        where("userId", "==", userId),
+        where("status", "==", "active")));
     myActivityIds = new Set();
     mySnap.forEach(d => myActivityIds.add(d.data().activityId));
+
+    // Cargar actividades vetadas
+    const vetoedSnap = await getDocs(query(
+        collection(db, "reservations"),
+        where("userId", "==", userId),
+        where("status", "==", "vetoed")));
+    window.myVetoedIds = new Set();
+    vetoedSnap.forEach(d => window.myVetoedIds.add(d.data().activityId));
 
     let filtered = allActivities;
     if (fromDate || toDate) {
@@ -255,6 +263,7 @@
 }
         container.innerHTML = activities.map(a => {
             const alreadySignedUp = myActivityIds.has(a.id);
+            const isVetoed = window.myVetoedIds?.has(a.id);  // ← añade esta línea
             const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
 
             const stripeBtn = a.stripeLink
@@ -281,11 +290,11 @@
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             ${isOwner
                 ? `<span class="activity-owner-badge">Tu actividad</span>`
-                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${noSlots && !alreadySignedUp ? 'signup-btn--full' : ''}"
-                        data-id="${a.id}" data-name="${a.name}" data-date="${a.date || ''}"
-                        data-schedule="${a.schedule || ''}" data-price="${a.price || 0}"
-                        ${alreadySignedUp || noSlots ? 'disabled' : ''}>
-                        ${alreadySignedUp ? '✓ Apuntado' : noSlots ? 'Completo' : 'Apuntarme'}
+                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+                    data-id="${a.id}" data-name="${a.name}" data-date="${a.date || ''}"
+                    data-schedule="${a.schedule || ''}" data-price="${a.price || 0}"
+                    ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
+                    ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
                    </button>
                    ${stripeBtn}`
             }
@@ -306,13 +315,28 @@
     const cur = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
     if (cur <= 0) { btn.textContent = "Completo"; btn.classList.add("signup-btn--full"); return; }
 
-    const existSnap = await getDocs(query(
-    collection(db, "reservations"),
-    where("userId", "==", userId),
-    where("activityId", "==", actId),
-    where("status", "==", "active")
-    ));
-    if (!existSnap.empty) { btn.textContent = "✓ Apuntado"; btn.classList.add("signup-btn--done"); return; }
+        // Comprobar si está vetado
+        const vetoSnap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId),
+            where("activityId", "==", actId),
+            where("status", "==", "vetoed")
+        ));
+        if (!vetoSnap.empty) {
+            btn.textContent = "🚫 Vetado";
+            btn.classList.add("signup-btn--full");
+            btn.disabled = true;
+            return;
+        }
+
+        // Comprobar si ya está apuntado
+        const existSnap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId),
+            where("activityId", "==", actId),
+            where("status", "==", "active")
+        ));
+        if (!existSnap.empty) { btn.textContent = "✓ Apuntado"; btn.classList.add("signup-btn--done"); return; }
 
     await addDoc(collection(db, "reservations"), {
     userId, activityId: actId, gymOrProId: ownerId,

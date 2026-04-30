@@ -273,6 +273,19 @@ window.book = async (id, name, date, time, price) => {
         const ref = doc(db, "activities", id);
         const s = await getDoc(ref);
         const slots = s.data().availableSlots ?? s.data().slots;
+
+            // Comprobar si está vetado
+        const vetoSnap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId),
+            where("activityId", "==", id),
+            where("status", "==", "vetoed")
+        ));
+        if (!vetoSnap.empty) {
+            alert("Has sido vetado de esta actividad y no puedes volver a inscribirte.");
+            return;
+        }
+
         if (slots > 0) {
             await addDoc(collection(db, "reservations"), {
                 userId, activityId: id, gymOrProId: ownerId,
