@@ -19,9 +19,9 @@ async function loadData() {
     if (!proSnap.exists()) return;
     const d = proSnap.data();
 
-    document.getElementById("profileName").textContent = d.name        || "—";
-    document.getElementById("profileDesc").textContent = d.description || "—";
-    document.getElementById("contactLines").textContent = d.contactInfo || "—";
+    document.getElementById("profileName").textContent  = d.name        || "—";
+    document.getElementById("profileDesc").textContent  = d.description || "—";
+    document.getElementById("contactLines").textContent = d.contactInfo  || "—";
 
     if (d.schedule) {
         if (typeof d.schedule === "object") {
@@ -41,7 +41,7 @@ async function loadData() {
 
     if (d.gallery && d.gallery.length > 0) {
         document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
-                <div class="gallery-slot"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join("");
+            <div class="gallery-slot"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join("");
     }
 
     if (d.rating) {
@@ -122,6 +122,7 @@ document.getElementById("commentsToggleBtn").addEventListener("click", async () 
         commentsLoaded = true;
     }
 });
+
 async function loadComments() {
     const list = document.getElementById("commentList");
     try {
@@ -204,68 +205,76 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
 // ── Actividades ───────────────────────────────────────
 async function loadActivities(fromDate = null, toDate = null) {
     const container = document.getElementById("activitiesSection");
-    const snap = await getDocs(query(collection(db, "activities"), where("ownerId", "==", ownerId)));
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>`;
 
-    const mySnap = await getDocs(query(
-        collection(db, "reservations"),
-        where("userId", "==", userId),
-        where("status", "==", "active")));
-    const myIds = new Set();
-    mySnap.forEach(d => myIds.add(d.data().activityId));
+    try {
+        const snap = await getDocs(query(
+            collection(db, "activities"), where("ownerId", "==", ownerId)));
 
-    let acts = [];
-    snap.forEach(d => acts.push({ id: d.id, ...d.data() }));
+        const mySnap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId),
+            where("status", "==", "active")));
+        const myIds = new Set();
+        mySnap.forEach(d => myIds.add(d.data().activityId));
 
-    if (fromDate || toDate) {
-        acts = acts.filter(a => {
-            const ad = new Date(a.date);
-            if (fromDate && ad < new Date(fromDate)) return false;
-            return !(toDate && ad > new Date(toDate));
+        let acts = [];
+        snap.forEach(d => acts.push({ id: d.id, ...d.data() }));
 
-        });
-    }
-
-    if (acts.length === 0) { container.innerHTML = "<p>No hay actividades disponibles.</p>"; return; }
-
-    container.innerHTML = activities.map(a => {
-        const alreadySignedUp = myActivityIds.has(a.id);
-        const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
-
-        const stripeBtn = a.stripeLink
-            ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
-              class="stripe-pay-btn"
-              style="display:inline-block; padding:8px 14px; background:#635bff;
-                     color:white; border-radius:6px; font-size:0.82rem;
-                     font-weight:600; text-decoration:none; margin-left:6px;">
-              💳 Pagar online
-           </a>`
-            : "";
-
-        return `
-    <div class="activity-card">
-        <div class="activity-info">
-            <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
-            <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
-            <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date || "—"}</span></div>
-        </div>
-        <div class="activity-right">
-            <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
-            <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots ?? 0}</span></div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            ${isOwner
-            ? `<span class="activity-owner-badge">Tu actividad</span>`
-            : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${noSlots && !alreadySignedUp ? 'signup-btn--full' : ''}"
-                        data-id="${a.id}" data-name="${a.name}" data-date="${a.date || ''}"
-                        data-schedule="${a.schedule || ''}" data-price="${a.price || 0}"
-                        ${alreadySignedUp || noSlots ? 'disabled' : ''}>
-                        ${alreadySignedUp ? '✓ Apuntado' : noSlots ? 'Completo' : 'Apuntarme'}
-                   </button>
-                   ${stripeBtn}`
+        if (fromDate || toDate) {
+            acts = acts.filter(a => {
+                const ad = new Date(a.date);
+                if (fromDate && ad < new Date(fromDate)) return false;
+                return !(toDate && ad > new Date(toDate));
+            });
         }
-        </div>
-    </div>`;
-    }).join("");
+
+        if (acts.length === 0) {
+            container.innerHTML = "<p>No hay actividades disponibles.</p>";
+            return;
+        }
+
+        // ── CORRECCIÓN: usar acts y myIds ─────────────────
+        container.innerHTML = acts.map(a => {
+            const done = myIds.has(a.id);
+            const full = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+            const stripeBtn = a.stripeLink
+                ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
+                      style="display:inline-block; padding:8px 14px; background:#635bff;
+                             color:white; border-radius:6px; font-size:0.82rem;
+                             font-weight:600; text-decoration:none; margin-left:6px;">
+                      💳 Pagar online
+                   </a>`
+                : "";
+
+            return `
+            <div class="activity-card">
+                <div class="activity-info">
+                    <strong>${a.name}</strong><br>
+                    <small>${a.date} | ${a.schedule}</small>
+                </div>
+                <div class="activity-right">
+                    <span>${a.price}€</span><br>
+                    <small>Cupo: ${a.availableSlots ?? a.slots}</small>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    ${isOwner ? '<span>(Tuya)</span>' : `
+                        <button class="signup-btn ${done ? 'signup-btn--done' : ''} ${full && !done ? 'signup-btn--full' : ''}"
+                            ${done || full ? 'disabled' : ''}
+                            onclick="window.book('${a.id}', '${a.name}', '${a.date}', '${a.schedule}', '${a.price}')">
+                            ${done ? '✓' : full ? 'Lleno' : 'Apuntarme'}
+                        </button>
+                        ${stripeBtn}
+                    `}
+                </div>
+            </div>`;
+        }).join("");
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style="color:red;">Error al cargar actividades.</p>`;
+    }
 }
 
 window.book = async (id, name, date, time, price) => {
@@ -274,7 +283,6 @@ window.book = async (id, name, date, time, price) => {
         const s = await getDoc(ref);
         const slots = s.data().availableSlots ?? s.data().slots;
 
-            // Comprobar si está vetado
         const vetoSnap = await getDocs(query(
             collection(db, "reservations"),
             where("userId", "==", userId),
