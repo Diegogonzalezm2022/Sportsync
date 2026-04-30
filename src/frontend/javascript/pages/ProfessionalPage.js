@@ -227,27 +227,44 @@ async function loadActivities(fromDate = null, toDate = null) {
 
     if (acts.length === 0) { container.innerHTML = "<p>No hay actividades disponibles.</p>"; return; }
 
-    container.innerHTML = acts.map(a => {
-        const done = myIds.has(a.id);
-        const full = (a.availableSlots ?? a.slots ?? 0) <= 0;
+    container.innerHTML = activities.map(a => {
+        const alreadySignedUp = myActivityIds.has(a.id);
+        const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+        const stripeBtn = a.stripeLink
+            ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
+              class="stripe-pay-btn"
+              style="display:inline-block; padding:8px 14px; background:#635bff;
+                     color:white; border-radius:6px; font-size:0.82rem;
+                     font-weight:600; text-decoration:none; margin-left:6px;">
+              💳 Pagar online
+           </a>`
+            : "";
+
         return `
-            <div class="activity-card">
-                <div class="activity-info">
-                    <strong>${a.name}</strong><br>
-                    <small>${a.date} | ${a.schedule}</small>
-                </div>
-                <div class="activity-right">
-                    <span>${a.price}€</span><br>
-                    <small>Cupo: ${a.availableSlots ?? a.slots}</small>
-                </div>
-                ${isOwner ? '<span>(Tuya)</span>' : `
-                    <button class="signup-btn ${done ? 'signup-btn--done' : ''} ${full && !done ? 'signup-btn--full' : ''}"
-                        ${done || full ? 'disabled' : ''}
-                        onclick="window.book('${a.id}', '${a.name}', '${a.date}', '${a.schedule}', '${a.price}')">
-                        ${done ? '✓' : full ? 'Lleno' : 'Apuntarme'}
-                    </button>
-                `}
-            </div>`;
+    <div class="activity-card">
+        <div class="activity-info">
+            <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
+            <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
+            <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date || "—"}</span></div>
+        </div>
+        <div class="activity-right">
+            <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
+            <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots ?? 0}</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            ${isOwner
+            ? `<span class="activity-owner-badge">Tu actividad</span>`
+            : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${noSlots && !alreadySignedUp ? 'signup-btn--full' : ''}"
+                        data-id="${a.id}" data-name="${a.name}" data-date="${a.date || ''}"
+                        data-schedule="${a.schedule || ''}" data-price="${a.price || 0}"
+                        ${alreadySignedUp || noSlots ? 'disabled' : ''}>
+                        ${alreadySignedUp ? '✓ Apuntado' : noSlots ? 'Completo' : 'Apuntarme'}
+                   </button>
+                   ${stripeBtn}`
+        }
+        </div>
+    </div>`;
     }).join("");
 }
 
