@@ -1,10 +1,13 @@
 import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, where, doc, updateDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {
+    getFirestore, collection, getDocs, query, where,
+    doc, updateDoc, getDoc, increment
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
+
 emailjs.init("bOhMQRr1h4BzhaNUT");
 
-// ── Firebase init desde JSON ───────────────────────────────────
+// ── Firebase init ──────────────────────────────────────────────
 let app;
 try {
     app = getApp();
@@ -13,46 +16,40 @@ try {
     const firebaseConfig = await response.json();
     app = initializeApp(firebaseConfig);
 }
+const db = getFirestore(app);
 
-const auth = getAuth(app);
-const db   = getFirestore(app);
+// ── Sesión y tipo de propietario ───────────────────────────────
+// Usa sessionStorage igual que GymPage y ProfessionalPage
+const userId    = sessionStorage.getItem("userId");
+const params    = new URLSearchParams(window.location.search);
+// "type" viene de la URL: ?id=XXX&type=gym  o  ?id=XXX&type=professional
+const ownerType = params.get("type") || "gym";
+// El ownerId es el propio usuario logueado (solo el dueño accede aquí)
+const ownerId   = params.get("id") || userId;
 
-// ── DIAGNÓSTICO: borra esto cuando funcione ────────────────────
-onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        console.log("NO HAY SESIÓN → redirigiendo");
-        window.location.href = "Login.html";
-        return;
-    }
+if (!userId) {
+    window.location.href = "Login.html";
+}
 
-    console.log("UID de Auth:", user.uid);
-    console.log("Email:", user.email);
+// ── Nombre del dueño para el email ────────────────────────────
+let ownerName = "";
 
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-    console.log("Doc existe en users:", userSnap.exists());
-    if (userSnap.exists()) {
-        console.log("Role:", userSnap.data().role);
-    }
+async function loadOwnerName() {
+    const col  = ownerType === "gym" ? "gyms" : "professionals";
+    const snap = await getDoc(doc(db, col, ownerId));
+    ownerName  = snap.exists() ? (snap.data().name || "") : "";
+}
 
-    // COMENTADO temporalmente para no redirigir
-    // if (!userSnap.exists() || userSnap.data().role !== "gym") {
-    //     window.location.href = "Index.html";
-    //     return;
-    // }
-
-    loadDashboard(user.uid);
-});
-
-// ── Carga solo las actividades del gimnasio logueado ───────────
-async function loadDashboard(gymUid) {
-    const container = document.getElementById('activities-list');
+// ── Carga el dashboard ─────────────────────────────────────────
+async function loadDashboard() {
+    const container = document.getElementById("activities-list");
 
     try {
-        // Solo actividades donde ownerId == UID del gimnasio logueado
+        // ownerType dinámico: funciona tanto para "gym" como para "professional"
         const q = query(
             collection(db, "activities"),
-            where("ownerId", "==", gymUid),
-            where("ownerType", "==", "gym")
+            where("ownerId",   "==", ownerId),
+            where("ownerType", "==", ownerType)
         );
         const actSnap = await getDocs(q);
         container.innerHTML = "";
@@ -66,27 +63,28 @@ async function loadDashboard(gymUid) {
             const actData = actDoc.data();
             const actId   = actDoc.id;
 
-            const activitySection = document.createElement('div');
-            activitySection.className = 'activity-group';
+            const activitySection = document.createElement("div");
+            activitySection.className = "activity-group";
             activitySection.innerHTML = `
                 <div class="activity-summary">
                     <div class="activity-summary-left">
                         <p><strong>Actividad:</strong> ${actData.name}</p>
-                        <p><strong>Horario:</strong> ${actData.schedule || 'Sin horario'}</p>
-                        <p><strong>Fecha:</strong> ${actData.date || 'Sin fecha'}</p>
+                        <p><strong>Horario:</strong>   ${actData.schedule || "Sin horario"}</p>
+                        <p><strong>Fecha:</strong>     ${actData.date     || "Sin fecha"}</p>
                     </div>
                     <div class="activity-summary-right">
                         <p><strong>Precio:</strong> ${actData.price}€</p>
-                        <p><strong>Plazas disponibles:</strong> <span id="slots-${actId}">${actData.availableSlots ?? actData.slots}</span></p>
+                        <p><strong>Plazas disponibles:</strong>
+                            <span id="slots-${actId}">${actData.availableSlots ?? actData.slots}</span>
+                        </p>
                     </div>
                 </div>
                 <div class="users-list" id="users-container-${actId}">
-                    <p style="padding:10px; font-size:0.9em; color:gray;">Buscando participantes...</p>
-                </div>
-            `;
+                    <p style="padding:10px;font-size:0.9em;color:gray;">Buscando participantes...</p>
+                </div>`;
             container.appendChild(activitySection);
 
-            loadParticipants(actId);
+            loadParticipants(actId, actData);
         }
     } catch (e) {
         console.error(e);
@@ -95,19 +93,19 @@ async function loadDashboard(gymUid) {
 }
 
 // ── Carga los usuarios inscritos en una actividad ──────────────
-async function loadParticipants(activityId) {
+async function loadParticipants(activityId, actData) {
     const listDiv = document.getElementById(`users-container-${activityId}`);
 
     try {
         const q = query(
             collection(db, "reservations"),
             where("activityId", "==", activityId),
-            where("status", "==", "active")
+            where("status",     "==", "active")
         );
         const resSnap = await getDocs(q);
 
         if (resSnap.empty) {
-            listDiv.innerHTML = "<p style='padding:10px; color:black;'>No hay usuarios inscritos.</p>";
+            listDiv.innerHTML = "<p style='padding:10px;color:black;'>No hay usuarios inscritos.</p>";
             return;
         }
 
@@ -115,27 +113,31 @@ async function loadParticipants(activityId) {
 
         for (const resDoc of resSnap.docs) {
             const resData  = resDoc.data();
-
-            // Buscar nombre del usuario en la colección "users"
             const userSnap = await getDoc(doc(db, "users", resData.userId));
             const userData = userSnap.exists() ? userSnap.data() : null;
             const userName = userData
-                ? `${userData.name} ${userData.surname || ''}`.trim()
+                ? `${userData.name} ${userData.surname || ""}`.trim()
                 : "Usuario Anónimo";
+            const userEmail = userData?.email || "";
 
-            const row = document.createElement('div');
-            row.className = 'user-row';
+            const row = document.createElement("div");
+            row.className = "user-row";
             row.innerHTML = `
                 <span class="user-name">${userName}</span>
-                <button class="veto-btn" data-res-id="${resDoc.id}" data-act-id="${activityId}">
+                <button class="veto-btn"
+                    data-res-id="${resDoc.id}"
+                    data-act-id="${activityId}"
+                    data-user-email="${userEmail}"
+                    data-user-name="${userName}"
+                    data-act-name="${actData.name}"
+                    data-act-date="${actData.date     || '—'}"
+                    data-act-schedule="${actData.schedule || '—'}"
+                    data-act-price="${actData.price   || '—'}">
                     🚫 Vetar
-                </button>
-            `;
+                </button>`;
 
-            // Listener en el botón (evita usar onclick inline con parámetros)
-            row.querySelector('.veto-btn').addEventListener('click', (e) => {
-                const btn = e.currentTarget;
-                handleVeto(btn.dataset.resId, btn.dataset.actId, btn);
+            row.querySelector(".veto-btn").addEventListener("click", (e) => {
+                handleVeto(e.currentTarget);
             });
 
             listDiv.appendChild(row);
@@ -147,51 +149,50 @@ async function loadParticipants(activityId) {
 }
 
 // ── Vetar usuario ──────────────────────────────────────────────
-async function handleVeto(reservationId, activityId, btn) {
+async function handleVeto(btn) {
     if (!confirm("¿Seguro que quieres vetar a este usuario?")) return;
 
+    const reservationId  = btn.dataset.resId;
+    const activityId     = btn.dataset.actId;
+    const userEmail      = btn.dataset.userEmail;
+    const userName       = btn.dataset.userName;
+    const actName        = btn.dataset.actName;
+    const actDate        = btn.dataset.actDate;
+    const actSchedule    = btn.dataset.actSchedule;
+    const actPrice       = btn.dataset.actPrice;
+
+    btn.disabled    = true;
+    btn.textContent = "Vetando...";
+
     try {
-        // 1. Obtener datos de la reserva para saber el userId
-        const resSnap = await getDoc(doc(db, "reservations", reservationId));
-        const resData = resSnap.data();
-
-        // 2. Obtener datos del usuario vetado
-        const userSnap = await getDoc(doc(db, "users", resData.userId));
-        const userData = userSnap.exists() ? userSnap.data() : null;
-        const userEmail = userData?.email || null;
-        const userName  = userData ? `${userData.name} ${userData.surname || ''}`.trim() : "Usuario";
-
-        // 3. Obtener nombre de la actividad
-        const actSnap = await getDoc(doc(db, "activities", activityId));
-        const actName = actSnap.exists() ? actSnap.data().name : "la actividad";
-
-        // 4. Actualizar Firestore
+        // 1. Marcar reserva como vetada
         await updateDoc(doc(db, "reservations", reservationId), { status: "vetoed" });
+
+        // 2. Devolver plaza a la actividad
         await updateDoc(doc(db, "activities", activityId), { availableSlots: increment(1) });
 
-        // 5. Enviar email al usuario vetado
+        // 3. Enviar email al usuario vetado
         if (userEmail) {
             try {
                 await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
-                    type: "vetada ❌",
-                    user_name: userName,
-                    user_email: userEmail,
-                    activity_name: actName,
-                    activity_date: actSnap.data().date || "—",
-                    activity_schedule: actSnap.data().schedule || "—",
-                    activity_price: actSnap.data().price || "—",
-                    owner_name: "",
-                    comment: "Has sido vetado de esta actividad y no podrás volver a inscribirte. Cualquier cuestión, contacte con el gimnasio o profesional correspondiente a su actividad."
+                    type:              "vetada ❌",
+                    user_name:         userName,
+                    user_email:        userEmail,
+                    activity_name:     actName,
+                    activity_date:     actDate,
+                    activity_schedule: actSchedule,
+                    activity_price:    actPrice,
+                    owner_name:        ownerName,   // ← ya no queda vacío
+                    comment:           "Has sido vetado de esta actividad y no podrás volver a inscribirte. Para cualquier consulta, contacta con el gimnasio o profesional correspondiente."
                 });
             } catch (emailErr) {
                 console.warn("Email no enviado:", emailErr);
             }
         }
 
-        // 6. Actualizar UI
-        btn.textContent = '✓ Vetado';
-        btn.disabled    = true;
-        btn.closest('.user-row').classList.add('user-row--vetoed');
+        // 4. Actualizar UI
+        btn.textContent = "✓ Vetado";
+        btn.closest(".user-row").classList.add("user-row--vetoed");
 
         const slotSpan = document.getElementById(`slots-${activityId}`);
         if (slotSpan) slotSpan.textContent = parseInt(slotSpan.textContent) + 1;
@@ -199,7 +200,13 @@ async function handleVeto(reservationId, activityId, btn) {
     } catch (e) {
         console.error(e);
         alert("Error al procesar el veto.");
+        btn.disabled    = false;
+        btn.textContent = "🚫 Vetar";
     }
 }
 
 window.handleVeto = handleVeto;
+
+// ── Iniciar ────────────────────────────────────────────────────
+await loadOwnerName();
+await loadDashboard();

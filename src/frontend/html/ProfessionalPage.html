@@ -9,8 +9,9 @@
     <link rel="stylesheet" href="../css/components/Footer.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
+        /* ── Botones de estado de inscripción ── */
         .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
-        .star--active { color: #f1c40f !important; }
+        .star--active     { color: #f1c40f !important; }
 
         /* ── Comentarios ── */
         .comments-section { margin: 24px 0; }
@@ -20,29 +21,29 @@
             transition: border-color 0.15s, color 0.15s;
         }
         .comments-toggle-btn:hover { border-color: #aaa; color: #222; }
-        .comments-box { margin-top: 14px; }
-        .comment-form { display: flex; gap: 8px; margin-bottom: 16px; }
+        .comments-box      { margin-top: 14px; }
+        .comment-form      { display: flex; gap: 8px; margin-bottom: 16px; }
         .comment-input {
             flex: 1; padding: 9px 12px; border: 1.5px solid #ddd;
             border-radius: 8px; font-size: 0.85rem; outline: none;
             font-family: inherit;
         }
-        .comment-input:focus { border-color: #888; }
+        .comment-input:focus  { border-color: #888; }
         .comment-submit-btn {
             padding: 9px 16px; border: none; border-radius: 8px;
             background: #1a1a1a; color: white; font-size: 0.85rem;
             cursor: pointer; white-space: nowrap;
         }
         .comment-submit-btn:hover { background: #333; }
-        .comment-list { display: flex; flex-direction: column; gap: 10px; }
-        .comment-item {
+        .comment-list  { display: flex; flex-direction: column; gap: 10px; }
+        .comment-item  {
             background: #f8f8f8; border-radius: 10px;
             padding: 10px 14px; font-size: 0.85rem;
         }
         .comment-author { font-weight: 600; color: #333; margin-bottom: 3px; font-size: 0.8rem; }
-        .comment-text { color: #444; line-height: 1.4; }
-        .comment-date { font-size: 0.72rem; color: #aaa; margin-top: 4px; }
-        .no-comments { font-size: 0.83rem; color: #aaa; font-style: italic; }
+        .comment-text   { color: #444; line-height: 1.4; }
+        .comment-date   { font-size: 0.72rem; color: #aaa; margin-top: 4px; }
+        .no-comments    { font-size: 0.83rem; color: #aaa; font-style: italic; }
         .comment-delete-btn {
             background: none; border: none; cursor: pointer;
             color: #ccc; font-size: 0.75rem; float: right;
@@ -56,20 +57,28 @@
 <header xlu-include-file="components/Header.html"></header>
 
 <main class="profile-page-main">
+
+    <!-- ── Botón volver ── -->
     <button class="back-btn" onclick="history.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
     </button>
 
+    <!-- ── Sección superior: foto + info ── -->
     <section class="top-section">
+
         <div class="profile-photo-block">
-            <div class="profile-photo" id="profilePhotoBlock" style="position:relative;overflow:hidden;background:white;">
+            <div class="profile-photo" id="profilePhotoBlock"
+                 style="position:relative;overflow:hidden;background-color:white;">
                 <span class="photo-caption" id="photoCaption">Foto de Perfil</span>
-                <img id="profilePhotoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                <img id="profilePhotoImg" src="" alt=""
+                     style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
             </div>
             <div class="schedule-block">
                 <span class="schedule-label">Disponibilidad:</span>
                 <div class="schedule-box">
-                    <span class="schedule-days" id="scheduleDays">—</span>
+                    <span class="schedule-days"  id="scheduleDays">—</span>
                     <span class="schedule-hours" id="scheduleHours"></span>
                 </div>
             </div>
@@ -101,52 +110,76 @@
                 <span class="info-label">Contacto:</span>
                 <div class="contact-lines" id="contactLines">—</div>
             </div>
+            <!-- Solo visible si es el dueño -->
             <div id="ownerControls" style="display:none; margin-top:10px;">
-                <button class="edit-mode-btn" id="editBtn">✏️ Editar Perfil Profesional</button>
+                <button class="edit-mode-btn"     id="editBtn">✏️ Editar Perfil Profesional</button>
                 <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
         </div>
+
     </section>
 
+    <!-- ── Galería ── -->
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
             <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
             </button>
             <div class="gallery-carousel" id="galleryCarousel"></div>
             <button class="carousel-arrow carousel-arrow--right" id="carouselRight">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
             </button>
         </div>
     </section>
 
+    <!-- ── Filtro de fechas ── -->
     <section class="date-filter-section">
         <div class="date-btn-group">
             <button class="date-btn" id="dateFromBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8"  y1="2" x2="8"  y2="6"/>
+                    <line x1="3"  y1="10" x2="21" y2="10"/>
+                </svg>
                 <span id="dateFromLabel">Fecha desde</span>
             </button>
             <input type="date" id="dateFromInput" class="date-input-hidden">
+
             <button class="date-btn" id="dateToBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8"  y1="2" x2="8"  y2="6"/>
+                    <line x1="3"  y1="10" x2="21" y2="10"/>
+                </svg>
                 <span id="dateToLabel">Fecha hasta</span>
             </button>
             <input type="date" id="dateToInput" class="date-input-hidden">
         </div>
     </section>
 
+    <!-- ── Actividades ── -->
     <section class="activities-section" id="activitiesSection">
-        <p>Cargando clases...</p>
+        <div class="activities-section-message">
+            <p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>
+        </div>
     </section>
 
-    <!-- ── Sección comentarios ── -->
+    <!-- ── Comentarios ── -->
     <section class="comments-section">
         <button class="comments-toggle-btn" id="commentsToggleBtn">
             💬 Ver comentarios
         </button>
         <div class="comments-box" id="commentsBox" style="display:none;">
+            <!-- Solo visible si NO es el dueño; se activa desde JS -->
             <div class="comment-form" id="commentForm" style="display:none;">
-                <textarea class="comment-input" id="commentInput" placeholder="Escribe tu comentario..." rows="2"></textarea>
+                <textarea class="comment-input" id="commentInput"
+                          placeholder="Escribe tu comentario..." rows="2"></textarea>
                 <button class="comment-submit-btn" id="commentSubmitBtn">Publicar</button>
             </div>
             <div class="comment-list" id="commentList">
@@ -160,7 +193,8 @@
 <footer xlu-include-file="components/Footer.html"></footer>
 
 <script src="../javascript/scripts/xlu-include-file.js"></script>
-<script type="module" src="../javascript/pages/ProfessionalPage.js"></script>
 <script>xLuIncludeFile();</script>
+<script type="module" src="../javascript/pages/ProfessionalPage.js"></script>
+
 </body>
 </html>

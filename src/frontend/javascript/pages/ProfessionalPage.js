@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, query, where, updateDoc, serverTimestamp}
-    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {
+    getFirestore, doc, getDoc, collection, getDocs,
+    addDoc, deleteDoc, query, where, updateDoc, increment, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 emailjs.init("bOhMQRr1h4BzhaNUT");
 
@@ -14,9 +16,20 @@ const params  = new URLSearchParams(window.location.search);
 const ownerId = params.get("id") || sessionStorage.getItem("userId");
 const isOwner = (userId === ownerId);
 
+if (!userId) window.location.href = "Login.html";
+
+// ── Variables globales de actividades ────────────────
+let allActivities = [];
+let myActivityIds = new Set();
+let myVetoedIds   = new Set();
+
+// ── Cargar datos del profesional ──────────────────────
 async function loadData() {
     const proSnap = await getDoc(doc(db, "professionals", ownerId));
-    if (!proSnap.exists()) return;
+    if (!proSnap.exists()) {
+        document.getElementById("profileName").textContent = "Perfil no encontrado";
+        return;
+    }
     const d = proSnap.data();
 
     document.getElementById("profileName").textContent  = d.name        || "—";
@@ -34,14 +47,16 @@ async function loadData() {
     }
 
     if (d.photoURL) {
-        document.getElementById("profilePhotoImg").src = d.photoURL;
+        document.getElementById("profilePhotoImg").src           = d.photoURL;
         document.getElementById("profilePhotoImg").style.display = "block";
-        document.getElementById("photoCaption").style.display = "none";
+        document.getElementById("photoCaption").style.display    = "none";
     }
 
     if (d.gallery && d.gallery.length > 0) {
         document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
-            <div class="gallery-slot"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`).join("");
+            <div class="gallery-slot">
+                <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+            </div>`).join("");
     }
 
     if (d.rating) {
@@ -53,70 +68,69 @@ async function loadData() {
     }
 
     if (isOwner) {
-        document.getElementById("ownerControls").style.display = "block";
+        document.getElementById("ownerControls").style.display   = "block";
         document.getElementById("starsContainer").style.pointerEvents = "none";
-        document.getElementById("ratingHint").textContent = "Tu perfil";
+        document.getElementById("ratingHint").textContent        = "Tu perfil";
+        document.getElementById("editBtn").onclick    = () =>
+            window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
         document.getElementById("editBtnVet").onclick = () =>
             window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
-        document.getElementById("editBtn").onclick = () =>
-            window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
     } else {
+        const stars = document.querySelectorAll(".star");
+
         if (d.ratings && d.ratings[userId]) {
             const myPrev = d.ratings[userId];
-            document.querySelectorAll(".star").forEach(s =>
-                s.classList.toggle("star--active", +s.dataset.value <= myPrev));
+            stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= myPrev));
             document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
         }
-        setupRating();
+
+        stars.forEach(star => {
+            star.addEventListener("mouseover", () =>
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
+            star.addEventListener("mouseout", () => {
+                const text  = document.getElementById("ratingHint").textContent;
+                const match = text.match(/[\d.]+/);
+                const cur   = match ? Math.round(parseFloat(match[0])) : 0;
+                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
+            });
+            star.onclick = async () => {
+                const val  = +star.dataset.value;
+                const ref  = doc(db, "professionals", ownerId);
+                const snap = await getDoc(ref);
+                if (snap.exists()) {
+                    const data       = snap.data();
+                    const ratings    = data.ratings    || {};
+                    const prevRating = ratings[userId] || null;
+                    let { rating = 0, ratingCount = 0 } = data;
+                    if (prevRating !== null) {
+                        const totalSinAnterior = (rating * ratingCount) - prevRating;
+                        rating = ratingCount > 1 ? (totalSinAnterior + val) / ratingCount : val;
+                    } else {
+                        rating      = ((rating * ratingCount) + val) / (ratingCount + 1);
+                        ratingCount = ratingCount + 1;
+                    }
+                    await updateDoc(ref, { rating, ratingCount, [`ratings.${userId}`]: val });
+                    location.reload();
+                }
+            };
+        });
+
+        // Mostrar formulario de comentario solo a usuarios no dueños
         document.getElementById("commentForm").style.display = "flex";
     }
 
     await loadActivities();
 }
 
-function setupRating() {
-    const stars = document.querySelectorAll(".star");
-    stars.forEach(star => {
-        star.addEventListener("mouseover", () =>
-            stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
-        star.addEventListener("mouseout", () => {
-            const text = document.getElementById("ratingHint").textContent;
-            const match = text.match(/[\d.]+/);
-            const cur = match ? Math.round(parseFloat(match[0])) : 0;
-            stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
-        });
-        star.onclick = async () => {
-            const val = +star.dataset.value;
-            const ref = doc(db, "professionals", ownerId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const data = snap.data();
-                const ratings    = data.ratings    || {};
-                const prevRating = ratings[userId] || null;
-                let { rating = 0, ratingCount = 0 } = data;
-                if (prevRating !== null) {
-                    const totalSinAnterior = (rating * ratingCount) - prevRating;
-                    rating = ratingCount > 1 ? (totalSinAnterior + val) / ratingCount : val;
-                } else {
-                    rating = ((rating * ratingCount) + val) / (ratingCount + 1);
-                    ratingCount = ratingCount + 1;
-                }
-                await updateDoc(ref, { rating, ratingCount, [`ratings.${userId}`]: val });
-                location.reload();
-            }
-        };
-    });
-}
-
 // ── Comentarios ───────────────────────────────────────
 let commentsLoaded = false;
 
 document.getElementById("commentsToggleBtn").addEventListener("click", async () => {
-    const box = document.getElementById("commentsBox");
-    const btn = document.getElementById("commentsToggleBtn");
+    const box     = document.getElementById("commentsBox");
+    const btn     = document.getElementById("commentsToggleBtn");
     const visible = box.style.display !== "none";
     box.style.display = visible ? "none" : "block";
-    btn.textContent = visible ? "💬 Ver comentarios" : "💬 Ocultar comentarios";
+    btn.textContent   = visible ? "💬 Ver comentarios" : "💬 Ocultar comentarios";
     if (!visible && !commentsLoaded) {
         await loadComments();
         commentsLoaded = true;
@@ -128,7 +142,7 @@ async function loadComments() {
     try {
         const snap = await getDocs(query(
             collection(db, "comments"),
-            where("targetId", "==", ownerId),
+            where("targetId",   "==", ownerId),
             where("targetType", "==", "professional")
         ));
         if (snap.empty) {
@@ -141,11 +155,11 @@ async function loadComments() {
 
         list.innerHTML = "";
         comments.forEach(c => {
-            const date = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("es-ES") : "";
+            const date      = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("es-ES") : "";
             const canDelete = (c.userId === userId) || isOwner;
-            const div = document.createElement("div");
-            div.className = "comment-item";
-            div.innerHTML = `
+            const div       = document.createElement("div");
+            div.className   = "comment-item";
+            div.innerHTML   = `
                 ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
                 <div class="comment-author">${c.username || "Usuario"}</div>
                 <div class="comment-text">${c.text}</div>
@@ -173,8 +187,9 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
     const text  = input.value.trim();
     if (!text) return;
 
-    const btn = document.getElementById("commentSubmitBtn");
-    btn.disabled = true; btn.textContent = "Publicando...";
+    const btn     = document.getElementById("commentSubmitBtn");
+    btn.disabled  = true;
+    btn.textContent = "Publicando...";
 
     try {
         const userSnap = await getDoc(doc(db, "users", userId));
@@ -188,10 +203,10 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
             userId,
             username,
             text,
-            createdAt: serverTimestamp()
+            createdAt:  serverTimestamp()
         });
 
-        input.value = "";
+        input.value    = "";
         commentsLoaded = false;
         await loadComments();
         commentsLoaded = true;
@@ -199,7 +214,8 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
         console.error(e);
         alert("Error al publicar el comentario.");
     }
-    btn.disabled = false; btn.textContent = "Publicar";
+    btn.disabled    = false;
+    btn.textContent = "Publicar";
 });
 
 // ── Actividades ───────────────────────────────────────
@@ -209,67 +225,41 @@ async function loadActivities(fromDate = null, toDate = null) {
 
     try {
         const snap = await getDocs(query(
-            collection(db, "activities"), where("ownerId", "==", ownerId)));
+            collection(db, "activities"),
+            where("ownerId", "==", ownerId)
+        ));
+        allActivities = [];
+        snap.forEach(d => allActivities.push({ id: d.id, ...d.data() }));
 
+        // Reservas activas del usuario
         const mySnap = await getDocs(query(
             collection(db, "reservations"),
             where("userId", "==", userId),
-            where("status", "==", "active")));
-        const myIds = new Set();
-        mySnap.forEach(d => myIds.add(d.data().activityId));
+            where("status", "==", "active")
+        ));
+        myActivityIds = new Set();
+        mySnap.forEach(d => myActivityIds.add(d.data().activityId));
 
-        let acts = [];
-        snap.forEach(d => acts.push({ id: d.id, ...d.data() }));
+        // Actividades vetadas del usuario
+        const vetoedSnap = await getDocs(query(
+            collection(db, "reservations"),
+            where("userId", "==", userId),
+            where("status", "==", "vetoed")
+        ));
+        myVetoedIds = new Set();
+        vetoedSnap.forEach(d => myVetoedIds.add(d.data().activityId));
 
+        let filtered = allActivities;
         if (fromDate || toDate) {
-            acts = acts.filter(a => {
-                const ad = new Date(a.date);
-                if (fromDate && ad < new Date(fromDate)) return false;
-                return !(toDate && ad > new Date(toDate));
+            filtered = allActivities.filter(a => {
+                if (!a.date) return true;
+                const actDate = new Date(a.date);
+                if (fromDate && actDate < new Date(fromDate)) return false;
+                if (toDate   && actDate > new Date(toDate))   return false;
+                return true;
             });
         }
-
-        if (acts.length === 0) {
-            container.innerHTML = "<p>No hay actividades disponibles.</p>";
-            return;
-        }
-
-        // ── CORRECCIÓN: usar acts y myIds ─────────────────
-        container.innerHTML = acts.map(a => {
-            const done = myIds.has(a.id);
-            const full = (a.availableSlots ?? a.slots ?? 0) <= 0;
-
-            const stripeBtn = a.stripeLink
-                ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
-                      style="display:inline-block; padding:8px 14px; background:#635bff;
-                             color:white; border-radius:6px; font-size:0.82rem;
-                             font-weight:600; text-decoration:none; margin-left:6px;">
-                      💳 Pagar online
-                   </a>`
-                : "";
-
-            return `
-            <div class="activity-card">
-                <div class="activity-info">
-                    <strong>${a.name}</strong><br>
-                    <small>${a.date} | ${a.schedule}</small>
-                </div>
-                <div class="activity-right">
-                    <span>${a.price}€</span><br>
-                    <small>Cupo: ${a.availableSlots ?? a.slots}</small>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    ${isOwner ? '<span>(Tuya)</span>' : `
-                        <button class="signup-btn ${done ? 'signup-btn--done' : ''} ${full && !done ? 'signup-btn--full' : ''}"
-                            ${done || full ? 'disabled' : ''}
-                            onclick="window.book('${a.id}', '${a.name}', '${a.date}', '${a.schedule}', '${a.price}')">
-                            ${done ? '✓' : full ? 'Lleno' : 'Apuntarme'}
-                        </button>
-                        ${stripeBtn}
-                    `}
-                </div>
-            </div>`;
-        }).join("");
+        renderActivities(filtered);
 
     } catch (e) {
         console.error(e);
@@ -277,45 +267,165 @@ async function loadActivities(fromDate = null, toDate = null) {
     }
 }
 
-window.book = async (id, name, date, time, price) => {
-    try {
-        const ref = doc(db, "activities", id);
-        const s = await getDoc(ref);
-        const slots = s.data().availableSlots ?? s.data().slots;
+function renderActivities(activities) {
+    const container = document.getElementById("activitiesSection");
+    if (activities.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay actividades disponibles.</p>`;
+        return;
+    }
 
-        const vetoSnap = await getDocs(query(
-            collection(db, "reservations"),
-            where("userId", "==", userId),
-            where("activityId", "==", id),
-            where("status", "==", "vetoed")
-        ));
-        if (!vetoSnap.empty) {
-            alert("Has sido vetado de esta actividad y no puedes volver a inscribirte.");
-            return;
+    container.innerHTML = activities.map(a => {
+        const alreadySignedUp = myActivityIds.has(a.id);
+        const isVetoed        = myVetoedIds.has(a.id);
+        const noSlots         = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+        const stripeBtn = a.stripeLink
+            ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
+                  style="display:inline-block;padding:8px 14px;background:#635bff;
+                         color:white;border-radius:6px;font-size:0.82rem;
+                         font-weight:600;text-decoration:none;margin-left:6px;">
+                  💳 Pagar online
+               </a>`
+            : "";
+
+        return `
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date || "—"}</span></div>
+            </div>
+            <div class="activity-right">
+                <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
+                <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots ?? 0}</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${isOwner
+            ? `<span class="activity-owner-badge">Tu actividad</span>`
+            : `<button class="signup-btn
+                            ${alreadySignedUp ? 'signup-btn--done' : ''}
+                            ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+                            data-id="${a.id}"
+                            data-name="${a.name}"
+                            data-date="${a.date || ''}"
+                            data-schedule="${a.schedule || ''}"
+                            data-price="${a.price || 0}"
+                            ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
+                            ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                       </button>
+                       ${stripeBtn}`
         }
+            </div>
+        </div>`;
+    }).join("");
 
-        if (slots > 0) {
-            await addDoc(collection(db, "reservations"), {
-                userId, activityId: id, gymOrProId: ownerId,
-                ownerType: "professional", status: "active",
-                paid: false, createdAt: serverTimestamp()
-            });
-            await updateDoc(ref, { availableSlots: slots - 1 });
-            emailjs.send("service_ak2mcnm", "template_czzg7qg", {
-                user_email: sessionStorage.getItem("userEmail"),
-                activity_name: name,
-                owner_name: document.getElementById("profileName").textContent
-            });
-            alert("Reserva completada");
-            location.reload();
-        }
-    } catch (e) { console.error(e); }
-};
+    if (!isOwner) {
+        container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+            btn.onclick = async () => {
+                const actId = btn.dataset.id;
+                btn.disabled    = true;
+                btn.textContent = "Comprobando...";
 
+                try {
+                    const actRef  = doc(db, "activities", actId);
+                    const actSnap = await getDoc(actRef);
+                    if (!actSnap.exists()) {
+                        alert("Actividad no encontrada.");
+                        btn.disabled = false;
+                        return;
+                    }
+                    const cur = actSnap.data().availableSlots ?? actSnap.data().slots ?? 0;
+                    if (cur <= 0) {
+                        btn.textContent = "Completo";
+                        btn.classList.add("signup-btn--full");
+                        return;
+                    }
+
+                    // Comprobar veto en tiempo real
+                    const vetoSnap = await getDocs(query(
+                        collection(db, "reservations"),
+                        where("userId",     "==", userId),
+                        where("activityId", "==", actId),
+                        where("status",     "==", "vetoed")
+                    ));
+                    if (!vetoSnap.empty) {
+                        btn.textContent = "🚫 Vetado";
+                        btn.classList.add("signup-btn--full");
+                        btn.disabled = true;
+                        myVetoedIds.add(actId);
+                        return;
+                    }
+
+                    // Comprobar si ya está apuntado en tiempo real
+                    const existSnap = await getDocs(query(
+                        collection(db, "reservations"),
+                        where("userId",     "==", userId),
+                        where("activityId", "==", actId),
+                        where("status",     "==", "active")
+                    ));
+                    if (!existSnap.empty) {
+                        btn.textContent = "✓ Apuntado";
+                        btn.classList.add("signup-btn--done");
+                        myActivityIds.add(actId);
+                        return;
+                    }
+
+                    // Crear reserva
+                    await addDoc(collection(db, "reservations"), {
+                        userId,
+                        activityId: actId,
+                        gymOrProId: ownerId,
+                        ownerType:  "professional",
+                        status:     "active",
+                        paid:       false,
+                        createdAt:  serverTimestamp()
+                    });
+                    await updateDoc(actRef, { availableSlots: cur - 1 });
+
+                    // Email de confirmación de reserva
+                    const proSnap = await getDoc(doc(db, "professionals", ownerId));
+                    const proName = proSnap.exists() ? proSnap.data().name : "Profesional";
+                    const userEmail = sessionStorage.getItem("userEmail") || "";
+                    try {
+                        await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                            type:              "confirmada ✅",
+                            user_name:         userEmail.split("@")[0] || "Cliente",
+                            user_email:        userEmail,
+                            activity_name:     btn.dataset.name,
+                            activity_date:     btn.dataset.date,
+                            activity_schedule: btn.dataset.schedule,
+                            activity_price:    btn.dataset.price,
+                            owner_name:        proName,
+                            comment:           "¡Te esperamos!"
+                        });
+                    } catch (emailErr) {
+                        console.warn("Email de confirmación no enviado:", emailErr);
+                    }
+
+                    alert("Reserva confirmada. Échale un vistazo a tu correo.");
+                    btn.textContent = "✓ Apuntado";
+                    btn.classList.add("signup-btn--done");
+                    myActivityIds.add(actId);
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Error al realizar la reserva.");
+                    btn.disabled    = false;
+                    btn.textContent = "Apuntarme";
+                }
+            };
+        });
+    }
+}
+
+// ── Filtros de fecha ──────────────────────────────────
 document.getElementById("dateFromBtn").onclick = () =>
-    document.getElementById("dateFromInput").showPicker?.() || document.getElementById("dateFromInput").click();
+    document.getElementById("dateFromInput").showPicker?.() ||
+    document.getElementById("dateFromInput").click();
+
 document.getElementById("dateToBtn").onclick = () =>
-    document.getElementById("dateToInput").showPicker?.() || document.getElementById("dateToInput").click();
+    document.getElementById("dateToInput").showPicker?.() ||
+    document.getElementById("dateToInput").click();
 
 document.getElementById("dateFromInput").onchange = async function () {
     const toVal = document.getElementById("dateToInput").value;
@@ -343,9 +453,11 @@ document.getElementById("dateToInput").onchange = async function () {
     await loadActivities(fromVal, this.value);
 };
 
+// ── Carrusel de galería ───────────────────────────────
 document.getElementById("carouselLeft").onclick = () =>
     document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
 document.getElementById("carouselRight").onclick = () =>
     document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" });
 
+// ── Iniciar ───────────────────────────────────────────
 await loadData();
