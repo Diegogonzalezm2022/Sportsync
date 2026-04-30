@@ -33,6 +33,7 @@ body {
     color: white;
     gap: 30px;
     flex: 1;
+    margin-left: 10%;
 }
 
 /* --- ESTILO DE ENLACES (Márgenes fijos ELIMINADOS para responsive) --- */
