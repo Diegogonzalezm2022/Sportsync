@@ -16,7 +16,7 @@ import {
     runTransaction
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 
-const firebaseConfig = await fetch('../assets/firebaseConfig.json');
+const firebaseConfig = await fetch('../../../assets/firebaseConfig.json');
 
 export default class FirebaseDb {
 
@@ -56,36 +56,71 @@ export default class FirebaseDb {
             paid: false,
             createdAt: serverTimestamp()
         });
-        await updateDoc(activityDoc,
-            {
-                availableSlots: availableSlots-1
-            }
-            );
+        await updateDoc(activityDoc, {
+            availableSlots: availableSlots - 1
+        });
         return docRef.id;
     }
 
     async cancelReservation(reservationId) {
         try {
-            const reservationRef = await doc(this.db, "reservations", reservationId);
+            const reservationRef = doc(this.db, "reservations", reservationId);
             const reservation = await getDoc(reservationRef);
-            const activityId = await reservation.data().activityId;
-            const activityRef = await doc(this.db, "activities", activityId)
+            const activityId = reservation.data().activityId;
+            const activityRef = doc(this.db, "activities", activityId);
             const activity = await getDoc(activityRef);
-            if (activity.data().maxCancelDate.toDate() <= Date.now()) {
-                return { success: false, error: "Cancel limit passed" };
+
+            const maxCancelDate = activity.data().maxCancelDate;
+            if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
+                throw new Error("Cancel limit passed");
             }
+
             await updateDoc(reservationRef, {
                 status: "cancelled"
-            }
-            );
-            await updateDoc(activityRef, {
-                availableSlots: activity.data().availableSlots+1
-
             });
+            await updateDoc(activityRef, {
+                availableSlots: activity.data().availableSlots + 1
+            });
+
             return { success: true };
         } catch (error) {
-            return { success: false, error: error.message };
+            throw error;
         }
+    }
+
+    async reactivateReservation(reservationId) {
+        try {
+            const reservationRef = doc(this.db, "reservations", reservationId);
+            const reservation = await getDoc(reservationRef);
+            const activityId = reservation.data().activityId;
+            const activityRef = doc(this.db, "activities", activityId);
+            const activity = await getDoc(activityRef);
+
+            const actData = activity.data();
+
+            if ((actData.availableSlots ?? 0) <= 0) {
+                throw new Error("No hay plazas disponibles");
+            }
+
+            const maxCancelDate = actData.maxCancelDate;
+            if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
+                throw new Error("La actividad ya no admite nuevas reservas");
+            }
+
+            await updateDoc(reservationRef, { status: "active" });
+            await updateDoc(activityRef, {
+                availableSlots: actData.availableSlots - 1
+            });
+
+            return { success: true };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async deleteReservation(reservationId) {
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        await deleteDoc(reservationRef);
     }
 
     async findGymsByDistance(lat, lng, radiusKm = 10) {
@@ -115,7 +150,7 @@ export default class FirebaseDb {
         return gyms;
     }
 
-    async addGym(gymData, ownerId=null) {
+    async addGym(gymData, ownerId = null) {
         if (!ownerId) {
             const gymsRef = collection(this.db, "gyms");
             const docRef = await addDoc(gymsRef, {
@@ -126,7 +161,7 @@ export default class FirebaseDb {
             });
             return docRef.id;
         } else {
-            const docRef = await setDoc(doc(this.db, "gyms", ownerId), {
+            await setDoc(doc(this.db, "gyms", ownerId), {
                 ...gymData,
                 rating: 0,
                 ratingCount: 0,
@@ -136,7 +171,7 @@ export default class FirebaseDb {
         }
     }
 
-    async addProfessional(proData, ownerId=null) {
+    async addProfessional(proData, ownerId = null) {
         if (!ownerId) {
             const prosRef = collection(this.db, "professionals");
             const docRef = await addDoc(prosRef, {
@@ -147,7 +182,7 @@ export default class FirebaseDb {
             });
             return docRef.id;
         } else {
-            const docRef = await setDoc(doc(this.db, "professionals", ownerId), {
+            await setDoc(doc(this.db, "professionals", ownerId), {
                 ...proData,
                 rating: 0,
                 ratingCount: 0,
@@ -157,56 +192,55 @@ export default class FirebaseDb {
         }
     }
 
-    async addUser(userData, userId= null) {
+    async addUser(userData, userId = null) {
         const usersRef = collection(this.db, "users");
         if (!userId) {
             const docRef = await addDoc(usersRef, {
                 ...userData,
                 createdAt: serverTimestamp()
-            })
-            return docRef.id
+            });
+            return docRef.id;
         } else {
             await setDoc(doc(this.db, "users", userId), {
                 ...userData,
                 createdAt: serverTimestamp()
             });
-            return userId
+            return userId;
         }
     }
 
     async setUserRole(userId, role) {
-        const userRef = await doc(this.db, "users", userId);
+        const userRef = doc(this.db, "users", userId);
         await updateDoc(userRef, {
             role: role,
-            }
-        )
+        });
     }
 
     async getUser(userId) {
-        const userRef = await doc(this.db, "users", userId);
+        const userRef = doc(this.db, "users", userId);
         if (userRef) {
             const userDoc = await getDoc(userRef);
-            return userDoc.data()
+            return userDoc.data();
         } else {
             return {};
         }
     }
 
     async getGym(gymId) {
-        const gymRef = await doc(this.db, "gyms", gymId);
+        const gymRef = doc(this.db, "gyms", gymId);
         if (gymRef) {
             const gymDoc = await getDoc(gymRef);
-            return gymDoc.data()
+            return gymDoc.data();
         } else {
             return {};
         }
     }
 
     async getProfessional(proId) {
-        const proRef = await doc(this.db, "gyms", proId);
+        const proRef = doc(this.db, "professionals", proId);
         if (proRef) {
             const proDoc = await getDoc(proRef);
-            return proDoc.data()
+            return proDoc.data();
         } else {
             return {};
         }
@@ -214,12 +248,12 @@ export default class FirebaseDb {
 
     async addMaterial(materialData) {
         const materialsRef = collection(this.db, "materials");
-        const docRef = await addDoc(materialsRef, {
+        await addDoc(materialsRef, {
             ...materialData,
             rating: 0,
             ratingCount: 0,
             createdAt: serverTimestamp()
-        })
+        });
     }
 
     async addActivity(ownerId, ownerType, activityData) {
@@ -234,10 +268,10 @@ export default class FirebaseDb {
     }
 
     async getActivity(activityId) {
-        const activityRef = await doc(this.db, "activities", activityId);
+        const activityRef = doc(this.db, "activities", activityId);
         if (activityRef) {
             const activityDoc = await getDoc(activityRef);
-            return activityDoc.data()
+            return activityDoc.data();
         } else {
             return {};
         }

@@ -12,10 +12,8 @@ const db = await FirebaseDb.create();
 
 /**
  * FUNCIÓN GLOBAL PARA COMPARTIR
- * Se asigna a window para que el atributo onclick del HTML pueda encontrarla
  */
 window.shareReservation = function(ownerName, activityName, activityId) {
-    // Construimos la URL hacia la página de detalles de la actividad
     const shareUrl = `${window.location.origin}/pages/ActivityDetail.html?id=${activityId}`;
 
     const shareData = {
@@ -53,11 +51,12 @@ async function loadReservations() {
         try {
             const actData = await db.getActivity(r.activityId);
             if (actData) {
-                activityName       = actData.name     || r.activityId;
-                r.activitySchedule = actData.schedule || "—";
-                r.activityPrice    = actData.price    || "—";
-                r.activityDate     = actData.date     || "—";
-                availableSlots     = actData.availableSlots ?? actData.slots ?? 0;
+                activityName            = actData.name     || r.activityId;
+                r.activitySchedule      = actData.schedule || "—";
+                r.activityPrice         = actData.price    || "—";
+                r.activityDate          = actData.date     || "—";
+                r.activityMaxCancelDate = actData.maxCancelDate || null; // ✅ guardamos para renderPast
+                availableSlots          = actData.availableSlots ?? actData.slots ?? 0;
             }
         } catch (e) { console.error("Error cargando actividad:", e); }
 
@@ -112,16 +111,18 @@ function renderActive(reservations) {
             </div>
         </article>`).join("");
 
-    // Re-asignar eventos de cancelación
     list.querySelectorAll(".cancel-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
+
+            btn.disabled = true;
+            btn.textContent = "Cancelando...";
+
             try {
                 const { id, activityName, activitySchedule, activityPrice, activityDate, ownerName } = btn.dataset;
 
                 await db.cancelReservation(id);
 
-                // Envío de EmailJS
                 const userEmail = sessionStorage.getItem("userEmail") || "";
                 const userName  = userEmail.split("@")[0] || "Cliente";
 
@@ -138,10 +139,17 @@ function renderActive(reservations) {
                 });
 
                 alert("Reserva cancelada y correo enviado.");
-                location.reload();
+                await loadReservations();
             } catch (e) {
                 console.error(e);
-                alert("Error al cancelar la reserva.");
+                btn.disabled = false;
+                btn.textContent = "Cancelar";
+
+                if (e.message === "Cancel limit passed") {
+                    alert("No se puede cancelar: ha pasado la fecha límite de cancelación.");
+                } else {
+                    alert("Error al cancelar la reserva.");
+                }
             }
         });
     });
@@ -155,7 +163,15 @@ function renderPast(reservations) {
         return;
     }
 
-    list.innerHTML = reservations.map(r => `
+    list.innerHTML = reservations.map(r => {
+        // Calcular si se puede volver a reservar
+        const now = new Date();
+        const maxDate = r.activityMaxCancelDate
+            ? new Date(r.activityMaxCancelDate.seconds * 1000)
+            : null;
+        const canRebook = (r.availableSlots > 0) && (!maxDate || maxDate > now);
+
+        return `
         <article class="reservation-card past-card" data-id="${r.id}">
             <button class="delete-card-btn" data-id="${r.id}" title="Eliminar del historial">✕</button>
             <div class="card-info">
@@ -171,16 +187,41 @@ function renderPast(reservations) {
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                     </svg>
                 </button>
+                ${canRebook ? `
+                    <button class="action-btn rebook-btn" data-id="${r.id}">
+                        Volver a reservar
+                    </button>
+                ` : ""}
                 <span class="status-text">${r.status === "done" ? "Hecho" : "Cancelado"}</span>
             </div>
-        </article>`).join("");
+        </article>`;
+    }).join("");
 
-    // Botones de eliminar del historial
+    // Botones eliminar del historial
     list.querySelectorAll(".delete-card-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Eliminar del historial?")) return;
-            await db.deleteReservation(btn.dataset.id); // Asumiendo que esta función existe en tu FirebaseDb.js
+            await db.deleteReservation(btn.dataset.id);
             btn.closest(".reservation-card").remove();
+        });
+    });
+
+    // Botones volver a reservar
+    list.querySelectorAll(".rebook-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("¿Quieres volver a activar esta reserva?")) return;
+            btn.disabled = true;
+            btn.textContent = "Reservando...";
+            try {
+                await db.reactivateReservation(btn.dataset.id);
+                alert("¡Reserva reactivada!");
+                await loadReservations();
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.textContent = "Volver a reservar";
+                alert(e.message || "Error al reactivar la reserva.");
+            }
         });
     });
 }
@@ -195,12 +236,15 @@ function formatSchedule(schedule) {
     return schedule;
 }
 
-// Botón de eliminar todo el pasado
+// Botón eliminar todo el historial
 document.getElementById("deleteAllPastBtn")?.addEventListener("click", async () => {
     if (!confirm("¿Eliminar todo el historial?")) return;
-    // Aquí deberías iterar y borrar o llamar a una función de db
-    alert("Función para borrar todo ejecutada");
-    location.reload();
+
+    const reservations = await db.getUserReservations(userId);
+    const past = reservations.filter(r => r.status === "cancelled" || r.status === "done");
+
+    await Promise.all(past.map(r => db.deleteReservation(r.id)));
+    await loadReservations();
 });
 
 loadReservations();
