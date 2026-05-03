@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import FirebaseDb from "../../../backend/javascript/app/FirebaseDb.js";
+import FirebaseDb from "../services/FirebaseDb.js";
 
 // Inicialización de Firebase y DB
 const userId = sessionStorage.getItem("userId");
