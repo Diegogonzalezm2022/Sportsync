@@ -1,28 +1,14 @@
 // FirebaseDb.js
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import {
-    getFirestore,
-    collection,
-    addDoc,
-    deleteDoc,
-    doc,
-    getDocs,
-    getDoc,
-    query,
-    where,
-    updateDoc,
-    serverTimestamp,
-    setDoc,
-    runTransaction
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-const firebaseConfig = await fetch('../../../assets/firebaseConfig.json');
+const firebaseConfig = await fetch('../../../assets/firebaseConfig.json').then(res => res.json());
 
 export default class FirebaseDb {
 
     constructor() {
-        this.db = null;
         this.app = null;
+        this.auth = null;
     }
 
     static async create() {
@@ -37,290 +23,129 @@ export default class FirebaseDb {
         } catch (error) {
             this.app = initializeApp(firebaseConfig);
         }
-        this.db = getFirestore(this.app);
+        this.auth = getAuth(this.app);
+    }
+
+    async _getToken() {
+        if (this.auth.currentUser) {
+            return await this.auth.currentUser.getIdToken();
+        }
+        return null;
+    }
+
+    async _fetch(endpoint, options = {}) {
+        const token = await this._getToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const response = await fetch(endpoint, { ...options, headers });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'API Error');
+        return data;
     }
 
     async makeReservation(userId, activityId, gymOrProId) {
-        const activityDoc = await doc(this.db, "activities", activityId);
-        const activity = await getDoc(activityDoc);
-        const availableSlots = activity.data().availableSlots;
-        if (availableSlots <= 0) {
-            throw new Error("Activity full");
-        }
-        const reservationsRef = collection(this.db, "reservations");
-        const docRef = await addDoc(reservationsRef, {
-            userId: userId,
-            activityId: activityId,
-            gymOrProId: gymOrProId,
-            status: "active",
-            paid: false,
-            createdAt: serverTimestamp()
+        const data = await this._fetch('/api/reservations', {
+            method: 'POST',
+            body: JSON.stringify({ userId, activityId, gymOrProId })
         });
-        await updateDoc(activityDoc, {
-            availableSlots: availableSlots - 1
-        });
-        return docRef.id;
+        return data.id;
     }
 
     async cancelReservation(reservationId) {
-        try {
-            const reservationRef = doc(this.db, "reservations", reservationId);
-            const reservation = await getDoc(reservationRef);
-            const activityId = reservation.data().activityId;
-            const activityRef = doc(this.db, "activities", activityId);
-            const activity = await getDoc(activityRef);
-
-            const maxCancelDate = activity.data().maxCancelDate;
-            if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-                throw new Error("Cancel limit passed");
-            }
-
-            await updateDoc(reservationRef, {
-                status: "cancelled"
-            });
-            await updateDoc(activityRef, {
-                availableSlots: activity.data().availableSlots + 1
-            });
-
-            return { success: true };
-        } catch (error) {
-            throw error;
-        }
+        return await this._fetch(`/api/reservations/${reservationId}/cancel`, { method: 'POST' });
     }
 
     async reactivateReservation(reservationId) {
-        try {
-            const reservationRef = doc(this.db, "reservations", reservationId);
-            const reservation = await getDoc(reservationRef);
-            const activityId = reservation.data().activityId;
-            const activityRef = doc(this.db, "activities", activityId);
-            const activity = await getDoc(activityRef);
-
-            const actData = activity.data();
-
-            if ((actData.availableSlots ?? 0) <= 0) {
-                throw new Error("No hay plazas disponibles");
-            }
-
-            const maxCancelDate = actData.maxCancelDate;
-            if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-                throw new Error("La actividad ya no admite nuevas reservas");
-            }
-
-            await updateDoc(reservationRef, { status: "active" });
-            await updateDoc(activityRef, {
-                availableSlots: actData.availableSlots - 1
-            });
-
-            return { success: true };
-        } catch (error) {
-            throw error;
-        }
+        return await this._fetch(`/api/reservations/${reservationId}/reactivate`, { method: 'POST' });
     }
 
     async deleteReservation(reservationId) {
-        const reservationRef = doc(this.db, "reservations", reservationId);
-        await deleteDoc(reservationRef);
+        return await this._fetch(`/api/reservations/${reservationId}`, { method: 'DELETE' });
     }
 
     async findGymsByDistance(lat, lng, radiusKm = 10) {
-        const latDelta = radiusKm / 111;
-        const lngDelta = radiusKm / (111 * Math.cos(lat * Math.PI / 180));
-
-        const gymsRef = collection(this.db, "gyms");
-        const q = query(
-            gymsRef,
-            where("location.lat", ">=", lat - latDelta),
-            where("location.lat", "<=", lat + latDelta)
-        );
-
-        const snapshot = await getDocs(q);
-        const gyms = [];
-
-        snapshot.forEach(docSnap => {
-            const gym = { id: docSnap.id, ...docSnap.data() };
-            if (
-                gym.location.lng >= lng - lngDelta &&
-                gym.location.lng <= lng + lngDelta
-            ) {
-                gyms.push(gym);
-            }
-        });
-
-        return gyms;
+        return await this._fetch(`/api/gyms?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`);
     }
 
     async addGym(gymData, ownerId = null) {
-        if (!ownerId) {
-            const gymsRef = collection(this.db, "gyms");
-            const docRef = await addDoc(gymsRef, {
-                ...gymData,
-                rating: 0,
-                ratingCount: 0,
-                createdAt: serverTimestamp()
-            });
-            return docRef.id;
-        } else {
-            await setDoc(doc(this.db, "gyms", ownerId), {
-                ...gymData,
-                rating: 0,
-                ratingCount: 0,
-                createdAt: serverTimestamp()
-            });
-            return ownerId;
-        }
+        const data = await this._fetch('/api/gyms', {
+            method: 'POST',
+            body: JSON.stringify({ gymData, ownerId })
+        });
+        return data.id;
     }
 
     async addProfessional(proData, ownerId = null) {
-        if (!ownerId) {
-            const prosRef = collection(this.db, "professionals");
-            const docRef = await addDoc(prosRef, {
-                ...proData,
-                rating: 0,
-                ratingCount: 0,
-                createdAt: serverTimestamp()
-            });
-            return docRef.id;
-        } else {
-            await setDoc(doc(this.db, "professionals", ownerId), {
-                ...proData,
-                rating: 0,
-                ratingCount: 0,
-                createdAt: serverTimestamp()
-            });
-            return ownerId;
-        }
+        const data = await this._fetch('/api/professionals', {
+            method: 'POST',
+            body: JSON.stringify({ proData, ownerId })
+        });
+        return data.id;
     }
 
     async addUser(userData, userId = null) {
-        const usersRef = collection(this.db, "users");
-        if (!userId) {
-            const docRef = await addDoc(usersRef, {
-                ...userData,
-                createdAt: serverTimestamp()
-            });
-            return docRef.id;
-        } else {
-            await setDoc(doc(this.db, "users", userId), {
-                ...userData,
-                createdAt: serverTimestamp()
-            });
-            return userId;
-        }
+        const data = await this._fetch('/api/users', {
+            method: 'POST',
+            body: JSON.stringify({ userData, userId })
+        });
+        return data.id;
     }
 
     async setUserRole(userId, role) {
-        const userRef = doc(this.db, "users", userId);
-        await updateDoc(userRef, {
-            role: role,
+        await this._fetch(`/api/users/${userId}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({ role })
         });
     }
 
     async getUser(userId) {
-        const userRef = doc(this.db, "users", userId);
-        if (userRef) {
-            const userDoc = await getDoc(userRef);
-            return userDoc.data();
-        } else {
-            return {};
-        }
+        return await this._fetch(`/api/users/${userId}`);
     }
 
     async getGym(gymId) {
-        const gymRef = doc(this.db, "gyms", gymId);
-        if (gymRef) {
-            const gymDoc = await getDoc(gymRef);
-            return gymDoc.data();
-        } else {
-            return {};
-        }
+        return await this._fetch(`/api/gyms/${gymId}`);
     }
 
     async getProfessional(proId) {
-        const proRef = doc(this.db, "professionals", proId);
-        if (proRef) {
-            const proDoc = await getDoc(proRef);
-            return proDoc.data();
-        } else {
-            return {};
-        }
+        return await this._fetch(`/api/professionals/${proId}`);
     }
 
     async addMaterial(materialData) {
-        const materialsRef = collection(this.db, "materials");
-        await addDoc(materialsRef, {
-            ...materialData,
-            rating: 0,
-            ratingCount: 0,
-            createdAt: serverTimestamp()
+        const data = await this._fetch('/api/materials', {
+            method: 'POST',
+            body: JSON.stringify({ materialData })
         });
+        return data.id;
     }
 
     async addActivity(ownerId, ownerType, activityData) {
-        const activitiesRef = collection(this.db, "activities");
-        const docRef = await addDoc(activitiesRef, {
-            ownerId: ownerId,
-            ownerType: ownerType,
-            ...activityData,
-            createdAt: serverTimestamp()
+        const data = await this._fetch('/api/activities', {
+            method: 'POST',
+            body: JSON.stringify({ ownerId, ownerType, activityData })
         });
-        return docRef.id;
+        return data.id;
     }
 
     async getActivity(activityId) {
-        const activityRef = doc(this.db, "activities", activityId);
-        if (activityRef) {
-            const activityDoc = await getDoc(activityRef);
-            return activityDoc.data();
-        } else {
-            return {};
-        }
+        return await this._fetch(`/api/activities/${activityId}`);
     }
 
     async getUserReservations(userId, status = null) {
-        const reservationsRef = collection(this.db, "reservations");
-        const conditions = [where("userId", "==", userId)];
-        if (status) conditions.push(where("status", "==", status));
-
-        const q = query(reservationsRef, ...conditions);
-        const snapshot = await getDocs(q);
-
-        const reservations = [];
-        snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
-        return reservations;
+        let url = `/api/users/${userId}/reservations`;
+        if (status) url += `?status=${status}`;
+        return await this._fetch(url);
     }
 
     async getActivityReservations(activityId) {
-        const reservationsRef = collection(this.db, "reservations");
-        const q = query(
-            reservationsRef,
-            where("activityId", "==", activityId),
-            where("status", "==", "active")
-        );
-        const snapshot = await getDocs(q);
-
-        const reservations = [];
-        snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
-        return reservations;
+        return await this._fetch(`/api/activities/${activityId}/reservations`);
     }
 
     async rateTarget(targetId, targetType, score) {
-        if (targetType !== "gym" && targetType !== "professional") {
-            throw new Error("targetType must be a gym or professional");
-        }
-        const colName = targetType === "gym" ? "gyms" : "professionals";
-        const targetRef = doc(this.db, colName, targetId);
-        const targetSnap = await getDoc(targetRef);
-
-        if (!targetSnap.exists()) throw new Error("Entidad no encontrada");
-
-        const { rating, ratingCount } = targetSnap.data();
-        const newCount = ratingCount + 1;
-        const newRating = ((rating * ratingCount) + score) / newCount;
-
-        await updateDoc(targetRef, {
-            rating: newRating,
-            ratingCount: newCount
+        return await this._fetch('/api/rate', {
+            method: 'POST',
+            body: JSON.stringify({ targetId, targetType, score })
         });
     }
 }
