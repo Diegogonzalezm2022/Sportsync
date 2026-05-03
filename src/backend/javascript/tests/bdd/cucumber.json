@@ -1,10 +1,10 @@
 {
   "default": {
-    "paths": ["src/javascript/tests/bdd/Features/"],
-    "require": ["src/javascript/tests/bdd/dbTests.js"],
+    "paths": ["src/backend/javascript/tests/bdd/Features/"],
+    "require": ["src/backend/javascript/tests/bdd/dbTests.js"],
     "formatOptions": {
       "snippetInterface": "synchronous"
     }
   },
-  "features": "src/javascript/tests/bdd/features"
+  "features": "src/backend/javascript/tests/bdd/features"
 }

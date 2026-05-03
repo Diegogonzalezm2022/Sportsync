@@ -3,6 +3,8 @@ import cors from 'cors';
 import admin from 'firebase-admin';
 import fs from 'fs';
 
+const firebaseDb = require('javascript/app/FirebaseDb');
+
 // Initialize Firebase Admin SDK
 // You must provide a service account key for full admin access.
 // Download it from Firebase Console -> Project Settings -> Service Accounts
@@ -22,7 +24,7 @@ try {
   admin.initializeApp({ projectId: 'proyecto2026ps' });
 }
 
-const db = admin.firestore();
+const db = firebaseDb.create();
 const app = express();
 
 app.use(cors());
@@ -37,8 +39,7 @@ const authenticateUser = async (req, res, next) => {
 
   const idToken = authHeader.split('Bearer ')[1];
   try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken;
+    req.user = await admin.auth().verifyIdToken(idToken);
     next();
   } catch (error) {
     console.error('Error verifying token:', error);
@@ -54,9 +55,7 @@ app.get('/api/health', (req, res) => res.status(200).send('OK'));
 // Users
 app.get('/api/users/:id', authenticateUser, async (req, res) => {
   try {
-    const userDoc = await db.collection('users').doc(req.params.id).get();
-    if (!userDoc.exists) return res.json({});
-    return res.json(userDoc.data());
+    return res.json(await db.getUser(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,17 +65,11 @@ app.post('/api/users', authenticateUser, async (req, res) => {
   try {
     const { userData, userId } = req.body;
     if (userId) {
-      await db.collection('users').doc(userId).set({
-        ...userData,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      await db.addUser(userData, userId);
       res.json({ id: userId });
     } else {
-      const docRef = await db.collection('users').add({
-        ...userData,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      res.json({ id: docRef.id });
+      const id = (await db).addUser(userData)
+      res.json({ id: id });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -85,9 +78,7 @@ app.post('/api/users', authenticateUser, async (req, res) => {
 
 app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
   try {
-    await db.collection('users').doc(req.params.id).update({
-      role: req.body.role,
-    });
+    await db.setUserRole(req.params.id, req.body.role)
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -97,9 +88,7 @@ app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
 // Gyms
 app.get('/api/gyms/:id', async (req, res) => {
   try {
-    const gymDoc = await db.collection('gyms').doc(req.params.id).get();
-    if (!gymDoc.exists) return res.json({});
-    res.json(gymDoc.data());
+    res.json((await db).getGym(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -110,27 +99,7 @@ app.get('/api/gyms', async (req, res) => {
     const { lat, lng, radiusKm } = req.query;
     if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
 
-    const radius = parseFloat(radiusKm) || 10;
-    const latDelta = radius / 111;
-    const lngDelta = radius / (111 * Math.cos(parseFloat(lat) * Math.PI / 180));
-
-    const gymsRef = db.collection('gyms');
-    const snapshot = await gymsRef
-      .where("location.lat", ">=", parseFloat(lat) - latDelta)
-      .where("location.lat", "<=", parseFloat(lat) + latDelta)
-      .get();
-
-    const gyms = [];
-    snapshot.forEach(docSnap => {
-      const gym = { id: docSnap.id, ...docSnap.data() };
-      if (
-        gym.location.lng >= parseFloat(lng) - lngDelta &&
-        gym.location.lng <= parseFloat(lng) + lngDelta
-      ) {
-        gyms.push(gym);
-      }
-    });
-    res.json(gyms);
+    res.json((await db).findGymsByDistance(lat, lng, radiusKm));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -140,21 +109,11 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
   try {
     const { gymData, ownerId } = req.body;
     if (ownerId) {
-      await db.collection('gyms').doc(ownerId).set({
-        ...gymData,
-        rating: 0,
-        ratingCount: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      (await db).addGym(gymData, ownerId)
       res.json({ id: ownerId });
     } else {
-      const docRef = await db.collection('gyms').add({
-        ...gymData,
-        rating: 0,
-        ratingCount: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      res.json({ id: docRef.id });
+      const id = (await db).addGym(gymData)
+      res.json({ id: id });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -164,9 +123,7 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
 // Professionals
 app.get('/api/professionals/:id', async (req, res) => {
   try {
-    const proDoc = await db.collection('professionals').doc(req.params.id).get();
-    if (!proDoc.exists) return res.json({});
-    res.json(proDoc.data());
+    res.json((await db).getProfessional(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -176,21 +133,11 @@ app.post('/api/professionals', authenticateUser, async (req, res) => {
   try {
     const { proData, ownerId } = req.body;
     if (ownerId) {
-      await db.collection('professionals').doc(ownerId).set({
-        ...proData,
-        rating: 0,
-        ratingCount: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      await db.addProfessional(proData, ownerId)
       res.json({ id: ownerId });
     } else {
-      const docRef = await db.collection('professionals').add({
-        ...proData,
-        rating: 0,
-        ratingCount: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      res.json({ id: docRef.id });
+      const id = (await db).addProfessional(proData)
+      res.json({ id: id});
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -200,12 +147,9 @@ app.post('/api/professionals', authenticateUser, async (req, res) => {
 // Activities
 app.get('/api/activities/:id', async (req, res) => {
   try {
-    const docSnap = await db.collection('activities').doc(req.params.id).get();
-    if (!docSnap.exists) return res.json({});
-    
     // Firestore Timestamps need to be handled, but simple res.json might not serialize them exactly the same way.
     // Client SDK has .toDate(), we might need to convert server timestamps to ISO strings or milliseconds.
-    const data = docSnap.data();
+    const data = (await db).getActivity(req.params.id);
     if (data.maxCancelDate && data.maxCancelDate.toDate) {
       data.maxCancelDate = data.maxCancelDate.toDate().toISOString();
     }
@@ -225,16 +169,11 @@ app.post('/api/activities', authenticateUser, async (req, res) => {
     
     // Convert strings back to dates if needed
     if (activityData.maxCancelDate) {
-       activityData.maxCancelDate = admin.firestore.Timestamp.fromDate(new Date(activityData.maxCancelDate));
+       activityData.maxCancelDate = admin.firestore.Timestamp.fromDate(Date.parse(activityData.maxCancelDate));
     }
     
-    const docRef = await db.collection('activities').add({
-      ownerId,
-      ownerType,
-      ...activityData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    res.json({ id: docRef.id });
+    const id = (await db).addActivity(ownerId, ownerType,activityData);
+    res.json({ id: id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -244,32 +183,10 @@ app.post('/api/activities', authenticateUser, async (req, res) => {
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {
     const { userId, activityId, gymOrProId } = req.body;
-    
-    const activityRef = db.collection('activities').doc(activityId);
-    
-    const result = await db.runTransaction(async (t) => {
-      const activityDoc = await t.get(activityRef);
-      if (!activityDoc.exists) throw new Error("Activity not found");
-      
-      const availableSlots = activityDoc.data().availableSlots;
-      if (availableSlots <= 0) throw new Error("Activity full");
-      
-      const resRef = db.collection('reservations').doc();
-      t.set(resRef, {
-        userId,
-        activityId,
-        gymOrProId,
-        status: "active",
-        paid: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      
-      t.update(activityRef, {
-        availableSlots: availableSlots - 1
-      });
-      
-      return resRef.id;
-    });
+
+    /*TODO: Aplicar solución a concurrencia en API*/
+
+    const result = (await db).makeReservation(userId, activityId, gymOrProId)
     
     res.json({ id: result });
   } catch (error) {
@@ -279,27 +196,11 @@ app.post('/api/reservations', authenticateUser, async (req, res) => {
 
 app.post('/api/reservations/:id/cancel', authenticateUser, async (req, res) => {
   try {
-    const reservationRef = db.collection('reservations').doc(req.params.id);
-    
-    await db.runTransaction(async (t) => {
-      const resDoc = await t.get(reservationRef);
-      if (!resDoc.exists) throw new Error("Reservation not found");
-      
-      const activityId = resDoc.data().activityId;
-      const activityRef = db.collection('activities').doc(activityId);
-      const activityDoc = await t.get(activityRef);
-      
-      const maxCancelDate = activityDoc.data().maxCancelDate;
-      if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-          throw new Error("Cancel limit passed");
-      }
-      
-      t.update(reservationRef, { status: "cancelled" });
-      t.update(activityRef, {
-          availableSlots: activityDoc.data().availableSlots + 1
-      });
-    });
-    
+
+    /*TODO: Aplicar solución a concurrencia en API*/
+
+    await db.cancelReservation(req.params.id)
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -308,31 +209,10 @@ app.post('/api/reservations/:id/cancel', authenticateUser, async (req, res) => {
 
 app.post('/api/reservations/:id/reactivate', authenticateUser, async (req, res) => {
   try {
-    const reservationRef = db.collection('reservations').doc(req.params.id);
-    
-    await db.runTransaction(async (t) => {
-      const resDoc = await t.get(reservationRef);
-      if (!resDoc.exists) throw new Error("Reservation not found");
-      
-      const activityId = resDoc.data().activityId;
-      const activityRef = db.collection('activities').doc(activityId);
-      const activityDoc = await t.get(activityRef);
-      const actData = activityDoc.data();
-      
-      if ((actData.availableSlots ?? 0) <= 0) {
-          throw new Error("No hay plazas disponibles");
-      }
 
-      const maxCancelDate = actData.maxCancelDate;
-      if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-          throw new Error("La actividad ya no admite nuevas reservas");
-      }
-      
-      t.update(reservationRef, { status: "active" });
-      t.update(activityRef, {
-          availableSlots: actData.availableSlots - 1
-      });
-    });
+    /*TODO: Aplicar solución a concurrencia en API*/
+
+    await db.reactivateReservation(req.params.id)
     
     res.json({ success: true });
   } catch (error) {
@@ -342,7 +222,7 @@ app.post('/api/reservations/:id/reactivate', authenticateUser, async (req, res) 
 
 app.delete('/api/reservations/:id', authenticateUser, async (req, res) => {
   try {
-    await db.collection('reservations').doc(req.params.id).delete();
+    await db.deleteReservation(req.params.id)
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -353,13 +233,7 @@ app.delete('/api/reservations/:id', authenticateUser, async (req, res) => {
 app.get('/api/users/:id/reservations', authenticateUser, async (req, res) => {
   try {
     const { status } = req.query;
-    let query = db.collection('reservations').where('userId', '==', req.params.id);
-    if (status) query = query.where('status', '==', status);
-    
-    const snapshot = await query.get();
-    const reservations = [];
-    snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
-    res.json(reservations);
+    res.json((await db).getUserReservations(req.params.id, status));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -367,14 +241,7 @@ app.get('/api/users/:id/reservations', authenticateUser, async (req, res) => {
 
 app.get('/api/activities/:id/reservations', authenticateUser, async (req, res) => {
   try {
-    const snapshot = await db.collection('reservations')
-      .where('activityId', '==', req.params.id)
-      .where('status', '==', 'active')
-      .get();
-    
-    const reservations = [];
-    snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
-    res.json(reservations);
+    res.json((await db).getActivityReservations(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -384,25 +251,8 @@ app.get('/api/activities/:id/reservations', authenticateUser, async (req, res) =
 app.post('/api/rate', authenticateUser, async (req, res) => {
   try {
     const { targetId, targetType, score } = req.body;
-    if (targetType !== "gym" && targetType !== "professional") {
-        return res.status(400).json({ error: "targetType must be a gym or professional" });
-    }
-    const colName = targetType === "gym" ? "gyms" : "professionals";
-    const targetRef = db.collection(colName).doc(targetId);
-    
-    await db.runTransaction(async (t) => {
-      const targetSnap = await t.get(targetRef);
-      if (!targetSnap.exists) throw new Error("Entidad no encontrada");
-      
-      const { rating, ratingCount } = targetSnap.data();
-      const newCount = ratingCount + 1;
-      const newRating = ((rating * ratingCount) + score) / newCount;
-      
-      t.update(targetRef, {
-        rating: newRating,
-        ratingCount: newCount
-      });
-    });
+    /*TODO: Aplicar solución a concurrencia en API*/
+    await db.rateTarget(targetId, targetType, score);
     
     res.json({ success: true });
   } catch (error) {
@@ -414,13 +264,8 @@ app.post('/api/rate', authenticateUser, async (req, res) => {
 app.post('/api/materials', authenticateUser, async (req, res) => {
   try {
     const { materialData } = req.body;
-    const docRef = await db.collection('materials').add({
-      ...materialData,
-      rating: 0,
-      ratingCount: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    res.json({ id: docRef.id });
+    const id=(await db).addMaterial(materialData)
+    res.json({ id: id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

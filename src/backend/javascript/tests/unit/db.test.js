@@ -76,9 +76,9 @@ test("errorIsThrownWhenAttemptingToCancelBeyondMaxDate", async ()=> {
         schedule: new Date(2026, 8, 8, 14),
     });
     const reserved = await dbInstance.makeReservation("tempUser", addedActivity, "temp");
-    const result = await dbInstance.cancelReservation(reserved);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("Cancel limit passed");
+    await  expect(async () => {
+        await dbInstance.cancelReservation(reserved)
+    }).rejects.toThrow("Cancel limit passed");
     await deleteDoc(doc(dbConnection, "activities", addedActivity));
     await deleteDoc(doc(dbConnection, "reservations", reserved));
 })

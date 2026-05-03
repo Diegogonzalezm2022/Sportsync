@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest && cucumber-js --config src/backend/javascript/tests/bdd/cucumber.json"
+    "test": "cucumber-js --config src/backend/javascript/tests/bdd/cucumber.json && jest"
   },
   "private": true,
   "devDependencies": {
