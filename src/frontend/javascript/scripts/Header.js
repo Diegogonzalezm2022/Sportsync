@@ -38,8 +38,17 @@ function updateAuthButton() {
 }
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateAuthButton);
-} else {
-    updateAuthButton();
+function init() {
+    const authActionBtn = document.getElementById('auth-action-btn');
+    if (authActionBtn) {
+        updateAuthButton();
+    } else {
+        window.addEventListener('xlu-includes-complete', updateAuthButton);
+    }
 }
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

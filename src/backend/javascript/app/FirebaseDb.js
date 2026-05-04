@@ -1,6 +1,5 @@
-// FirebaseDb.js
-const { initializeApp, getApp } = require('@firebase/app');
-const {
+import { initializeApp, getApp } from 'firebase/app';
+import {
     getFirestore,
     collection,
     addDoc,
@@ -14,9 +13,12 @@ const {
     serverTimestamp,
     setDoc,
     runTransaction
-} = require( '@firebase/firestore')
+} from 'firebase/firestore';
+import fs from 'fs';
 
-const firebaseConfig = require('../../firebaseConfig.json');
+// Cargamos la configuración desde la carpeta /assets mapeada en el contenedor
+const firebaseConfigPath = new URL('/assets/firebaseConfig.json', 'file://');
+const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
 
 class FirebaseDb {
 
@@ -271,9 +273,10 @@ class FirebaseDb {
     }
 
     async getUser(userId) {
-        const userDoc = await doc(this.db, "users", userId).get();
-        if (userDoc) {
-            return userDoc.data();
+        const userRef = doc(this.db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            return userSnap.data();
         } else {
             return {};
         }
@@ -327,4 +330,4 @@ class FirebaseDb {
     }
 }
 
-module.exports=FirebaseDb;
+export default FirebaseDb;

@@ -34,40 +34,51 @@
 
     // ── Login ─────────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
-    const email    = document.getElementById("user").value.trim();
-    const password = document.getElementById("password").value;
-    const errorEl  = document.getElementById("loginError");
-    errorEl.style.display = "none";
+        const email    = document.getElementById("user").value.trim();
+        const password = document.getElementById("password").value;
+        const errorEl  = document.getElementById("loginError");
+        const loginBtn = document.getElementById("loginBtn");
 
-    if (!email || !password) {
-    errorEl.textContent = "Por favor rellena todos los campos.";
-    errorEl.style.display = "block";
-    return;
-}
+        errorEl.style.display = "none";
 
-    try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    loggedUid = userCredential.user.uid;
+        if (!email || !password) {
+            errorEl.textContent = "Por favor rellena todos los campos.";
+            errorEl.style.display = "block";
+            return;
+        }
 
-    sessionStorage.setItem("userId", loggedUid);
-    sessionStorage.setItem("userEmail", email);
+        const originalText = loginBtn.textContent;
+        loginBtn.textContent = "Iniciando sesión...";
+        loginBtn.disabled = true;
 
-    const userData = await db.getUser(loggedUid);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            loggedUid = userCredential.user.uid;
 
-    if (userData.role) {
-    sessionStorage.setItem("userRole", userData.role);
-    const oId = (userData.role === "gym" || userData.role === "professional") ? loggedUid : null;
-    if (oId) sessionStorage.setItem("ownerId", oId);
-    redirectByRole(userData.role, oId);
-} else {
-    document.getElementById("roleOverlay").classList.add("active");
-}
-} catch (e) {
-    console.error(e);
-    document.getElementById("loginError").textContent = "Email o contraseña incorrectos.";
-    document.getElementById("loginError").style.display = "block";
-}
-});
+            sessionStorage.setItem("userId", loggedUid);
+            sessionStorage.setItem("userEmail", email);
+
+            const userData = await db.getUser(loggedUid);
+
+            if (userData && userData.role) {
+                sessionStorage.setItem("userRole", userData.role);
+                const oId = (userData.role === "gym" || userData.role === "professional") ? loggedUid : null;
+                if (oId) sessionStorage.setItem("ownerId", oId);
+                redirectByRole(userData.role, oId);
+            } else {
+                document.getElementById("roleOverlay").classList.add("active");
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
+            }
+        } catch (e) {
+            console.error("Error en login:", e);
+            loginBtn.textContent = originalText;
+            loginBtn.disabled = false;
+            errorEl.textContent = "Email o contraseña incorrectos.";
+            errorEl.style.display = "block";
+        }
+    });
+
 
     document.getElementById("password").addEventListener("keydown", e => {
     if (e.key === "Enter") document.getElementById("loginBtn").click();

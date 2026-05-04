@@ -4,11 +4,11 @@ services:
       context: .
       dockerfile: src/backend/Dockerfile
     container_name: sportsync-backend
-    # Exposing the port is optional, since the frontend Nginx proxies to it.
-    # We map it to localhost:3000 just in case you want to test the API directly using Postman.
-    # To truly "protect" it, you can comment out the ports section.
     ports:
       - "3000:3000"
+    volumes:
+      - ./src/backend:/app
+      - ./src/assets:/assets
     environment:
       - PORT=3000
     networks:
@@ -22,6 +22,9 @@ services:
     container_name: sportsync-frontend
     ports:
       - "8080:80"
+    volumes:
+      - ./src/frontend:/usr/share/nginx/html/frontend
+      - ./src/assets:/usr/share/nginx/html/assets
     depends_on:
       - backend
     networks:

@@ -39,30 +39,37 @@
 }
 
     try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
-    // Guardar datos sin rol todavía
+        const registerBtn = document.getElementById("registerBtn");
+        const originalText = registerBtn.textContent;
+        registerBtn.textContent = "Registrando...";
+        registerBtn.disabled = true;
 
-    await db.addUser({
-    name,
-    surname,
-    username,
-    email
-}, uid);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
 
-    sessionStorage.setItem("userId", uid);
-    sessionStorage.setItem("userEmail", email);
+        await db.addUser({
+            name,
+            surname,
+            username,
+            email
+        }, uid);
 
-    // Redirigir a Login para que aparezca el popup de rol
-    // pero marcamos que viene del registro para forzar el popup
-    sessionStorage.setItem("showRolePopup", "true");
-    window.location.href = "Login.html";
+        sessionStorage.setItem("userId", uid);
+        sessionStorage.setItem("userEmail", email);
+        sessionStorage.setItem("showRolePopup", "true");
 
-} catch (e) {
-    errorEl.style.display = "block";
-    errorEl.textContent =
-    e.code === "auth/email-already-in-use"
-    ? "Este email ya está registrado."
-    : "Error al registrarse. Inténtalo de nuevo.";
-}
+        window.location.href = "Login.html";
+
+    } catch (e) {
+        console.error("Error en registro:", e);
+        const registerBtn = document.getElementById("registerBtn");
+        registerBtn.textContent = "Registrarte";
+        registerBtn.disabled = false;
+        errorEl.style.display = "block";
+        errorEl.textContent =
+            e.code === "auth/email-already-in-use"
+                ? "Este email ya está registrado."
+                : "Error al registrarse. Inténtalo de nuevo.";
+    }
+
 });
