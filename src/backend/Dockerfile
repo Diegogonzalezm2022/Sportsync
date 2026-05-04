@@ -8,6 +8,7 @@ RUN npm install
 
 # Copy backend source code
 COPY src/backend/server.js ./
+COPY src/backend/ ./
 # Copy service account if it exists (Optional, Docker will ignore if missing due to .dockerignore or we can just try to copy it if we ensure it exists, but COPY fails if file doesn't exist. So we can use a wildcard)
 COPY src/backend/serviceAccountKey.json ./
 

@@ -3,7 +3,7 @@ import cors from 'cors';
 import admin from 'firebase-admin';
 import fs from 'fs';
 
-const firebaseDb = require('javascript/app/FirebaseDb');
+import firebaseDb from './javascript/app/FirebaseDb.js';
 
 // Initialize Firebase Admin SDK
 // You must provide a service account key for full admin access.
