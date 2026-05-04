@@ -1,4 +1,5 @@
 /src/assets/firebaseConfig.json
+/src/backend/firebaseConfig.json
 node_modules/
 .idea/
 serviceAccountKey.json
