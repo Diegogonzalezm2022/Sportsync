@@ -9,6 +9,10 @@ services:
     # To truly "protect" it, you can comment out the ports section.
     ports:
       - "3000:3000"
+    volumes:
+      - ./src/backend:/app
+      - /app/node_modules
+      - ./src/assets:/assets
     environment:
       - PORT=3000
     networks:
@@ -22,6 +26,9 @@ services:
     container_name: sportsync-frontend
     ports:
       - "8080:80"
+    volumes:
+      - ./src/frontend:/usr/share/nginx/html/frontend
+      - ./src/assets:/usr/share/nginx/html/assets
     depends_on:
       - backend
     networks:

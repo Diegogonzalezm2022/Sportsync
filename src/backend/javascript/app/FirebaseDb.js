@@ -16,7 +16,20 @@ const {
     runTransaction
 } = require( '@firebase/firestore')
 
-const firebaseConfig = require('../../firebaseConfig.json');
+const fs = require('fs');
+const path = require('path');
+
+// Try to load config from /assets (Docker volume) or relative path (local)
+let firebaseConfig;
+try {
+    firebaseConfig = JSON.parse(fs.readFileSync('/assets/firebaseConfig.json', 'utf8'));
+} catch (e) {
+    try {
+        firebaseConfig = require('../../firebaseConfig.json');
+    } catch (err) {
+        console.error("CRITICAL: Could not load firebaseConfig.json from /assets or relative path.");
+    }
+}
 
 class FirebaseDb {
 
@@ -271,9 +284,10 @@ class FirebaseDb {
     }
 
     async getUser(userId) {
-        const userDoc = await doc(this.db, "users", userId).get();
-        if (userDoc) {
-            return userDoc.data();
+        const userRef = doc(this.db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            return userSnap.data();
         } else {
             return {};
         }
