@@ -101,7 +101,7 @@
                 /*
                 const colName = role === "gym" ? "gyms" : "professionals";
                 */
-                const uData = db.getUser(loggedUid);
+                const uData = await db.getUser(loggedUid);
                 /* ¿Es importante que dueño de gimnasio y gimnasio tengan el mismo Id?
                 await setDoc(doc(db, colName, loggedUid), {
                 const colName  = role === "gym" ? "gyms" : "professionals";

@@ -68,7 +68,7 @@ app.post('/api/users', authenticateUser, async (req, res) => {
       await db.addUser(userData, userId);
       res.json({ id: userId });
     } else {
-      const id = db.addUser(userData)
+      const id = await db.addUser(userData)
       res.json({ id: id });
     }
   } catch (error) {
@@ -88,7 +88,7 @@ app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
 // Gyms
 app.get('/api/gyms/:id', async (req, res) => {
   try {
-    res.json(db.getGym(req.params.id));
+    res.json(await db.getGym(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -99,7 +99,7 @@ app.get('/api/gyms', async (req, res) => {
     const { lat, lng, radiusKm } = req.query;
     if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
 
-    res.json(db.findGymsByDistance(lat, lng, radiusKm));
+    res.json(await db.findGymsByDistance(lat, lng, radiusKm));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -109,10 +109,10 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
   try {
     const { gymData, ownerId } = req.body;
     if (ownerId) {
-      db.addGym(gymData, ownerId)
+      await db.addGym(gymData, ownerId)
       res.json({ id: ownerId });
     } else {
-      const id = db.addGym(gymData)
+      const id = await db.addGym(gymData)
       res.json({ id: id });
     }
   } catch (error) {
@@ -123,7 +123,7 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
 // Professionals
 app.get('/api/professionals/:id', async (req, res) => {
   try {
-    res.json(db.getProfessional(req.params.id));
+    res.json(await db.getProfessional(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -136,7 +136,7 @@ app.post('/api/professionals', authenticateUser, async (req, res) => {
       await db.addProfessional(proData, ownerId)
       res.json({ id: ownerId });
     } else {
-      const id = db.addProfessional(proData)
+      const id = await db.addProfessional(proData)
       res.json({ id: id});
     }
   } catch (error) {
@@ -149,7 +149,7 @@ app.get('/api/activities/:id', async (req, res) => {
   try {
     // Firestore Timestamps need to be handled, but simple res.json might not serialize them exactly the same way.
     // Client SDK has .toDate(), we might need to convert server timestamps to ISO strings or milliseconds.
-    const data = db.getActivity(req.params.id);
+    const data = await db.getActivity(req.params.id);
     if (data.maxCancelDate && data.maxCancelDate.toDate) {
       data.maxCancelDate = data.maxCancelDate.toDate().toISOString();
     }
@@ -172,7 +172,7 @@ app.post('/api/activities', authenticateUser, async (req, res) => {
        activityData.maxCancelDate = admin.firestore.Timestamp.fromDate(Date.parse(activityData.maxCancelDate));
     }
     
-    const id = db.addActivity(ownerId, ownerType,activityData);
+    const id = await db.addActivity(ownerId, ownerType,activityData);
     res.json({ id: id });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -186,7 +186,7 @@ app.post('/api/reservations', authenticateUser, async (req, res) => {
 
     /*TODO: Aplicar solución a concurrencia en API*/
 
-    const result = db.makeReservation(userId, activityId, gymOrProId)
+    const result = await db.makeReservation(userId, activityId, gymOrProId)
     
     res.json({ id: result });
   } catch (error) {
@@ -233,7 +233,7 @@ app.delete('/api/reservations/:id', authenticateUser, async (req, res) => {
 app.get('/api/users/:id/reservations', authenticateUser, async (req, res) => {
   try {
     const { status } = req.query;
-    res.json(db.getUserReservations(req.params.id, status));
+    res.json(await db.getUserReservations(req.params.id, status));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -241,7 +241,7 @@ app.get('/api/users/:id/reservations', authenticateUser, async (req, res) => {
 
 app.get('/api/activities/:id/reservations', authenticateUser, async (req, res) => {
   try {
-    res.json(db.getActivityReservations(req.params.id));
+    res.json(await db.getActivityReservations(req.params.id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -264,7 +264,7 @@ app.post('/api/rate', authenticateUser, async (req, res) => {
 app.post('/api/materials', authenticateUser, async (req, res) => {
   try {
     const { materialData } = req.body;
-    const id=db.addMaterial(materialData)
+    const id = await db.addMaterial(materialData)
     res.json({ id: id });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,18 +1,12 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import FirebaseDb from "../services/FirebaseDb.js";
 
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
 
-const response = await fetch("../../assets/firebaseConfig.json");
-const firebaseConfig = await response.json();
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = await FirebaseDb.create();
+const data = await db.getUser(userId);
 
-const userSnap = await getDoc(doc(db, "users", userId));
-
-if (userSnap.exists()) {
-    const data = userSnap.data();
+if (data && Object.keys(data).length > 0) {
 
     document.getElementById("profile-name").textContent  = `${data.name || ""} ${data.surname || ""}`.trim() || "—";
     document.getElementById("profile-user").textContent  = data.username || "—";

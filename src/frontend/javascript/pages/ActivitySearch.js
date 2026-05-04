@@ -1,27 +1,27 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, doc, getDoc }
-    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import FirebaseDb from "../services/FirebaseDb.js";
 
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
 
-const response = await fetch("../../assets/firebaseConfig.json");
-const firebaseConfig = await response.json();
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = await FirebaseDb.create();
 
-const userSnap = await getDoc(doc(db, "users", userId));
-if (userSnap.exists()) {
-    const data = userSnap.data();
-    document.getElementById("userName").textContent =
-        data.username || `${data.name || ""} ${data.surname || ""}`.trim() ||
-        sessionStorage.getItem("userEmail") || "Usuario";
-    if (data.photoURL) {
-        const avatarDiv = document.querySelector(".user-avatar");
-        avatarDiv.innerHTML = `<img src="${data.photoURL}" alt="Foto de perfil"
-            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+try {
+    const data = await db.getUser(userId);
+    if (data && data.username) {
+        document.getElementById("userName").textContent =
+            data.username || `${data.name || ""} ${data.surname || ""}`.trim() ||
+            sessionStorage.getItem("userEmail") || "Usuario";
+        if (data.photoURL) {
+            const avatarDiv = document.querySelector(".user-avatar");
+            avatarDiv.innerHTML = `<img src="${data.photoURL}" alt="Foto de perfil"
+                style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        }
+    } else {
+        document.getElementById("userName").textContent =
+            sessionStorage.getItem("userEmail") || "Usuario";
     }
-} else {
+} catch (error) {
+    console.error("Error loading user data:", error);
     document.getElementById("userName").textContent =
         sessionStorage.getItem("userEmail") || "Usuario";
 }
@@ -157,53 +157,22 @@ function getLocation() {
 async function searchNearby() {
     showStatus("Buscando cerca de ti...");
     const radiusKm = 50;
-    const latDelta = radiusKm / 111;
-    const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
 
     try {
-        const gymsSnap = await getDocs(query(
-            collection(db, "gyms"),
-            where("location.lat", ">=", userLat - latDelta),
-            where("location.lat", "<=", userLat + latDelta)
-        ));
-        const prosSnap = await getDocs(query(
-            collection(db, "professionals"),
-            where("location.lat", ">=", userLat - latDelta),
-            where("location.lat", "<=", userLat + latDelta)
-        ));
-
-        const gyms = [];
-        gymsSnap.forEach(d => {
-            const data = { id: d.id, type: "gym", ...d.data() };
-            if (data.location?.lng >= userLng - lngDelta &&
-                data.location?.lng <= userLng + lngDelta) {
-                data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
-                gyms.push(data);
-            }
-        });
-        const pros = [];
-        prosSnap.forEach(d => {
-            const data = { id: d.id, type: "professional", ...d.data() };
-            if (data.location?.lng >= userLng - lngDelta &&
-                data.location?.lng <= userLng + lngDelta) {
-                data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
-                pros.push(data);
-            }
-        });
-
-        allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
+        const entities = await db.findNearbyEntities(userLat, userLng, radiusKm);
+        
+        allResults = entities.map(item => {
+            item.distanceKm = calcDistance(userLat, userLng, item.location.lat, item.location.lng);
+            return item;
+        }).sort((a, b) => a.distanceKm - b.distanceKm);
 
         await Promise.all(allResults.map(async item => {
             try {
-                const actSnap = await getDocs(query(
-                    collection(db, "activities"),
-                    where("ownerId", "==", item.id)
-                ));
-                const prices = [];
-                actSnap.forEach(d => {
-                    const p = d.data().price;
-                    if (p !== undefined && p !== null) prices.push(parseFloat(p));
-                });
+                const activities = await db.getActivitiesByOwner(item.id);
+                const prices = activities.map(d => {
+                    const p = d.price;
+                    return (p !== undefined && p !== null) ? parseFloat(p) : null;
+                }).filter(p => p !== null);
                 item._prices = prices;
             } catch { item._prices = []; }
         }));
