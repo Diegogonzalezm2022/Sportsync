@@ -13,6 +13,51 @@
         .reservation-card {
             position: relative;
         }
+
+        /* ── Widget de valoración ── */
+        .rating-widget {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin: 8px 0 4px;
+            background: #fafafa;
+            border: 1.5px solid #eee;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .rating-widget--done {
+            background: #f0faf0;
+            border-color: #c3e6c3;
+            cursor: default;
+        }
+        .rating-widget-label {
+            font-size: 0.82rem;
+            color: #555;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .rating-stars {
+            display: flex;
+            gap: 3px;
+        }
+        .rating-star {
+            font-size: 1.5rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.12s, transform 0.1s;
+            line-height: 1;
+            user-select: none;
+        }
+        .rating-star:hover,
+        .rating-star--active {
+            color: #f1c40f;
+            transform: scale(1.15);
+        }
+        .rating-widget--done .rating-widget-label {
+            color: #2e7d32;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>

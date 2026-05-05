@@ -306,4 +306,33 @@ export default class FirebaseDb {
         await updateDoc(reservationRef, { status: "done" });
         return { success: true };
     }
+
+    async rateReservation(reservationId, score) {
+        if (score < 1 || score > 5) throw new Error("La puntuación debe estar entre 1 y 5");
+
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        const reservationSnap = await getDoc(reservationRef);
+
+        if (!reservationSnap.exists()) throw new Error("Reserva no encontrada");
+
+        const resData = reservationSnap.data();
+        if (resData.status !== "done") throw new Error("Solo se pueden valorar reservas completadas");
+        if (resData.userRating != null) throw new Error("Ya has valorado esta reserva");
+
+        const { gymOrProId, ownerType } = resData;
+        const colName = ownerType === "gym" ? "gyms" : "professionals";
+        const targetRef = doc(this.db, colName, gymOrProId);
+        const targetSnap = await getDoc(targetRef);
+
+        if (!targetSnap.exists()) throw new Error("Entidad no encontrada");
+
+        const { rating = 0, ratingCount = 0 } = targetSnap.data();
+        const newCount  = ratingCount + 1;
+        const newRating = ((rating * ratingCount) + score) / newCount;
+
+        await updateDoc(reservationRef, { userRating: score });
+        await updateDoc(targetRef, { rating: newRating, ratingCount: newCount });
+
+        return { success: true, newRating, newCount };
+    }
 }

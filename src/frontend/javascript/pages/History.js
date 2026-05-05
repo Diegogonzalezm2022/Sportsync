@@ -215,6 +215,29 @@ function renderPast(reservations) {
             : r.activityMaxCancelDate ? new Date(r.activityMaxCancelDate) : null;
         const canRebook = r.status === "cancelled" && (r.availableSlots > 0) && (!maxDate || maxDate > now);
 
+        // Widget de valoración: solo en reservas completadas
+        let ratingWidget = "";
+        if (r.status === "done") {
+            if (r.userRating != null) {
+                ratingWidget = `
+                <div class="rating-widget rating-widget--done">
+                    <span class="rating-widget-label">⭐ Tu valoración: ${r.userRating}/5</span>
+                </div>`;
+            } else {
+                ratingWidget = `
+                <div class="rating-widget" data-reservation-id="${r.id}">
+                    <span class="rating-widget-label">Valora tu experiencia:</span>
+                    <div class="rating-stars">
+                        <span class="rating-star" data-value="1">★</span>
+                        <span class="rating-star" data-value="2">★</span>
+                        <span class="rating-star" data-value="3">★</span>
+                        <span class="rating-star" data-value="4">★</span>
+                        <span class="rating-star" data-value="5">★</span>
+                    </div>
+                </div>`;
+            }
+        }
+
         return `
         <article class="reservation-card past-card" data-id="${r.id}">
             <button class="delete-card-btn" data-id="${r.id}" title="Eliminar del historial">✕</button>
@@ -223,6 +246,7 @@ function renderPast(reservations) {
                 <p><strong>Actividad:</strong> ${r.activityName}</p>
                 <p><strong>Estado:</strong> ${r.status === "done" ? "✅ Completada" : "❌ Cancelada"}</p>
             </div>
+            ${ratingWidget}
             <div class="card-actions past-actions">
                 <button class="icon-btn share-icon"
                     onclick="window.shareReservation('${escapeAttr(r.ownerName)}', '${escapeAttr(r.activityName)}', '${r.activityId}')">
@@ -241,6 +265,7 @@ function renderPast(reservations) {
         </article>`;
     }).join("");
 
+    // ── Botones eliminar ──────────────────────────────────────────────────────
     list.querySelectorAll(".delete-card-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Eliminar del historial?")) return;
@@ -257,6 +282,7 @@ function renderPast(reservations) {
         });
     });
 
+    // ── Botones volver a reservar ─────────────────────────────────────────────
     list.querySelectorAll(".rebook-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Quieres volver a activar esta reserva?")) return;
@@ -272,6 +298,39 @@ function renderPast(reservations) {
                 btn.textContent = "Volver a reservar";
                 alert(e.message || "Error al reactivar la reserva.");
             }
+        });
+    });
+
+    // ── Widget de valoración por estrella ─────────────────────────────────────
+    list.querySelectorAll(".rating-widget:not(.rating-widget--done)").forEach(widget => {
+        const reservationId = widget.dataset.reservationId;
+        const stars         = widget.querySelectorAll(".rating-star");
+
+        stars.forEach(star => {
+            star.addEventListener("mouseover", () => {
+                stars.forEach(s =>
+                    s.classList.toggle("rating-star--active", +s.dataset.value <= +star.dataset.value));
+            });
+            star.addEventListener("mouseout", () => {
+                stars.forEach(s => s.classList.remove("rating-star--active"));
+            });
+            star.addEventListener("click", async () => {
+                const score = +star.dataset.value;
+                // Bloquear inmediatamente para evitar doble clic
+                stars.forEach(s => s.style.pointerEvents = "none");
+                widget.querySelector(".rating-widget-label").textContent = "Guardando...";
+                try {
+                    await db.rateReservation(reservationId, score);
+                    widget.classList.add("rating-widget--done");
+                    widget.innerHTML =
+                        `<span class="rating-widget-label">⭐ ¡Gracias! Tu valoración: ${score}/5</span>`;
+                } catch (e) {
+                    console.error(e);
+                    stars.forEach(s => s.style.pointerEvents = "auto");
+                    widget.querySelector(".rating-widget-label").textContent = "Valora tu experiencia:";
+                    alert(e.message || "Error al guardar la valoración.");
+                }
+            });
         });
     });
 }

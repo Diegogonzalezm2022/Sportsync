@@ -76,44 +76,19 @@ async function loadData() {
         document.getElementById("editBtnVet").onclick = () =>
             window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
     } else {
-        const stars = document.querySelectorAll(".star");
-
-        if (d.ratings && d.ratings[userId]) {
-            const myPrev = d.ratings[userId];
-            stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= myPrev));
-            document.getElementById("ratingHint").textContent = `Tu valoración: ${myPrev}/5`;
-        }
-
-        stars.forEach(star => {
-            star.addEventListener("mouseover", () =>
-                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= +star.dataset.value)));
-            star.addEventListener("mouseout", () => {
-                const text  = document.getElementById("ratingHint").textContent;
-                const match = text.match(/[\d.]+/);
-                const cur   = match ? Math.round(parseFloat(match[0])) : 0;
-                stars.forEach(s => s.classList.toggle("star--active", +s.dataset.value <= cur));
+        // Estrellas en modo lectura — la valoración se hace desde el historial
+        document.getElementById("starsContainer").style.pointerEvents = "none";
+        if (d.rating) {
+            const rounded = Math.round(d.rating);
+            document.querySelectorAll(".star").forEach(s => {
+                if (+s.dataset.value <= rounded) s.classList.add("star--active");
             });
-            star.onclick = async () => {
-                const val  = +star.dataset.value;
-                const ref  = doc(db, "professionals", ownerId);
-                const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    const data       = snap.data();
-                    const ratings    = data.ratings    || {};
-                    const prevRating = ratings[userId] || null;
-                    let { rating = 0, ratingCount = 0 } = data;
-                    if (prevRating !== null) {
-                        const totalSinAnterior = (rating * ratingCount) - prevRating;
-                        rating = ratingCount > 1 ? (totalSinAnterior + val) / ratingCount : val;
-                    } else {
-                        rating      = ((rating * ratingCount) + val) / (ratingCount + 1);
-                        ratingCount = ratingCount + 1;
-                    }
-                    await updateDoc(ref, { rating, ratingCount, [`ratings.${userId}`]: val });
-                    location.reload();
-                }
-            };
-        });
+            const count = d.ratingCount || 0;
+            document.getElementById("ratingHint").textContent =
+                `${d.rating.toFixed(1)} / 5 (${count} valoracion${count !== 1 ? "es" : ""})`;
+        } else {
+            document.getElementById("ratingHint").textContent = "Sin valoraciones aún";
+        }
 
         // Mostrar formulario de comentario solo a usuarios no dueños
         document.getElementById("commentForm").style.display = "flex";
