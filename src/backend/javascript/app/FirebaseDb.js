@@ -152,6 +152,30 @@ class FirebaseDb {
         return gyms;
     }
 
+    async findProfessionalsByDistance(lat, lng, radiusKm = 10) {
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(lat * Math.PI / 180));
+
+        const snapshot = await this.db.collection("professionals")
+            .where("location.lat", ">=", lat - latDelta)
+            .where("location.lat", "<=", lat + latDelta)
+            .get();
+
+        const professionals = [];
+
+        snapshot.forEach(docSnap => {
+            const pro = { id: docSnap.id, ...docSnap.data() };
+            if (
+                pro.location.lng >= lng - lngDelta &&
+                pro.location.lng <= lng + lngDelta
+            ) {
+                professionals.push(pro);
+            }
+        });
+
+        return professionals;
+    }
+
     async addGym(gymData, ownerId = null) {
         const data = {
             ...gymData,

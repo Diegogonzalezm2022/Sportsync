@@ -121,6 +121,17 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
 });
 
 // Professionals
+app.get('/api/professionals', async (req, res) => {
+  try {
+    const { lat, lng, radiusKm } = req.query;
+    if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
+    const professionals = await db.findProfessionalsByDistance(parseFloat(lat), parseFloat(lng), parseFloat(radiusKm));
+    res.json(professionals.map(p => serializeData(p)));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/professionals/:id', async (req, res) => {
   try {
     const pro = await db.getProfessional(req.params.id);

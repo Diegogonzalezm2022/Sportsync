@@ -167,16 +167,95 @@ function getLocation() {
 
 async function searchNearby() {
     showStatus("Buscando cerca de ti...");
+    const radiusKm = 50;
 
     try {
+        const [gymsRes, professionalsRes] = await Promise.all([
+            api.getGyms(userLat, userLng, radiusKm),
+            api.getProfessionals(userLat, userLng, radiusKm)
+        ]);
+
         allResults = [];
+
+        const gyms = Array.isArray(gymsRes) ? gymsRes : [];
+        const professionals = Array.isArray(professionalsRes) ? professionalsRes : [];
+
+        for (const gym of gyms) {
+            allResults.push({
+                id: gym.id,
+                type: "gym",
+                name: gym.name || "Gimnasio",
+                description: gym.description || "",
+                location: gym.location,
+                rating: gym.rating || 0,
+                photoURL: gym.photoURL || null,
+                distanceKm: calcDistance(userLat, userLng, gym.location.lat, gym.location.lng),
+                _prices: gym.activityPrices || []
+            });
+        }
+
+        for (const pro of professionals) {
+            allResults.push({
+                id: pro.id,
+                type: "professional",
+                name: pro.name || "Profesional",
+                description: pro.description || "",
+                location: pro.location,
+                rating: pro.rating || 0,
+                photoURL: pro.photoURL || null,
+                distanceKm: calcDistance(userLat, userLng, pro.location.lat, pro.location.lng),
+                _prices: pro.activityPrices || []
+            });
+        }
+
+        allResults.sort((a, b) => a.distanceKm - b.distanceKm);
 
         resultMarkers.forEach(m => { if (map) map.removeLayer(m); });
         resultMarkers.length = 0;
 
+        allResults.forEach(item => {
+            const isGym = item.type === "gym";
+            const color = isGym ? "#1d3557" : "#c08000";
+            const emoji = isGym ? "🏋️" : "👤";
+            const marker = L.marker([item.location.lat, item.location.lng], {
+                icon: L.divIcon({
+                    className: "",
+                    html: `<div style="background:${color};color:white;border-radius:8px;
+                           padding:4px 7px;font-size:11px;font-weight:700;
+                           white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);
+                           border:2px solid white;cursor:pointer;">
+                           ${emoji} ${item.name}</div>`,
+                    iconAnchor: [0, 0]
+                })
+            }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family:sans-serif;min-width:160px;">
+                    <strong style="font-size:0.95rem;">${item.name}</strong><br>
+                    <span style="font-size:0.78rem;color:#666;">${item.description || ""}</span><br>
+                    <span style="font-size:0.75rem;color:#999;">${item.distanceKm.toFixed(1)} km</span><br>
+                    <a href="${isGym ? "GymPage" : "ProfessionalPage"}.html?id=${item.id}"
+                       style="display:inline-block;margin-top:8px;padding:5px 12px;
+                              background:#1a1a1a;color:white;border-radius:6px;
+                              font-size:0.78rem;font-weight:600;text-decoration:none;">
+                        Ver perfil →
+                    </a>
+                </div>`);
+            resultMarkers.push(marker);
+        });
+
+        if (allResults.length > 0) {
+            map.fitBounds(
+                [[userLat, userLng], ...allResults.map(r => [r.location.lat, r.location.lng])],
+                { padding: [40, 40] }
+            );
+        }
+
         hideStatus();
         renderResults(filterResults(allResults));
-        showStatus("Funcionalidad de búsqueda pendiente de implementar en el backend.", true);
+
+        if (allResults.length === 0) {
+            showStatus("No se encontraron gyms ni profesionales cerca de ti.", true);
+        }
 
     } catch (e) {
         console.error(e);
