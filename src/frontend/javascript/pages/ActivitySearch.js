@@ -14,47 +14,64 @@ let userLat = null;
 let userLng = null;
 let allResults = [];
 let activeFilter = "todos";
+let map = null;
+let mapBig = null;
+let mapBigInitialized = false;
+let userMarker = null;
+const resultMarkers = [];
 
-// Configurar token cuando el usuario esté autenticado
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const token = await user.getIdToken();
         api.setToken(token);
 
-        // Cargar datos del usuario
         try {
             const userData = await api.getUser(userId);
-            document.getElementById("userName").textContent =
-                userData.username || `${userData.name || ""} ${userData.surname || ""}`.trim() ||
-                sessionStorage.getItem("userEmail") || "Usuario";
+            const userNameEl = document.getElementById("userName");
+            if (userNameEl) {
+                userNameEl.textContent =
+                    userData.username || `${userData.name || ""} ${userData.surname || ""}`.trim() ||
+                    sessionStorage.getItem("userEmail") || "Usuario";
+            }
             if (userData.photoURL) {
                 const avatarDiv = document.querySelector(".user-avatar");
-                avatarDiv.innerHTML = `<img src="${userData.photoURL}" alt="Foto de perfil"
-                    style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                if (avatarDiv) {
+                    avatarDiv.innerHTML = `<img src="${userData.photoURL}" alt="Foto de perfil"
+                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                }
             }
         } catch (e) {
-            document.getElementById("userName").textContent =
-                sessionStorage.getItem("userEmail") || "Usuario";
+            const userNameEl = document.getElementById("userName");
+            if (userNameEl) {
+                userNameEl.textContent =
+                    sessionStorage.getItem("userEmail") || "Usuario";
+            }
         }
 
         const userRole = sessionStorage.getItem("userRole") || "";
-        document.getElementById("userRole").textContent =
-            userRole === "gym" ? "Gimnasio"
-                : userRole === "professional" ? "Profesional"
-                    : "Usuario";
+        const userRoleEl = document.getElementById("userRole");
+        if (userRoleEl) {
+            userRoleEl.textContent =
+                userRole === "gym" ? "Gimnasio"
+                    : userRole === "professional" ? "Profesional"
+                        : "Usuario";
+        }
     }
 });
 
-const map = L.map("map").setView([28.1235, -15.4362], 13);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap"
-}).addTo(map);
-
-let mapBig = null;
-let mapBigInitialized = false;
+function initMap() {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
+    map = L.map("map").setView([28.1235, -15.4362], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
+}
 
 function initMapBig() {
     if (mapBigInitialized) return;
+    const mapBigEl = document.getElementById("mapBig");
+    if (!mapBigEl) return;
     mapBig = L.map("mapBig").setView([28.1235, -15.4362], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap"
@@ -117,20 +134,6 @@ function syncMapBig() {
     setTimeout(() => mapBig.invalidateSize(), 100);
 }
 
-document.getElementById("mapExpandBtn").addEventListener("click", () => {
-    initMapBig(); syncMapBig();
-    document.getElementById("mapModalOverlay").classList.add("active");
-});
-document.getElementById("mapModalClose").addEventListener("click", () =>
-    document.getElementById("mapModalOverlay").classList.remove("active"));
-document.getElementById("mapModalOverlay").addEventListener("click", (e) => {
-    if (e.target === document.getElementById("mapModalOverlay"))
-        document.getElementById("mapModalOverlay").classList.remove("active");
-});
-
-let userMarker = null;
-const resultMarkers = [];
-
 function getLocation() {
     if (!navigator.geolocation) {
         showStatus("Tu navegador no soporta geolocalización.", true); return;
@@ -140,7 +143,7 @@ function getLocation() {
         async (pos) => {
             userLat = pos.coords.latitude;
             userLng = pos.coords.longitude;
-            if (userMarker) map.removeLayer(userMarker);
+            if (userMarker && map) map.removeLayer(userMarker);
             userMarker = L.marker([userLat, userLng], {
                 icon: L.divIcon({
                     className: "",
@@ -164,14 +167,11 @@ function getLocation() {
 
 async function searchNearby() {
     showStatus("Buscando cerca de ti...");
-    const radiusKm = 50;
 
     try {
-        // TODO: Implementar búsqueda en backend
-        // Por ahora mostramos datos de ejemplo
         allResults = [];
 
-        resultMarkers.forEach(m => map.removeLayer(m));
+        resultMarkers.forEach(m => { if (map) map.removeLayer(m); });
         resultMarkers.length = 0;
 
         hideStatus();
@@ -195,20 +195,26 @@ function calcDistance(lat1, lng1, lat2, lng2) {
 }
 
 function getFilterValues() {
+    const sportEl = document.getElementById("filterSport");
+    const materialEl = document.getElementById("filterMaterial");
+    const priceMinEl = document.getElementById("filterPriceMin");
+    const priceMaxEl = document.getElementById("filterPriceMax");
     return {
-        sport:    document.getElementById("filterSport").value.trim().toLowerCase(),
-        material: document.getElementById("filterMaterial").value.trim().toLowerCase(),
-        priceMin: parseFloat(document.getElementById("filterPriceMin").value) || null,
-        priceMax: parseFloat(document.getElementById("filterPriceMax").value) || null,
+        sport:    sportEl ? sportEl.value.trim().toLowerCase() : "",
+        material: materialEl ? materialEl.value.trim().toLowerCase() : "",
+        priceMin: priceMinEl ? (parseFloat(priceMinEl.value) || null) : null,
+        priceMax: priceMaxEl ? (parseFloat(priceMaxEl.value) || null) : null,
     };
 }
 
 function filterResults(results) {
-    const searchText = document.getElementById("searchInput").value.toLowerCase();
+    const searchEl = document.getElementById("searchInput");
+    const searchText = searchEl ? searchEl.value.toLowerCase() : "";
     const { sport, material, priceMin, priceMax } = getFilterValues();
 
     const hasFilters = sport || material || priceMin !== null || priceMax !== null;
-    document.getElementById("filterActiveDot").style.display = hasFilters ? "inline-block" : "none";
+    const dotEl = document.getElementById("filterActiveDot");
+    if (dotEl) dotEl.style.display = hasFilters ? "inline-block" : "none";
 
     return results.filter(item => {
         const desc = (item.description || "").toLowerCase();
@@ -233,6 +239,7 @@ function filterResults(results) {
 
 function renderResults(results) {
     const list = document.getElementById("resultsList");
+    if (!list) return;
     if (results.length === 0) {
         list.innerHTML = `<p class="no-results">No se encontraron resultados con esos filtros.</p>`;
         return;
@@ -304,49 +311,97 @@ function renderResults(results) {
 
 function showStatus(msg, isError = false) {
     const el = document.getElementById("statusMsg");
+    if (!el) return;
     el.textContent = msg;
     el.style.display = "block";
     el.style.color = isError ? "var(--danger,#c0392b)" : "var(--text-muted,#999)";
 }
 function hideStatus() {
-    document.getElementById("statusMsg").style.display = "none";
+    const el = document.getElementById("statusMsg");
+    if (el) el.style.display = "none";
 }
 
-["filterSport", "filterMaterial", "filterPriceMin", "filterPriceMax"].forEach(id => {
-    document.getElementById(id).addEventListener("input", () =>
-        renderResults(filterResults(allResults)));
-});
+function setupEventListeners() {
+    const mapExpandBtn = document.getElementById("mapExpandBtn");
+    if (mapExpandBtn) mapExpandBtn.addEventListener("click", () => {
+        initMapBig(); syncMapBig();
+        const overlay = document.getElementById("mapModalOverlay");
+        if (overlay) overlay.classList.add("active");
+    });
 
-document.getElementById("filterResetBtn").addEventListener("click", () => {
-    document.getElementById("filterSport").value = "";
-    document.getElementById("filterMaterial").value = "";
-    document.getElementById("filterPriceMin").value = "";
-    document.getElementById("filterPriceMax").value = "";
-    document.getElementById("filterActiveDot").style.display = "none";
-    renderResults(filterResults(allResults));
-});
+    const mapModalClose = document.getElementById("mapModalClose");
+    if (mapModalClose) mapModalClose.addEventListener("click", () => {
+        const overlay = document.getElementById("mapModalOverlay");
+        if (overlay) overlay.classList.remove("active");
+    });
 
-document.getElementById("useLocationBtn").addEventListener("click", getLocation);
-document.getElementById("searchLocationBtn").addEventListener("click", getLocation);
-document.getElementById("searchSubmitBtn").addEventListener("click", () =>
-    renderResults(filterResults(allResults)));
-document.getElementById("searchInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") renderResults(filterResults(allResults));
-});
-document.getElementById("searchInput").addEventListener("input", e => {
-    document.getElementById("searchClearBtn").classList.toggle("hidden", e.target.value.length === 0);
-});
-document.getElementById("searchClearBtn").addEventListener("click", () => {
-    document.getElementById("searchInput").value = "";
-    document.getElementById("searchClearBtn").classList.add("hidden");
-    renderResults(filterResults(allResults));
-});
+    const mapModalOverlay = document.getElementById("mapModalOverlay");
+    if (mapModalOverlay) mapModalOverlay.addEventListener("click", (e) => {
+        if (e.target === mapModalOverlay) mapModalOverlay.classList.remove("active");
+    });
 
-document.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-        document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
-        chip.classList.add("chip--active");
-        activeFilter = chip.dataset.filter;
+    ["filterSport", "filterMaterial", "filterPriceMin", "filterPriceMax"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", () =>
+            renderResults(filterResults(allResults)));
+    });
+
+    const filterResetBtn = document.getElementById("filterResetBtn");
+    if (filterResetBtn) filterResetBtn.addEventListener("click", () => {
+        const fs = document.getElementById("filterSport"); if (fs) fs.value = "";
+        const fm = document.getElementById("filterMaterial"); if (fm) fm.value = "";
+        const fpm = document.getElementById("filterPriceMin"); if (fpm) fpm.value = "";
+        const fpx = document.getElementById("filterPriceMax"); if (fpx) fpx.value = "";
+        const dot = document.getElementById("filterActiveDot"); if (dot) dot.style.display = "none";
         renderResults(filterResults(allResults));
     });
-});
+
+    const useLocationBtn = document.getElementById("useLocationBtn");
+    if (useLocationBtn) useLocationBtn.addEventListener("click", getLocation);
+
+    const searchLocationBtn = document.getElementById("searchLocationBtn");
+    if (searchLocationBtn) searchLocationBtn.addEventListener("click", getLocation);
+
+    const searchSubmitBtn = document.getElementById("searchSubmitBtn");
+    if (searchSubmitBtn) searchSubmitBtn.addEventListener("click", () =>
+        renderResults(filterResults(allResults)));
+
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+        searchInput.addEventListener("keydown", e => {
+            if (e.key === "Enter") renderResults(filterResults(allResults));
+        });
+        searchInput.addEventListener("input", e => {
+            const clearBtn = document.getElementById("searchClearBtn");
+            if (clearBtn) clearBtn.classList.toggle("hidden", e.target.value.length === 0);
+        });
+    }
+
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    if (searchClearBtn) searchClearBtn.addEventListener("click", () => {
+        const si = document.getElementById("searchInput");
+        if (si) si.value = "";
+        searchClearBtn.classList.add("hidden");
+        renderResults(filterResults(allResults));
+    });
+
+    document.querySelectorAll(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".chip").forEach(c => c.classList.remove("chip--active"));
+            chip.classList.add("chip--active");
+            activeFilter = chip.dataset.filter;
+            renderResults(filterResults(allResults));
+        });
+    });
+}
+
+function initApp() {
+    initMap();
+    setupEventListeners();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
