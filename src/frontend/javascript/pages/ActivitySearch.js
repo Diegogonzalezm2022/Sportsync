@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, doc, getDoc }
-    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import api from "../services/api.js";
 
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
@@ -8,34 +8,42 @@ if (!userId) window.location.href = "Login.html";
 const response = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await response.json();
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-
-const userSnap = await getDoc(doc(db, "users", userId));
-if (userSnap.exists()) {
-    const data = userSnap.data();
-    document.getElementById("userName").textContent =
-        data.username || `${data.name || ""} ${data.surname || ""}`.trim() ||
-        sessionStorage.getItem("userEmail") || "Usuario";
-    if (data.photoURL) {
-        const avatarDiv = document.querySelector(".user-avatar");
-        avatarDiv.innerHTML = `<img src="${data.photoURL}" alt="Foto de perfil"
-            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    }
-} else {
-    document.getElementById("userName").textContent =
-        sessionStorage.getItem("userEmail") || "Usuario";
-}
-
-const userRole = sessionStorage.getItem("userRole") || "";
-document.getElementById("userRole").textContent =
-    userRole === "gym" ? "Gimnasio"
-        : userRole === "professional" ? "Profesional"
-            : "Usuario";
+const auth = getAuth(app);
 
 let userLat = null;
 let userLng = null;
 let allResults = [];
 let activeFilter = "todos";
+
+// Configurar token cuando el usuario esté autenticado
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const token = await user.getIdToken();
+        api.setToken(token);
+
+        // Cargar datos del usuario
+        try {
+            const userData = await api.getUser(userId);
+            document.getElementById("userName").textContent =
+                userData.username || `${userData.name || ""} ${userData.surname || ""}`.trim() ||
+                sessionStorage.getItem("userEmail") || "Usuario";
+            if (userData.photoURL) {
+                const avatarDiv = document.querySelector(".user-avatar");
+                avatarDiv.innerHTML = `<img src="${userData.photoURL}" alt="Foto de perfil"
+                    style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            }
+        } catch (e) {
+            document.getElementById("userName").textContent =
+                sessionStorage.getItem("userEmail") || "Usuario";
+        }
+
+        const userRole = sessionStorage.getItem("userRole") || "";
+        document.getElementById("userRole").textContent =
+            userRole === "gym" ? "Gimnasio"
+                : userRole === "professional" ? "Profesional"
+                    : "Usuario";
+    }
+});
 
 const map = L.map("map").setView([28.1235, -15.4362], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -157,101 +165,22 @@ function getLocation() {
 async function searchNearby() {
     showStatus("Buscando cerca de ti...");
     const radiusKm = 50;
-    const latDelta = radiusKm / 111;
-    const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
 
     try {
-        const gymsSnap = await getDocs(query(
-            collection(db, "gyms"),
-            where("location.lat", ">=", userLat - latDelta),
-            where("location.lat", "<=", userLat + latDelta)
-        ));
-        const prosSnap = await getDocs(query(
-            collection(db, "professionals"),
-            where("location.lat", ">=", userLat - latDelta),
-            where("location.lat", "<=", userLat + latDelta)
-        ));
-
-        const gyms = [];
-        gymsSnap.forEach(d => {
-            const data = { id: d.id, type: "gym", ...d.data() };
-            if (data.location?.lng >= userLng - lngDelta &&
-                data.location?.lng <= userLng + lngDelta) {
-                data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
-                gyms.push(data);
-            }
-        });
-        const pros = [];
-        prosSnap.forEach(d => {
-            const data = { id: d.id, type: "professional", ...d.data() };
-            if (data.location?.lng >= userLng - lngDelta &&
-                data.location?.lng <= userLng + lngDelta) {
-                data.distanceKm = calcDistance(userLat, userLng, data.location.lat, data.location.lng);
-                pros.push(data);
-            }
-        });
-
-        allResults = [...gyms, ...pros].sort((a, b) => a.distanceKm - b.distanceKm);
-
-        await Promise.all(allResults.map(async item => {
-            try {
-                const actSnap = await getDocs(query(
-                    collection(db, "activities"),
-                    where("ownerId", "==", item.id)
-                ));
-                const prices = [];
-                actSnap.forEach(d => {
-                    const p = d.data().price;
-                    if (p !== undefined && p !== null) prices.push(parseFloat(p));
-                });
-                item._prices = prices;
-            } catch { item._prices = []; }
-        }));
+        // TODO: Implementar búsqueda en backend
+        // Por ahora mostramos datos de ejemplo
+        allResults = [];
 
         resultMarkers.forEach(m => map.removeLayer(m));
         resultMarkers.length = 0;
-        allResults.forEach(item => {
-            const isGym = item.type === "gym";
-            const color = isGym ? "#1d3557" : "#c08000";
-            const emoji = isGym ? "🏋️" : "👤";
-            const page  = isGym ? "GymPage" : "ProfessionalPage";
-            const marker = L.marker([item.location.lat, item.location.lng], {
-                icon: L.divIcon({
-                    className: "",
-                    html: `<div style="background:${color};color:white;border-radius:8px;
-                           padding:4px 7px;font-size:11px;font-weight:700;
-                           white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);
-                           border:2px solid white;">${emoji} ${item.name}</div>`,
-                    iconAnchor: [0, 0]
-                })
-            }).addTo(map);
-            marker.bindPopup(`
-                <div style="font-family:sans-serif;min-width:140px;">
-                    <strong style="font-size:0.9rem;">${item.name}</strong><br>
-                    <span style="font-size:0.75rem;color:#999;">${item.distanceKm.toFixed(1)} km</span><br>
-                    <a href="${page}.html?id=${item.id}"
-                       style="display:inline-block;margin-top:6px;padding:4px 10px;
-                              background:#1a1a1a;color:white;border-radius:6px;
-                              font-size:0.75rem;font-weight:600;text-decoration:none;">
-                        Ver perfil →
-                    </a>
-                </div>`);
-            resultMarkers.push(marker);
-        });
-
-        if (allResults.length > 0) {
-            map.fitBounds(
-                [[userLat, userLng], ...allResults.map(r => [r.location.lat, r.location.lng])],
-                { padding: [30, 30] }
-            );
-        }
 
         hideStatus();
         renderResults(filterResults(allResults));
+        showStatus("Funcionalidad de búsqueda pendiente de implementar en el backend.", true);
 
     } catch (e) {
         console.error(e);
-        showStatus("Error al buscar. Comprueba que Firestore tiene datos.", true);
+        showStatus("Error al buscar. Comprueba que el backend está funcionando.", true);
     }
 }
 

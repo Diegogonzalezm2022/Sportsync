@@ -1,14 +1,24 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import FirebaseDb from "../services/FirebaseDb.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import api from "../services/api.js";
 
-// Inicialización de Firebase y DB
+// Inicialización de Firebase para auth
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
 
 const response = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await response.json();
 const app = initializeApp(firebaseConfig);
-const db = await FirebaseDb.create();
+const auth = getAuth(app);
+
+// Configurar token para el API
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        const token = await user.getIdToken();
+        api.setToken(token);
+        loadReservations();
+    }
+});
 
 /**
  * FUNCIÓN GLOBAL PARA COMPARTIR
@@ -31,7 +41,7 @@ window.shareReservation = function(ownerName, activityName, activityId) {
 };
 
 async function loadReservations() {
-    const reservations = await db.getUserReservations(userId);
+    const reservations = await api.getUserReservations(userId);
 
     const enriched = await Promise.all(reservations.map(async r => {
         let ownerName = r.gymOrProId;
@@ -40,22 +50,22 @@ async function loadReservations() {
 
         try {
             if (r.ownerType === "gym") {
-                const gym = await db.getGym(r.gymOrProId);
+                const gym = await api.getGym(r.gymOrProId);
                 ownerName = gym.name;
             } else {
-                const pro = await db.getProfessional(r.gymOrProId);
+                const pro = await api.getProfessional(r.gymOrProId);
                 ownerName = pro.name;
             }
         } catch (e) { console.error("Error cargando dueño:", e); }
 
         try {
-            const actData = await db.getActivity(r.activityId);
+            const actData = await api.getActivity(r.activityId);
             if (actData) {
                 activityName            = actData.name     || r.activityId;
                 r.activitySchedule      = actData.schedule || "—";
                 r.activityPrice         = actData.price    || "—";
                 r.activityDate          = actData.date     || "—";
-                r.activityMaxCancelDate = actData.maxCancelDate || null; // ✅ guardamos para renderPast
+                r.activityMaxCancelDate = actData.maxCancelDate || null;
                 availableSlots          = actData.availableSlots ?? actData.slots ?? 0;
             }
         } catch (e) { console.error("Error cargando actividad:", e); }
@@ -121,7 +131,7 @@ function renderActive(reservations) {
             try {
                 const { id, activityName, activitySchedule, activityPrice, activityDate, ownerName } = btn.dataset;
 
-                await db.cancelReservation(id);
+                await api.cancelReservation(id);
 
                 const userEmail = sessionStorage.getItem("userEmail") || "";
                 const userName  = userEmail.split("@")[0] || "Cliente";
@@ -167,7 +177,7 @@ function renderPast(reservations) {
         // Calcular si se puede volver a reservar
         const now = new Date();
         const maxDate = r.activityMaxCancelDate
-            ? new Date(r.activityMaxCancelDate.seconds * 1000)
+            ? new Date(r.activityMaxCancelDate)
             : null;
         const canRebook = (r.availableSlots > 0) && (!maxDate || maxDate > now);
 
@@ -201,7 +211,7 @@ function renderPast(reservations) {
     list.querySelectorAll(".delete-card-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Eliminar del historial?")) return;
-            await db.deleteReservation(btn.dataset.id);
+            await api.deleteReservation(btn.dataset.id);
             btn.closest(".reservation-card").remove();
         });
     });
@@ -213,7 +223,7 @@ function renderPast(reservations) {
             btn.disabled = true;
             btn.textContent = "Reservando...";
             try {
-                await db.reactivateReservation(btn.dataset.id);
+                await api.reactivateReservation(btn.dataset.id);
                 alert("¡Reserva reactivada!");
                 await loadReservations();
             } catch (e) {
@@ -228,8 +238,8 @@ function renderPast(reservations) {
 
 function formatSchedule(schedule) {
     if (!schedule) return "—";
-    if (typeof schedule === "object" && schedule.seconds) {
-        return new Date(schedule.seconds * 1000).toLocaleDateString("es-ES", {
+    if (typeof schedule === "string" && schedule.includes("T")) {
+        return new Date(schedule).toLocaleDateString("es-ES", {
             weekday: "long", day: "numeric", month: "long"
         });
     }
@@ -240,11 +250,9 @@ function formatSchedule(schedule) {
 document.getElementById("deleteAllPastBtn")?.addEventListener("click", async () => {
     if (!confirm("¿Eliminar todo el historial?")) return;
 
-    const reservations = await db.getUserReservations(userId);
+    const reservations = await api.getUserReservations(userId);
     const past = reservations.filter(r => r.status === "cancelled" || r.status === "done");
 
-    await Promise.all(past.map(r => db.deleteReservation(r.id)));
+    await Promise.all(past.map(r => api.deleteReservation(r.id)));
     await loadReservations();
 });
-
-loadReservations();

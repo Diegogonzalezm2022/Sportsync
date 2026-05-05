@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import api from "../services/api.js";
 
 const userId = sessionStorage.getItem("userId");
 if (!userId) window.location.href = "Login.html";
@@ -7,39 +8,52 @@ if (!userId) window.location.href = "Login.html";
 const response = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await response.json();
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const auth = getAuth(app);
 
-const userSnap = await getDoc(doc(db, "users", userId));
-
-if (userSnap.exists()) {
-    const data = userSnap.data();
-
-    document.getElementById("profile-name").textContent  = `${data.name || ""} ${data.surname || ""}`.trim() || "—";
-    document.getElementById("profile-user").textContent  = data.username || "—";
-    document.getElementById("profile-email").textContent = data.email    || "—";
-    document.getElementById("profile-bio").textContent   = data.bio      || "—";
-
-    // Teléfono (solo si existe)
-    if (data.phone) {
-        document.getElementById("profile-phone").textContent = data.phone;
-        document.getElementById("phone-group").style.display = "block";
+// Configurar token cuando el usuario esté autenticado
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const token = await user.getIdToken();
+        api.setToken(token);
+        loadProfile();
     }
+});
 
-    // Método de pago (solo si existe)
-    if (data.paymentMethod) {
-        const labels = { card: "Tarjeta de crédito", paypal: "PayPal", bizum: "Bizum" };
-        const detail = data.paymentDetails ? ` · ${data.paymentDetails}` : "";
-        document.getElementById("profile-payment").textContent = (labels[data.paymentMethod] || data.paymentMethod) + detail;
-        document.getElementById("payment-group").style.display = "block";
-    }
+async function loadProfile() {
+    try {
+        const data = await api.getUser(userId);
 
-    // Foto de perfil (solo si existe)
-    if (data.photoURL) {
-        const img = document.getElementById("profile-picture");
-        img.src = data.photoURL;
-        img.style.display = "block";
-        document.getElementById("profile-avatar-svg").style.display = "none";
+        if (data && data.id) {
+            document.getElementById("profile-name").textContent  = `${data.name || ""} ${data.surname || ""}`.trim() || "—";
+            document.getElementById("profile-user").textContent  = data.username || "—";
+            document.getElementById("profile-email").textContent = data.email    || "—";
+            document.getElementById("profile-bio").textContent   = data.bio      || "—";
+
+            // Teléfono (solo si existe)
+            if (data.phone) {
+                document.getElementById("profile-phone").textContent = data.phone;
+                document.getElementById("phone-group").style.display = "block";
+            }
+
+            // Método de pago (solo si existe)
+            if (data.paymentMethod) {
+                const labels = { card: "Tarjeta de crédito", paypal: "PayPal", bizum: "Bizum" };
+                const detail = data.paymentDetails ? ` · ${data.paymentDetails}` : "";
+                document.getElementById("profile-payment").textContent = (labels[data.paymentMethod] || data.paymentMethod) + detail;
+                document.getElementById("payment-group").style.display = "block";
+            }
+
+            // Foto de perfil (solo si existe)
+            if (data.photoURL) {
+                const img = document.getElementById("profile-picture");
+                img.src = data.photoURL;
+                img.style.display = "block";
+                document.getElementById("profile-avatar-svg").style.display = "none";
+            }
+        } else {
+            console.warn("No se encontraron datos del usuario en la base de datos.");
+        }
+    } catch (error) {
+        console.error("Error cargando perfil:", error);
     }
-} else {
-    console.warn("No se encontraron datos del usuario en Firestore.");
 }

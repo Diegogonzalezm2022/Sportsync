@@ -3,16 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "cucumber-js --config src/backend/javascript/tests/bdd/cucumber.json && jest"
+    "test": "cucumber-js --config src/backend/javascript/tests/bdd/cucumber.json && jest",
+    "start": "node src/backend/server.js"
   },
   "private": true,
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0"
+  },
   "devDependencies": {
     "@cucumber/cucumber": "^12.7.0",
     "firebase": "^12.11.0",
     "jest": "^30.3.0"
-  },
-  "dependencies": {
-    "assert": "^2.1.0"
   }
 }
