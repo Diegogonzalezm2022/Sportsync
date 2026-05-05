@@ -44,7 +44,7 @@ function buildMenu() {
         // ── Gimnasio o profesional logueado ──────────────────────────────────
         if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
         addBtn(nav, "Editar Perfil",  () => window.location.href = "EditProfile.html");
-        addBtn(nav, "Vetar Usuarios", () => window.location.href = "BanUsers.html");
+        addBtn(nav, "Vetar Usuarios", () => window.location.href = "ViewReservation.html");
         addBtn(nav, "Sobre Nosotros", () => window.location.href = "AboutUs.html");
         addBtn(nav, "Nuestro Equipo", () => window.location.href = "OurTeam.html");
 
@@ -62,10 +62,10 @@ function buildMenu() {
         // ── Usuario normal logueado ───────────────────────────────────────────
         if (!isIndexPage) addBtn(nav, "Inicio",             () => window.location.href = "Index.html");
         addBtn(nav, "Buscar Actividades", () => window.location.href = "ActivitySearch.html");
-        addBtn(nav, "Ver reservas",       () => window.location.href = "ViewReservation.html");
         addBtn(nav, "Editar Perfil",      () => window.location.href = "EditProfile.html");
-        addBtn(nav, "Historial",          () => window.location.href = "History.html");
+        addBtn(nav, "Ver Reservas",          () => window.location.href = "History.html");
         addBtn(nav, "Sobre Nosotros",     () => window.location.href = "AboutUs.html");
+        addBtn(nav, "Nuestro Equipo",     () => window.location.href = "OurTeam.html");
 
         const authBtn = document.createElement("button");
         authBtn.className = "logout-btn";
