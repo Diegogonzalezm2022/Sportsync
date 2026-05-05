@@ -2,44 +2,93 @@ import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 let app;
-
-async function initFirebase() {
-    try {
-        app = getApp();
-    } catch {
-        const response = await fetch("../../assets/firebaseConfig.json");
-        const firebaseConfig = await response.json();
-        app = initializeApp(firebaseConfig);
-    }
-    return app;
+try {
+    app = getApp();
+} catch {
+    const res = await fetch("../../assets/firebaseConfig.json");
+    const cfg = await res.json();
+    app = initializeApp(cfg);
 }
 
-await initFirebase();
 const auth = getAuth(app);
 
-function updateAuthButton() {
-    const authActionBtn = document.getElementById('auth-action-btn');
-    if (!authActionBtn) return;
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            authActionBtn.textContent = 'Logout';
-            authActionBtn.onclick = async () => {
-                await signOut(auth);
-                window.location.href = "Index.html";
-            };
-        } else {
-            authActionBtn.textContent = 'Login';
-            authActionBtn.onclick = () => {
-                window.location.href = "Login.html";
-            };
-        }
-    });
+function addBtn(nav, label, action, className = "") {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.onclick = action;
+    if (className) btn.className = className;
+    nav.appendChild(btn);
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateAuthButton);
-} else {
-    updateAuthButton();
+function buildMenu() {
+    const nav = document.getElementById("header-nav");
+    if (!nav) return;
+
+    nav.innerHTML = "";
+
+    const role           = sessionStorage.getItem("userRole");
+    const userId         = sessionStorage.getItem("userId");
+    const page           = window.location.pathname.split("/").pop();
+    const isLoginPage    = page === "Login.html";
+    const isRegisterPage = page === "CreateAnAccount.html";
+    const isIndexPage    = page === "Index.html" || page === "";
+    const isAuthPage     = isLoginPage || isRegisterPage;
+
+    if (isAuthPage) {
+        // ── Login / Registro: solo las opciones que no sean la página actual ──
+        if (!isIndexPage)    addBtn(nav, "Inicio",       () => window.location.href = "Index.html");
+        if (!isLoginPage)    addBtn(nav, "Login",        () => window.location.href = "Login.html", "logout-btn");
+        if (!isRegisterPage) addBtn(nav, "Crear cuenta", () => window.location.href = "CreateAnAccount.html", "logout-btn");
+
+    } else if (role === "gym" || role === "professional") {
+        // ── Gimnasio o profesional logueado ──────────────────────────────────
+        if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
+        addBtn(nav, "Editar Perfil",  () => window.location.href = "EditProfile.html");
+        addBtn(nav, "Vetar Usuarios", () => window.location.href = "BanUsers.html");
+        addBtn(nav, "Sobre Nosotros", () => window.location.href = "AboutUs.html");
+        addBtn(nav, "Nuestro Equipo", () => window.location.href = "OurTeam.html");
+
+        const authBtn = document.createElement("button");
+        authBtn.className = "logout-btn";
+        authBtn.textContent = "Logout";
+        authBtn.onclick = async () => {
+            await signOut(auth);
+            sessionStorage.clear();
+            window.location.href = "Login.html";
+        };
+        nav.appendChild(authBtn);
+
+    } else if (userId) {
+        // ── Usuario normal logueado ───────────────────────────────────────────
+        if (!isIndexPage) addBtn(nav, "Inicio",             () => window.location.href = "Index.html");
+        addBtn(nav, "Buscar Actividades", () => window.location.href = "ActivitySearch.html");
+        addBtn(nav, "Ver reservas",       () => window.location.href = "ViewReservation.html");
+        addBtn(nav, "Editar Perfil",      () => window.location.href = "EditProfile.html");
+        addBtn(nav, "Historial",          () => window.location.href = "History.html");
+        addBtn(nav, "Sobre Nosotros",     () => window.location.href = "AboutUs.html");
+
+        const authBtn = document.createElement("button");
+        authBtn.className = "logout-btn";
+        authBtn.textContent = "Logout";
+        authBtn.onclick = async () => {
+            await signOut(auth);
+            sessionStorage.clear();
+            window.location.href = "Login.html";
+        };
+        nav.appendChild(authBtn);
+
+    } else {
+        // ── No logueado ───────────────────────────────────────────────────────
+        if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
+        addBtn(nav, "Sobre Nosotros", () => window.location.href = "AboutUs.html");
+        addBtn(nav, "Nuestro Equipo", () => window.location.href = "OurTeam.html");
+
+        const authBtn = document.createElement("button");
+        authBtn.className = "logout-btn";
+        authBtn.textContent = "Login";
+        authBtn.onclick = () => window.location.href = "Login.html";
+        nav.appendChild(authBtn);
+    }
 }
+
+window.addEventListener("xlu-includes-complete", buildMenu);

@@ -2,21 +2,12 @@
     <div class="logo">
         <img src="../../assets/imagenes/logo_SportSync.png" alt="">
     </div>
-
     <div class="app-name">SportSync</div>
-
     <div class="menu-icon" onclick="document.getElementById('mobile-menu-popup').classList.toggle('active')">&#9776;</div>
-
 </header>
-<div id="mobile-menu-popup" class="header-popup-menu">
-    <nav class="popup-nav">
-        <button onclick="window.location.href='Index.html'">Inicio</button>
-        <button onclick="window.location.href='ActivitySearch.html'">Buscar Actividades</button>
-        <button onclick="window.location.href='ViewReservation.html'">Ver reservas</button>
-        <button onclick="window.location.href='EditProfile.html'">Editar Perfil</button>
-        <button onclick="window.location.href='History.html'">Historial</button>
-        <button onclick="window.location.href='AboutUs.html'">Sobre Nosotros</button>
 
-        <button id="auth-action-btn" class="logout-btn">Cargando...</button>
+<div id="mobile-menu-popup" class="header-popup-menu">
+    <nav class="popup-nav" id="header-nav">
+        <!-- Se rellena dinámicamente desde Header.js -->
     </nav>
 </div>
