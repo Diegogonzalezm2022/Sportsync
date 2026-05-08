@@ -16,8 +16,6 @@ import {
     runTransaction
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 
-const firebaseConfig = await fetch('../assets/firebaseConfig.json');
-
 export default class FirebaseDb {
 
     constructor() {
@@ -25,67 +23,103 @@ export default class FirebaseDb {
         this.app = null;
     }
 
-    static async create() {
+    static async create(firebaseConfig = null) {
         const instance = new FirebaseDb();
-        await instance._init();
+        await instance._init(firebaseConfig);
         return instance;
     }
 
-    async _init() {
+    async _init(firebaseConfig = null) {
         try {
             this.app = getApp();
         } catch (error) {
+            if (!firebaseConfig) throw new Error("firebaseConfig requerido para inicializar Firebase");
             this.app = initializeApp(firebaseConfig);
         }
         this.db = getFirestore(this.app);
     }
 
-    async makeReservation(userId, activityId, gymOrProId) {
-        const activityDoc = await doc(this.db, "activities", activityId);
-        const activity = await getDoc(activityDoc);
+    async makeReservation(userId, activityId, gymOrProId, ownerType) {
+        const activityRef = doc(this.db, "activities", activityId);
+        const activity = await getDoc(activityRef);
         const availableSlots = activity.data().availableSlots;
         if (availableSlots <= 0) {
             throw new Error("Activity full");
         }
         const reservationsRef = collection(this.db, "reservations");
         const docRef = await addDoc(reservationsRef, {
-            userId: userId,
-            activityId: activityId,
-            gymOrProId: gymOrProId,
+            userId,
+            activityId,
+            gymOrProId,
+            ownerType: ownerType || null,
             status: "active",
             paid: false,
             createdAt: serverTimestamp()
         });
-        await updateDoc(activityDoc,
-            {
-                availableSlots: availableSlots-1
-            }
-            );
+        await updateDoc(activityRef, {
+            availableSlots: availableSlots - 1
+        });
         return docRef.id;
     }
 
     async cancelReservation(reservationId) {
-        try {
-            const reservationRef = await doc(this.db, "reservations", reservationId);
-            const reservation = await getDoc(reservationRef);
-            const activityId = await reservation.data().activityId;
-            const activityRef = await doc(this.db, "activities", activityId)
-            const activity = await getDoc(activityRef);
-            if (activity.data().maxCancelDate.toDate() <= Date.now()) {
-                return { success: false, error: "Cancel limit passed" };
-            }
-            await updateDoc(reservationRef, {
-                status: "cancelled"
-            }
-            );
-            await updateDoc(activityRef, {
-                availableSlots: activity.data().availableSlots+1
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        const reservation = await getDoc(reservationRef);
+        const activityId = reservation.data().activityId;
+        const activityRef = doc(this.db, "activities", activityId);
+        const activity = await getDoc(activityRef);
 
-            });
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
+        const maxCancelDate = activity.data().maxCancelDate;
+        if (maxCancelDate) {
+            const cancelDate = typeof maxCancelDate.toDate === "function"
+                ? maxCancelDate.toDate()
+                : new Date(maxCancelDate);
+            if (cancelDate < new Date()) {
+                throw new Error("Cancel limit passed");
+            }
         }
+
+        await updateDoc(reservationRef, { status: "cancelled" });
+        await updateDoc(activityRef, {
+            availableSlots: activity.data().availableSlots + 1
+        });
+
+        return { success: true };
+    }
+
+    async reactivateReservation(reservationId) {
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        const reservation = await getDoc(reservationRef);
+        const activityId = reservation.data().activityId;
+        const activityRef = doc(this.db, "activities", activityId);
+        const activity = await getDoc(activityRef);
+        const actData = activity.data();
+
+        if ((actData.availableSlots ?? 0) <= 0) {
+            throw new Error("No hay plazas disponibles");
+        }
+
+        const maxCancelDate = actData.maxCancelDate;
+        if (maxCancelDate) {
+            const cancelDate = typeof maxCancelDate.toDate === "function"
+                ? maxCancelDate.toDate()
+                : new Date(maxCancelDate);
+            if (cancelDate < new Date()) {
+                throw new Error("La actividad ya no admite nuevas reservas");
+            }
+        }
+
+        await updateDoc(reservationRef, { status: "active" });
+        await updateDoc(activityRef, {
+            availableSlots: actData.availableSlots - 1
+        });
+
+        return { success: true };
+    }
+
+    async deleteReservation(reservationId) {
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        await deleteDoc(reservationRef);
     }
 
     async findGymsByDistance(lat, lng, radiusKm = 10) {
@@ -115,7 +149,7 @@ export default class FirebaseDb {
         return gyms;
     }
 
-    async addGym(gymData, ownerId=null) {
+    async addGym(gymData, ownerId = null) {
         if (!ownerId) {
             const gymsRef = collection(this.db, "gyms");
             const docRef = await addDoc(gymsRef, {
@@ -126,7 +160,7 @@ export default class FirebaseDb {
             });
             return docRef.id;
         } else {
-            const docRef = await setDoc(doc(this.db, "gyms", ownerId), {
+            await setDoc(doc(this.db, "gyms", ownerId), {
                 ...gymData,
                 rating: 0,
                 ratingCount: 0,
@@ -136,7 +170,7 @@ export default class FirebaseDb {
         }
     }
 
-    async addProfessional(proData, ownerId=null) {
+    async addProfessional(proData, ownerId = null) {
         if (!ownerId) {
             const prosRef = collection(this.db, "professionals");
             const docRef = await addDoc(prosRef, {
@@ -147,7 +181,7 @@ export default class FirebaseDb {
             });
             return docRef.id;
         } else {
-            const docRef = await setDoc(doc(this.db, "professionals", ownerId), {
+            await setDoc(doc(this.db, "professionals", ownerId), {
                 ...proData,
                 rating: 0,
                 ratingCount: 0,
@@ -157,76 +191,61 @@ export default class FirebaseDb {
         }
     }
 
-    async addUser(userData, userId= null) {
+    async addUser(userData, userId = null) {
         const usersRef = collection(this.db, "users");
         if (!userId) {
             const docRef = await addDoc(usersRef, {
                 ...userData,
                 createdAt: serverTimestamp()
-            })
-            return docRef.id
+            });
+            return docRef.id;
         } else {
             await setDoc(doc(this.db, "users", userId), {
                 ...userData,
                 createdAt: serverTimestamp()
             });
-            return userId
+            return userId;
         }
     }
 
     async setUserRole(userId, role) {
-        const userRef = await doc(this.db, "users", userId);
-        await updateDoc(userRef, {
-            role: role,
-            }
-        )
+        const userRef = doc(this.db, "users", userId);
+        await updateDoc(userRef, { role });
     }
 
     async getUser(userId) {
-        const userRef = await doc(this.db, "users", userId);
-        if (userRef) {
-            const userDoc = await getDoc(userRef);
-            return userDoc.data()
-        } else {
-            return {};
-        }
+        const userRef = doc(this.db, "users", userId);
+        const userDoc = await getDoc(userRef);
+        return userDoc.exists() ? userDoc.data() : {};
     }
 
     async getGym(gymId) {
-        const gymRef = await doc(this.db, "gyms", gymId);
-        if (gymRef) {
-            const gymDoc = await getDoc(gymRef);
-            return gymDoc.data()
-        } else {
-            return {};
-        }
+        const gymRef = doc(this.db, "gyms", gymId);
+        const gymDoc = await getDoc(gymRef);
+        return gymDoc.exists() ? gymDoc.data() : null;
     }
 
     async getProfessional(proId) {
-        const proRef = await doc(this.db, "gyms", proId);
-        if (proRef) {
-            const proDoc = await getDoc(proRef);
-            return proDoc.data()
-        } else {
-            return {};
-        }
+        const proRef = doc(this.db, "professionals", proId);
+        const proDoc = await getDoc(proRef);
+        return proDoc.exists() ? proDoc.data() : null;
     }
 
     async addMaterial(materialData) {
         const materialsRef = collection(this.db, "materials");
-        const docRef = await addDoc(materialsRef, {
+        await addDoc(materialsRef, {
             ...materialData,
             rating: 0,
             ratingCount: 0,
             createdAt: serverTimestamp()
-        })
+        });
     }
 
     async addActivity(ownerId, ownerType, activityData) {
         const activitiesRef = collection(this.db, "activities");
         const docRef = await addDoc(activitiesRef, {
-            ownerId: ownerId,
-            ownerType: ownerType,
+            ownerId,
+            ownerType,
             ...activityData,
             createdAt: serverTimestamp()
         });
@@ -234,13 +253,9 @@ export default class FirebaseDb {
     }
 
     async getActivity(activityId) {
-        const activityRef = await doc(this.db, "activities", activityId);
-        if (activityRef) {
-            const activityDoc = await getDoc(activityRef);
-            return activityDoc.data()
-        } else {
-            return {};
-        }
+        const activityRef = doc(this.db, "activities", activityId);
+        const activityDoc = await getDoc(activityRef);
+        return activityDoc.exists() ? activityDoc.data() : null;
     }
 
     async getUserReservations(userId, status = null) {
@@ -284,9 +299,40 @@ export default class FirebaseDb {
         const newCount = ratingCount + 1;
         const newRating = ((rating * ratingCount) + score) / newCount;
 
-        await updateDoc(targetRef, {
-            rating: newRating,
-            ratingCount: newCount
-        });
+        await updateDoc(targetRef, { rating: newRating, ratingCount: newCount });
+    }
+    async completeReservation(reservationId) {
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        await updateDoc(reservationRef, { status: "done" });
+        return { success: true };
+    }
+
+    async rateReservation(reservationId, score) {
+        if (score < 1 || score > 5) throw new Error("La puntuación debe estar entre 1 y 5");
+
+        const reservationRef = doc(this.db, "reservations", reservationId);
+        const reservationSnap = await getDoc(reservationRef);
+
+        if (!reservationSnap.exists()) throw new Error("Reserva no encontrada");
+
+        const resData = reservationSnap.data();
+        if (resData.status !== "done") throw new Error("Solo se pueden valorar reservas completadas");
+        if (resData.userRating != null) throw new Error("Ya has valorado esta reserva");
+
+        const { gymOrProId, ownerType } = resData;
+        const colName = ownerType === "gym" ? "gyms" : "professionals";
+        const targetRef = doc(this.db, colName, gymOrProId);
+        const targetSnap = await getDoc(targetRef);
+
+        if (!targetSnap.exists()) throw new Error("Entidad no encontrada");
+
+        const { rating = 0, ratingCount = 0 } = targetSnap.data();
+        const newCount  = ratingCount + 1;
+        const newRating = ((rating * ratingCount) + score) / newCount;
+
+        await updateDoc(reservationRef, { userRating: score });
+        await updateDoc(targetRef, { rating: newRating, ratingCount: newCount });
+
+        return { success: true, newRating, newCount };
     }
 }

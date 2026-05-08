@@ -54,25 +54,31 @@ body{
 
 .delete-card-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 20px;
-    height: 20px;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: none;
-    background: lightgrey;
-    color: white;
-    font-size: 10px;
+    background: #e0e0e0;
+    color: #666;
+    font-size: 11px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     transition: background 0.15s, color 0.15s;
+    z-index: 1;
 }
 .delete-card-btn:hover {
     background: #e74c3c;
     color: white;
+}
+
+/* Compensar el espacio que ocupa el ✕ para que no tape el texto */
+.past-card .card-info {
+    padding-right: 36px;
 }
 
 .reservation-card {
@@ -127,7 +133,7 @@ body{
 
 .card-actions.past-actions {
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 10px;
 }
 

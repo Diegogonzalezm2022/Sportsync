@@ -48,8 +48,7 @@ async function loadDashboard() {
         // ownerType dinámico: funciona tanto para "gym" como para "professional"
         const q = query(
             collection(db, "activities"),
-            where("ownerId",   "==", ownerId),
-            where("ownerType", "==", ownerType)
+            where("ownerId", "==", ownerId)
         );
         const actSnap = await getDocs(q);
         container.innerHTML = "";
