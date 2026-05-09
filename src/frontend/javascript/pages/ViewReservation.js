@@ -58,12 +58,6 @@ async function loadDashboard() {
     const container = document.getElementById("activities-list");
 
     try {
-        // TODO: Implementar endpoint en backend para obtener actividades por ownerId
-        container.innerHTML = "<p>Funcionalidad pendiente de implementar en el backend.</p>";
-        return;
-
-        // Código original comentado - pending backend implementation
-        /*
         const activities = await api.getActivitiesByOwner(ownerId);
         container.innerHTML = "";
 
@@ -98,7 +92,6 @@ async function loadDashboard() {
 
             loadParticipants(actId, actData);
         }
-        */
     } catch (e) {
         console.error(e);
         container.innerHTML = "<p>Error al cargar datos.</p>";
@@ -110,11 +103,6 @@ async function loadParticipants(activityId, actData) {
     const listDiv = document.getElementById(`users-container-${activityId}`);
 
     try {
-        // TODO: Implementar en backend
-        listDiv.innerHTML = "<p style='padding:10px;color:black;'>Funcionalidad pendiente de implementar.</p>";
-        return;
-
-        /*
         const reservations = await api.getActivityReservations(activityId);
 
         if (reservations.length === 0) {
@@ -153,7 +141,6 @@ async function loadParticipants(activityId, actData) {
 
             listDiv.appendChild(row);
         }
-        */
     } catch (e) {
         console.error("Error cargando participantes:", e);
         listDiv.innerHTML = "<p style='color:red;'>Error al cargar participantes.</p>";
@@ -177,14 +164,9 @@ async function handleVeto(btn) {
     btn.textContent = "Vetando...";
 
     try {
-        // 1. Marcar reserva como vetada
-        await api.request(`/reservations/${reservationId}`, {
-            method: 'POST',
-            body: JSON.stringify({ status: "vetoed" })
+        await api.request(`/reservations/${reservationId}/veto`, {
+            method: 'POST'
         });
-
-        // 2. Devolver plaza a la actividad
-        // TODO: Implementar en backend
 
         // 3. Enviar email al usuario vetado
         if (userEmail) {

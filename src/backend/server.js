@@ -70,6 +70,15 @@ app.get('/api/users/:id', authenticateUser, async (req, res) => {
   }
 });
 
+app.put('/api/users/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.updateUser(req.params.id, req.body);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/users', authenticateUser, async (req, res) => {
   try {
     const { userData, userId } = req.body;
@@ -120,6 +129,15 @@ app.post('/api/gyms', authenticateUser, async (req, res) => {
   }
 });
 
+app.put('/api/gyms/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.updateGym(req.params.id, req.body);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Professionals
 app.get('/api/professionals', async (req, res) => {
   try {
@@ -151,7 +169,31 @@ app.post('/api/professionals', authenticateUser, async (req, res) => {
   }
 });
 
+app.put('/api/professionals/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.updateProfessional(req.params.id, req.body);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Activities
+app.get('/api/activities', async (req, res) => {
+  try {
+    const { ownerId, ownerType } = req.query;
+
+    if (ownerId) {
+      const activities = await db.findActivitiesByOwner(ownerId);
+      return res.json(activities.map(a => serializeData(a)));
+    }
+
+    res.json([]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/activities/:id', async (req, res) => {
   try {
     const activity = await db.getActivity(req.params.id);
@@ -171,6 +213,25 @@ app.post('/api/activities', authenticateUser, async (req, res) => {
 
     const id = await db.addActivity(ownerId, ownerType, activityData);
     res.json({ id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/activities/:id', authenticateUser, async (req, res) => {
+  try {
+    const { activityData } = req.body;
+    await db.updateActivity(req.params.id, activityData || req.body);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/activities/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.deleteActivity(req.params.id);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -199,6 +260,15 @@ app.post('/api/reservations/:id/cancel', authenticateUser, async (req, res) => {
 app.post('/api/reservations/:id/reactivate', authenticateUser, async (req, res) => {
   try {
     await db.reactivateReservation(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/reservations/:id/veto', authenticateUser, async (req, res) => {
+  try {
+    await db.vetoReservation(req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

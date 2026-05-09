@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = (window.__API_BASE_URL__) || 'http://localhost:3000/api';
 
 class ApiService {
   constructor() {
@@ -71,6 +71,13 @@ class ApiService {
     });
   }
 
+  async updateGym(id, gymData) {
+    return this.request(`/gyms/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(gymData)
+    });
+  }
+
   async getProfessionals(lat, lng, radius) {
     const params = new URLSearchParams();
     if (lat) params.append('lat', lat);
@@ -91,12 +98,32 @@ class ApiService {
     });
   }
 
+  async updateProfessional(id, proData) {
+    return this.request(`/professionals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(proData)
+    });
+  }
+
+  async updateUser(id, userData) {
+    return this.request(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  }
+
   async getActivities(ownerId, ownerType) {
     const params = new URLSearchParams();
     if (ownerId) params.append('ownerId', ownerId);
     if (ownerType) params.append('ownerType', ownerType);
     const query = params.toString() ? `?${params.toString()}` : '';
     return this.request(`/activities${query}`);
+  }
+
+  async getActivitiesByOwner(ownerId) {
+    const params = new URLSearchParams();
+    params.append('ownerId', ownerId);
+    return this.request(`/activities?${params.toString()}`);
   }
 
   async getActivity(id) {
@@ -107,6 +134,19 @@ class ApiService {
     return this.request('/activities', {
       method: 'POST',
       body: JSON.stringify({ ownerId, ownerType, activityData })
+    });
+  }
+
+  async updateActivity(id, activityData) {
+    return this.request(`/activities/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ activityData })
+    });
+  }
+
+  async deleteActivity(id) {
+    return this.request(`/activities/${id}`, {
+      method: 'DELETE'
     });
   }
 

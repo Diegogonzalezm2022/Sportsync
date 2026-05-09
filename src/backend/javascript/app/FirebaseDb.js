@@ -128,6 +128,31 @@ class FirebaseDb {
         await this.db.collection("reservations").doc(reservationId).delete();
     }
 
+    async vetoReservation(reservationId) {
+        const reservationRef = this.db.collection("reservations").doc(reservationId);
+        const reservationSnap = await reservationRef.get();
+
+        if (!reservationSnap.exists) {
+            throw new Error("Reservation not found");
+        }
+
+        const activityId = reservationSnap.data().activityId;
+        const activityRef = this.db.collection("activities").doc(activityId);
+        const activitySnap = await activityRef.get();
+
+        if (activitySnap.exists) {
+            await activityRef.update({
+                availableSlots: admin.firestore.FieldValue.increment(1)
+            });
+        }
+
+        await reservationRef.update({
+            status: "vetoed"
+        });
+
+        return { success: true };
+    }
+
     async findGymsByDistance(lat, lng, radiusKm = 10) {
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(lat * Math.PI / 180));
@@ -287,6 +312,35 @@ class FirebaseDb {
         } else {
             return null;
         }
+    }
+
+    async updateUser(userId, data) {
+        await this.db.collection("users").doc(userId).update(data);
+    }
+
+    async updateGym(gymId, data) {
+        await this.db.collection("gyms").doc(gymId).update(data);
+    }
+
+    async updateProfessional(proId, data) {
+        await this.db.collection("professionals").doc(proId).update(data);
+    }
+
+    async updateActivity(activityId, data) {
+        await this.db.collection("activities").doc(activityId).update(data);
+    }
+
+    async deleteActivity(activityId) {
+        await this.db.collection("activities").doc(activityId).delete();
+    }
+
+    async findActivitiesByOwner(ownerId) {
+        const snapshot = await this.db.collection("activities")
+            .where("ownerId", "==", ownerId)
+            .get();
+        const activities = [];
+        snapshot.forEach(docSnap => activities.push({ id: docSnap.id, ...docSnap.data() }));
+        return activities;
     }
 
     async getUserReservations(userId, status = null) {

@@ -223,12 +223,11 @@ document.getElementById("saveGalleryBtn").onclick = async () => {
 async function loadActivities() {
     const list = document.getElementById("activitiesList");
     try {
-        // TODO: Implementar endpoint en backend para obtener actividades por owner
-        list.innerHTML = "<p>Funcionalidad pendiente de implementar en el backend.</p>";
-        return;
-
-        /*
         const activities = await api.getActivitiesByOwner(ownerId);
+        if (activities.length === 0) {
+            list.innerHTML = "<p>No tienes actividades creadas aún.</p>";
+            return;
+        }
         list.innerHTML = activities.map(d => {
             return `
         <div style="border-bottom:1px solid #eee; padding:8px; display:flex; justify-content:space-between; align-items:center;">
@@ -239,7 +238,6 @@ async function loadActivities() {
             <button onclick="window.delAct('${d.id}')">Eliminar</button>
         </div>`;
         }).join("");
-        */
     } catch (e) {
         console.error(e);
         list.innerHTML = "<p>Error al cargar actividades.</p>";

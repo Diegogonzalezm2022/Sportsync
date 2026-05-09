@@ -142,8 +142,7 @@ async function loadActivities(fromDate = null, toDate = null) {
     const container = document.getElementById("activitiesSection");
     container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>`;
     try {
-        // TODO: Crear endpoint en backend para filtrar actividades por ownerId
-        const activities = []; // await api.getActivitiesByOwner(ownerId);
+        const activities = await api.getActivitiesByOwner(ownerId);
         allActivities = activities;
 
         let filtered = allActivities;
@@ -213,8 +212,19 @@ function renderActivities(activities) {
     if (!isOwner) {
         container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
             btn.onclick = async () => {
-                // TODO: Implementar lógica de reserva usando api.js
-                alert("Funcionalidad de reserva pendiente de completar con el backend.");
+                const activityId = btn.dataset.id;
+                btn.disabled = true;
+                btn.textContent = "Reservando...";
+                try {
+                    await api.makeReservation(userId, activityId, ownerId);
+                    btn.textContent = "✓ Apuntado";
+                    btn.classList.add("signup-btn--done");
+                } catch (e) {
+                    console.error(e);
+                    alert(e.message || "Error al hacer la reserva.");
+                    btn.disabled = false;
+                    btn.textContent = "Apuntarme";
+                }
             };
         });
     }
