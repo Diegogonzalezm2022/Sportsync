@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../css/components/Footer.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../javascript/scripts/xlu-include-file.js"></script>
     <script type="module" src="../javascript/scripts/Header.js"></script>
     <script type="module" src="../javascript/pages/ActivitySearch.js"></script>
     <style>
@@ -172,9 +173,12 @@
 
 <footer xlu-include-file="components/Footer.html"></footer>
 
-<script src="../javascript/scripts/xlu-include-file.js"></script>
-<script>xLuIncludeFile();</script>
 
 
 </body>
+<script>
+    setTimeout(
+    xLuIncludeFile,
+        100);
+</script>
 </html>
