@@ -401,14 +401,7 @@ async function loadEquipment() {
     const container = document.getElementById("equipmentSection");
     if (!container) return;
 
-    // Comprobar qué equipamiento ya tiene reservado el usuario
-    const myEquipSnap = await getDocs(query(
-        collection(db, "equipmentReservations"),
-        where("userId", "==", userId),
-        where("status", "==", "active")
-    ));
-    const myEquipIds = new Set();
-    myEquipSnap.forEach(d => myEquipIds.add(d.data().equipmentId));
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando equipamiento...</p>`;
 
     try {
         const snap = await getDocs(query(
@@ -416,39 +409,19 @@ async function loadEquipment() {
             where("ownerId", "==", ownerId)
         ));
 
-        if (snap.empty) {
-            container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
-            return;
-        }
+        const equipment = [];
+        snap.forEach(d => equipment.push({ id: d.id, ...d.data() }));
 
-        container.innerHTML = snap.docs.map(d => {
-            const e = d.data();
-            const alreadyReserved = myEquipIds.has(d.id);
-            const noStock = parseInt(e.quantity) <= 0;
+        const mySnap = await getDocs(query(
+            collection(db, "equipmentReservations"),
+            where("userId", "==", userId),
+            where("status", "==", "active")
+        ));
 
-            return `
-            <div class="activity-card">
-                <div class="activity-info">
-                    <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${e.name}</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${e.date || "—"}</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${e.time || "—"}</span></div>
-                </div>
-                <div class="activity-right">
-                    <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${e.price}€</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Cantidad:</span> <span class="activity-value">${e.quantity}</span></div>
-                </div>
-                <div>
-                    ${isOwner
-                ? `<span class="activity-owner-badge">Tu equipamiento</span>`
-                : `<button class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''} ${noStock && !alreadyReserved ? 'signup-btn--full' : ''}"
-                                onclick="reserveEquip('${d.id}', '${e.name}', '${e.date||''}', '${e.time||''}', ${e.price||0}, this)"
-                                ${alreadyReserved || noStock ? 'disabled' : ''}>
-                                ${alreadyReserved ? '✓ Reservado' : noStock ? 'Sin stock' : 'Reservar'}
-                           </button>`
-            }
-                </div>
-            </div>`;
-        }).join("");
+        const myEquipIds = new Set();
+        mySnap.forEach(d => myEquipIds.add(d.data().equipmentId));
+
+        renderEquipment(equipment, myEquipIds);
 
     } catch (e) {
         console.error(e);
@@ -456,62 +429,153 @@ async function loadEquipment() {
     }
 }
 
-window.reserveEquip = async (equipId, name, date, time, price, btn) => {
-    btn.disabled = true;
-    btn.textContent = "Comprobando...";
+function renderEquipment(equipment, myEquipIds) {
+    const container = document.getElementById("equipmentSection");
 
-    try {
-        const equipRef  = doc(db, "equipment", equipId);
-        const equipSnap = await getDoc(equipRef);
-        if (!equipSnap.exists()) {
-            alert("Equipamiento no encontrado.");
-            btn.disabled = false;
-            btn.textContent = "Reservar";
-            return;
-        }
-
-        const cur = parseInt(equipSnap.data().quantity) || 0;
-        if (cur <= 0) {
-            btn.textContent = "Sin stock";
-            btn.classList.add("signup-btn--full");
-            return;
-        }
-
-        // Comprobar si ya tiene reserva activa
-        const existSnap = await getDocs(query(
-            collection(db, "equipmentReservations"),
-            where("userId",      "==", userId),
-            where("equipmentId", "==", equipId),
-            where("status",      "==", "active")
-        ));
-        if (!existSnap.empty) {
-            btn.textContent = "✓ Reservado";
-            btn.classList.add("signup-btn--done");
-            return;
-        }
-
-        await addDoc(collection(db, "equipmentReservations"), {
-            userId,
-            equipmentId: equipId,
-            gymOrProId:  ownerId,
-            ownerType:   "professional",
-            name, date, time, price,
-            status:    "active",
-            createdAt: serverTimestamp()
-        });
-        await updateDoc(equipRef, { quantity: cur - 1 });
-
-        btn.textContent = "✓ Reservado";
-        btn.classList.add("signup-btn--done");
-        btn.disabled = true;
-
-    } catch (e) {
-        console.error(e);
-        alert("Error al reservar el equipamiento.");
-        btn.disabled = false;
-        btn.textContent = "Reservar";
+    if (!equipment.length) {
+        container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
+        return;
     }
-};
+
+    container.innerHTML = equipment.map(e => {
+
+        const alreadyReserved = myEquipIds.has(e.id);
+        const noStock = (parseInt(e.quantity) || 0) <= 0;
+
+        return `
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row">
+                    <span class="activity-field-label">Nombre:</span>
+                    <span class="activity-value">${e.name}</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Fecha:</span>
+                    <span class="activity-value">${e.date || "—"}</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Horario:</span>
+                    <span class="activity-value">${e.time || "—"}</span>
+                </div>
+            </div>
+
+            <div class="activity-right">
+                <div class="activity-row">
+                    <span class="activity-field-label">Precio:</span>
+                    <span class="activity-value">${e.price}€</span>
+                </div>
+                <div class="activity-row">
+                    <span class="activity-field-label">Cantidad:</span>
+                    <span class="activity-value">${e.quantity}</span>
+                </div>
+            </div>
+
+            <div>
+                ${isOwner
+            ? `<span class="activity-owner-badge">Tu equipamiento</span>`
+            : `<button class="signup-btn
+                        ${alreadyReserved ? 'signup-btn--done' : ''}
+                        ${noStock ? 'signup-btn--full' : ''}"
+                        data-id="${e.id}"
+                        data-name="${e.name}"
+                        data-date="${e.date || ''}"
+                        data-time="${e.time || ''}"
+                        data-price="${e.price || 0}"
+                        ${alreadyReserved || noStock ? 'disabled' : ''}>
+                        ${alreadyReserved ? '✓ Reservado' : noStock ? 'Sin stock' : 'Reservar'}
+                    </button>`
+        }
+            </div>
+        </div>`;
+    }).join("");
+
+    attachEquipmentListeners();
+}
+
+function attachEquipmentListeners() {
+    const container = document.getElementById("equipmentSection");
+
+    container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+        btn.onclick = async () => {
+
+            // ← GUARDAR DATOS ANTES DE TOCAR EL BOTÓN
+            const equipId    = btn.dataset.id;
+            const equipName  = btn.dataset.name;
+            const equipDate  = btn.dataset.date;
+            const equipTime  = btn.dataset.time;
+            const equipPrice = btn.dataset.price;
+
+            btn.disabled    = true;
+            btn.textContent = "Comprobando...";
+
+            try {
+                const ref  = doc(db, "equipment", equipId);
+                const snap = await getDoc(ref);
+                if (!snap.exists()) return;
+
+                const stock = parseInt(snap.data().quantity) || 0;
+                if (stock <= 0) {
+                    btn.textContent = "Sin stock";
+                    btn.classList.add("signup-btn--full");
+                    return;
+                }
+
+                const existSnap = await getDocs(query(
+                    collection(db, "equipmentReservations"),
+                    where("userId",      "==", userId),
+                    where("equipmentId", "==", equipId),
+                    where("status",      "==", "active")
+                ));
+                if (!existSnap.empty) {
+                    btn.textContent = "✓ Reservado";
+                    btn.classList.add("signup-btn--done");
+                    return;
+                }
+
+                await addDoc(collection(db, "equipmentReservations"), {
+                    userId,
+                    equipmentId: equipId,
+                    gymOrProId:  ownerId,
+                    ownerType:   "professional",
+                    status:      "active",
+                    createdAt:   serverTimestamp()
+                });
+
+                await updateDoc(ref, { quantity: stock - 1 });
+
+                const proSnap   = await getDoc(doc(db, "professionals", ownerId));
+                const proName   = proSnap.exists() ? proSnap.data().name : "Profesional";
+                const userEmail = sessionStorage.getItem("userEmail") || "";
+
+                try {
+                    await emailjs.send("service_ak2mcnm", "template_czzg7qg", {
+                        type:              "equipamiento reservado ✅",
+                        user_name:         userEmail.split("@")[0] || "Cliente",
+                        user_email:        userEmail,
+                        activity_name:     equipName,
+                        activity_date:     equipDate,
+                        activity_schedule: equipTime,
+                        activity_price:    equipPrice,
+                        owner_name:        proName,
+                        comment:           "Te esperamos"
+                    });
+                } catch (emailErr) {
+                    console.warn("Email no enviado:", emailErr);
+                }
+
+                alert("Reserva confirmada. Revisa tu correo.");
+                btn.textContent = "✓ Reservado";
+                btn.classList.add("signup-btn--done");
+
+            } catch (e) {
+                console.error(e);
+                alert("Error en la reserva");
+                btn.disabled    = false;
+                btn.textContent = "Reservar";
+            }
+        };
+    });
+}
 
 // ── Filtros de fecha ──────────────────────────────────
 document.getElementById("dateFromBtn").onclick = () =>
