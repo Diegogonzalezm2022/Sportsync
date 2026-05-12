@@ -100,7 +100,7 @@ async function loadReservations() {
     });
 
     if (toComplete.length > 0) {
-        await Promise.all(toComplete.map(r => db.completeReservation(r.id)));
+        await Promise.all(toComplete.map(r => api.completeReservation(r.id)));
         return loadReservations(); // recargar con datos actualizados
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ function renderActive(reservations) {
             btn.disabled    = true;
             btn.textContent = "Completando...";
             try {
-                await db.completeReservation(btn.dataset.id);
+                await api.completeReservation(btn.dataset.id);
                 await loadReservations();
             } catch (e) {
                 console.error(e);
@@ -331,7 +331,7 @@ function renderPast(reservations) {
                 stars.forEach(s => s.style.pointerEvents = "none");
                 widget.querySelector(".rating-widget-label").textContent = "Guardando...";
                 try {
-                    await db.rateReservation(reservationId, score);
+                    await api.rateReservation(reservationId, score);
                     widget.classList.add("rating-widget--done");
                     widget.innerHTML =
                         `<span class="rating-widget-label">⭐ ¡Gracias! Tu valoración: ${score}/5</span>`;
