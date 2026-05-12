@@ -150,10 +150,23 @@ class ApiService {
     });
   }
 
-  async makeReservation(userId, activityId, gymOrProId) {
+  async makeReservation(userId, activityId, gymOrProId, ownerType) {
     return this.request('/reservations', {
       method: 'POST',
-      body: JSON.stringify({ userId, activityId, gymOrProId })
+      body: JSON.stringify({ userId, activityId, gymOrProId, ownerType })
+    });
+  }
+
+  async completeReservation(id) {
+    return this.request(`/reservations/${id}/complete`, {
+      method: 'POST'
+    });
+  }
+
+  async rateReservation(id, score) {
+    return this.request(`/reservations/${id}/rate`, {
+      method: 'POST',
+      body: JSON.stringify({ score })
     });
   }
 

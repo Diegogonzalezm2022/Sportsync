@@ -79,8 +79,20 @@ async function loadData() {
             document.getElementById("starsContainer").style.pointerEvents = "none";
             document.getElementById("ratingHint").textContent = "Tu perfil";
         } else {
-            // Aquí se debería cargar la valoración del usuario desde el backend
-            document.getElementById("ratingHint").textContent = "Valorar";
+            // Estrellas en modo lectura — la valoración se hace desde el historial
+            document.getElementById("starsContainer").style.pointerEvents = "none";
+            
+            // Mostrar formulario de comentario solo a usuarios no dueños
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = "flex";
+
+            if (d.rating) {
+                const count = d.ratingCount || 0;
+                document.getElementById("ratingHint").textContent =
+                    `${d.rating.toFixed(1)} / 5 (${count} valoracion${count !== 1 ? "es" : ""})`;
+            } else {
+                document.getElementById("ratingHint").textContent = "Sin valoraciones aún";
+            }
         }
 
         loadActivities();

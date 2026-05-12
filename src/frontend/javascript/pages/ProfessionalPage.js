@@ -72,7 +72,11 @@ async function loadData() {
             document.querySelectorAll(".star").forEach(s => {
                 if (+s.dataset.value <= rounded) s.classList.add("star--active");
             });
-            document.getElementById("ratingHint").textContent = `${d.rating.toFixed(1)} / 5`;
+            const count = d.ratingCount || 0;
+            document.getElementById("ratingHint").textContent =
+                `${d.rating.toFixed(1)} / 5 (${count} valoracion${count !== 1 ? "es" : ""})`;
+        } else {
+            document.getElementById("ratingHint").textContent = "Sin valoraciones aún";
         }
 
         if (isOwner) {
@@ -84,7 +88,7 @@ async function loadData() {
             document.getElementById("editBtnVet").onclick = () =>
                 window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
         } else {
-            document.getElementById("ratingHint").textContent = "Valorar";
+            document.getElementById("starsContainer").style.pointerEvents = "none";
         }
 
         await loadActivities();

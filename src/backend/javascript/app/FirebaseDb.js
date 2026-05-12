@@ -25,7 +25,7 @@ class FirebaseDb {
         return instance;
     }
 
-    async makeReservation(userId, activityId, gymOrProId) {
+    async makeReservation(userId, activityId, gymOrProId, ownerType) {
         const activityRef = this.db.collection("activities").doc(activityId);
         const activitySnap = await activityRef.get();
 
@@ -42,11 +42,11 @@ class FirebaseDb {
             userId: userId,
             activityId: activityId,
             gymOrProId: gymOrProId,
+            ownerType: ownerType || null,
             status: "active",
             paid: false,
             createdAt: Timestamp.now()
         });
-
         await activityRef.update({
             availableSlots: availableSlots - 1
         });
@@ -71,8 +71,13 @@ class FirebaseDb {
         }
 
         const maxCancelDate = activitySnap.data().maxCancelDate;
-        if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-            throw new Error("Cancel limit passed");
+        if (maxCancelDate) {
+            const cancelDate = typeof maxCancelDate.toDate === "function"
+                ? maxCancelDate.toDate()
+                : new Date(maxCancelDate);
+            if (cancelDate < new Date()) {
+                throw new Error("Cancel limit passed");
+            }
         }
 
         await reservationRef.update({
@@ -109,8 +114,13 @@ class FirebaseDb {
         }
 
         const maxCancelDate = actData.maxCancelDate;
-        if (maxCancelDate && maxCancelDate.toDate() < new Date()) {
-            throw new Error("La actividad ya no admite nuevas reservas");
+        if (maxCancelDate) {
+            const cancelDate = typeof maxCancelDate.toDate === "function"
+                ? maxCancelDate.toDate()
+                : new Date(maxCancelDate);
+            if (cancelDate < new Date()) {
+                throw new Error("La actividad ya no admite nuevas reservas");
+            }
         }
 
         await reservationRef.update({
@@ -385,6 +395,41 @@ class FirebaseDb {
             rating: newRating,
             ratingCount: newCount
         });
+    }
+
+    async completeReservation(reservationId) {
+        const reservationRef = this.db.collection("reservations").doc(reservationId);
+        await reservationRef.update({ status: "done" });
+        return { success: true };
+    }
+
+    async rateReservation(reservationId, score) {
+        if (score < 1 || score > 5) throw new Error("La puntuación debe estar entre 1 y 5");
+
+        const reservationRef = this.db.collection("reservations").doc(reservationId);
+        const reservationSnap = await reservationRef.get();
+
+        if (!reservationSnap.exists) throw new Error("Reserva no encontrada");
+
+        const resData = reservationSnap.data();
+        if (resData.status !== "done") throw new Error("Solo se pueden valorar reservas completadas");
+        if (resData.userRating != null) throw new Error("Ya has valorado esta reserva");
+
+        const { gymOrProId, ownerType } = resData;
+        const colName = ownerType === "gym" ? "gyms" : "professionals";
+        const targetRef = this.db.collection(colName).doc(gymOrProId);
+        const targetSnap = await targetRef.get();
+
+        if (!targetSnap.exists) throw new Error("Entidad no encontrada");
+
+        const { rating = 0, ratingCount = 0 } = targetSnap.data();
+        const newCount  = ratingCount + 1;
+        const newRating = ((rating * ratingCount) + score) / newCount;
+
+        await reservationRef.update({ userRating: score });
+        await targetRef.update({ rating: newRating, ratingCount: newCount });
+
+        return { success: true, newRating, newCount };
     }
 }
 

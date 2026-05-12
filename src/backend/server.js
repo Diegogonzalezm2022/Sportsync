@@ -240,9 +240,28 @@ app.delete('/api/activities/:id', authenticateUser, async (req, res) => {
 // Reservations
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {
-    const { userId, activityId, gymOrProId } = req.body;
-    const result = await db.makeReservation(userId, activityId, gymOrProId);
+    const { userId, activityId, gymOrProId, ownerType } = req.body;
+    const result = await db.makeReservation(userId, activityId, gymOrProId, ownerType);
     res.json({ id: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/reservations/:id/complete', authenticateUser, async (req, res) => {
+  try {
+    await db.completeReservation(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/reservations/:id/rate', authenticateUser, async (req, res) => {
+  try {
+    const { score } = req.body;
+    const result = await db.rateReservation(req.params.id, score);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
