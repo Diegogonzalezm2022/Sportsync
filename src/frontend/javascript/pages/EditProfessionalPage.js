@@ -207,6 +207,9 @@ document.getElementById("addGalleryBtn").onclick = () => {
 };
 
 document.getElementById("saveGalleryBtn").onclick = async () => {
+    const btn = document.getElementById("saveGalleryBtn");
+    btn.disabled = true;
+    btn.textContent = "Guardando...";
     try {
         await api.request(`/${collectionName}/${ownerId}`, {
             method: 'PUT',
@@ -214,8 +217,11 @@ document.getElementById("saveGalleryBtn").onclick = async () => {
         });
         alert("Galería guardada");
     } catch (e) {
-        console.error(e);
-        alert("Error al guardar galería.");
+        console.error("Error al guardar galería:", e);
+        alert("Error al guardar galería: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Guardar Galería";
     }
 };
 
