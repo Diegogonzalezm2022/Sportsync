@@ -33,6 +33,31 @@ class FirebaseDb {
             throw new Error("Activity not found");
         }
 
+        const actData = activitySnap.data();
+
+        // 1. Check if activity is in the past (based on max date if available)
+        const finalDateRaw = actData.maxCancelDate || actData.date;
+        if (finalDateRaw) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); 
+            const actDate = (finalDateRaw.toDate) ? finalDateRaw.toDate() : new Date(finalDateRaw);
+            if (actDate < now) {
+                throw new Error("Esta actividad ya ha pasado");
+            }
+        }
+
+        // 2. Check for existing active OR done reservation
+        const existingRes = await this.db.collection("reservations")
+            .where("userId", "==", userId)
+            .where("activityId", "==", activityId)
+            .where("status", "in", ["active", "done"])
+            .get();
+
+        if (!existingRes.empty) {
+            throw new Error("Ya estás apuntado o ya has realizado esta actividad");
+        }
+
+
         const availableSlots = activitySnap.data().availableSlots;
         if (availableSlots <= 0) {
             throw new Error("Activity full");

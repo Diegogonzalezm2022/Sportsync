@@ -19,7 +19,7 @@ if (!userId) window.location.href = "Login.html";
 
 // ── Variables globales de actividades ────────────────
 let allActivities = [];
-let myActivityIds = new Set();
+let myActivityIds = new Map();
 let myVetoedIds   = new Set();
 
 // Configurar token cuando el usuario esté autenticado
@@ -89,6 +89,14 @@ async function loadData() {
                 window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
         } else {
             document.getElementById("starsContainer").style.pointerEvents = "none";
+
+            // Cargar mis reservas para evitar duplicados
+            const myRes = await api.getUserReservations(userId);
+            myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
+
+            // Cargar vetos (si los hubiera)
+            const myVetoed = await api.getUserReservations(userId, "vetoed");
+            myVetoedIds = new Set(myVetoed.map(r => r.activityId));
         }
 
         await loadActivities();
@@ -201,9 +209,18 @@ function renderActivities(activities) {
         return;
     }
     container.innerHTML = activities.map(a => {
-        const alreadySignedUp = myActivityIds.has(a.id);
+        const alreadySignedUp = myActivityIds.get(a.id);
         const isVetoed        = myVetoedIds.has(a.id);
         const noSlots         = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+        // Comprobar si la actividad ya pasó (basándonos en la fecha máxima si existe)
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const finalDateRaw = a.maxCancelDate || a.date;
+        const actDate = (finalDateRaw && finalDateRaw.seconds) 
+            ? new Date(finalDateRaw.seconds * 1000) 
+            : new Date(finalDateRaw);
+        const isPast = actDate < now;
 
         const stripeBtn = a.stripeLink
             ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
@@ -213,6 +230,32 @@ function renderActivities(activities) {
                   💳 Pagar online
                </a>`
             : "";
+
+        let btnText = 'Apuntarme';
+        let btnClass = '';
+        let btnDisabled = false;
+
+        if (alreadySignedUp === 'done') {
+            btnText = '✓ Completada';
+            btnClass = 'signup-btn--done';
+            btnDisabled = true;
+        } else if (alreadySignedUp === 'active') {
+            btnText = '✓ Apuntado';
+            btnClass = 'signup-btn--done';
+            btnDisabled = true;
+        } else if (isVetoed) {
+            btnText = '🚫 Vetado';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        } else if (isPast) {
+            btnText = 'Finalizada';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        } else if (noSlots) {
+            btnText = 'Completo';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        }
 
         return `
         <div class="activity-card">
@@ -228,16 +271,14 @@ function renderActivities(activities) {
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 ${isOwner
             ? `<span class="activity-owner-badge">Tu actividad</span>`
-            : `<button class="signup-btn
-                            ${alreadySignedUp ? 'signup-btn--done' : ''}
-                            ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+            : `<button class="signup-btn ${btnClass}"
                             data-id="${a.id}"
                             data-name="${a.name}"
                             data-date="${a.date || ''}"
                             data-schedule="${a.schedule || ''}"
                             data-price="${a.price || 0}"
-                            ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
-                            ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                            ${btnDisabled ? 'disabled' : ''}>
+                            ${btnText}
                        </button>
                        ${stripeBtn}`
         }
