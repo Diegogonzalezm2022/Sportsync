@@ -443,6 +443,35 @@ class FirebaseDb {
 
         return { success: true, newRating, newCount };
     }
+
+    async getComments(ownerId, ownerType) {
+        const gymRef = await this.db.collection(ownerType + 's').doc(ownerId);
+
+        const gym = await gymRef.get();
+
+        const targetId = gym.data().ownerId;
+
+        let comments
+
+        try {
+
+            comments = await this.db.collection("comments")
+                .where("targetType", "==", ownerType)
+                .where("targetId", "==", targetId)
+                .get();
+
+        } catch (error) {
+            console.error(error);
+        }
+
+        const commentList = []
+
+        comments.forEach(comment => {
+            commentList.push({ id: comment.id, ...comment.data() });
+        })
+
+        return commentList;
+    }
 }
 
 export default FirebaseDb;
