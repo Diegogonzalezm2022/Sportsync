@@ -238,6 +238,16 @@ app.delete('/api/activities/:id', authenticateUser, async (req, res) => {
   }
 });
 
+app.get('/api/comments', authenticateUser, async (req, res) => {
+  try {
+    const {ownerId, ownerType} = req.query;
+    const comments = await db.getComments(ownerId, ownerType);
+    res.json(comments.map(comment => serializeData(comment)));
+  } catch (error) {
+    res.status(500).json({error: error.message})
+  }
+})
+
 // Reservations
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {

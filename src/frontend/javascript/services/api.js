@@ -188,6 +188,17 @@ class ApiService {
     });
   }
 
+  async getComments(ownerId, ownerType) {
+    const params = new URLSearchParams();
+    if (ownerId) params.append('ownerId', ownerId);
+    if (ownerType) params.append('ownerType', ownerType);
+    return this.request(`/comments?${params.toString()}`);
+  }
+
+  async deleteComment(id) {
+    console.log("Aún no implementado")
+  }
+
   async getUserReservations(userId, status = null) {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
