@@ -76,8 +76,8 @@
             <input type="date" id="actDate">
             <input type="text" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)">
             <input type="date" id="actMaxCancelDate">
-            <input type="number" id="actPrice" placeholder="Precio (€)">
-            <input type="number" id="actSlots" placeholder="Cupo">
+            <input type="number" id="actPrice" placeholder="Precio (€)" min="0">
+            <input type="number" id="actSlots" placeholder="Cupo" min="1">
             <input type="url" id="actStripeLink" placeholder="Link de pago Stripe (opcional) https://buy.stripe.com/...">
             <button id="createActBtn">Crear Actividad</button>
         </div>

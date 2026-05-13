@@ -94,6 +94,9 @@ async function loadData() {
             const myRes = await api.getUserReservations(userId);
             myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
 
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = "flex";
+
             // Cargar vetos (si los hubiera)
             const myVetoed = await api.getUserReservations(userId, "vetoed");
             myVetoedIds = new Set(myVetoed.map(r => r.activityId));
@@ -132,7 +135,7 @@ async function loadComments() {
                 let commentContainer = document.createElement('div');
                 commentContainer.classList.add('comment-item');
                 commentContainer.innerHTML = `
-                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${comment.id}" title="Eliminar">✕</button>` : ""}
                 <div class="comment-author">${comment.username || "Usuario"}</div>
                 <div class="comment-text">${comment.text}</div>
                 <div class="comment-date">${date}</div>`;
@@ -166,8 +169,7 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
     btn.textContent = "Publicando...";
 
     try {
-        // TODO: Implementar en backend
-        alert("Funcionalidad de comentarios pendiente de implementar en el backend.");
+        await api.addComment(ownerId, "gym", text, userId);
         input.value    = "";
     } catch (e) {
         console.error(e);

@@ -497,6 +497,23 @@ class FirebaseDb {
 
         return commentList;
     }
+
+    async addComment(targetId, targetType, commentText, authorId) {
+
+        const authorRef = await this.db.collection("users").doc(authorId)
+        const userSnap = await authorRef.get();
+
+        const commentRef = await this.db.collection("comments").add({
+                createdAt: Timestamp.now(),
+                targetId: targetId,
+                targetType: targetType,
+                userId: authorId,
+                text: commentText,
+                username: userSnap.data().username,
+            }
+        );
+        return commentRef.id;
+    }
 }
 
 export default FirebaseDb;

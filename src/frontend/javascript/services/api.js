@@ -195,6 +195,17 @@ class ApiService {
     return this.request(`/comments?${params.toString()}`);
   }
 
+  async addComment(targetId, targetType, commentText, authorId) {
+    const params = new URLSearchParams();
+    if (targetId) params.append('targetId', targetId);
+    if (targetType) params.append('targetType', targetType);
+    if (commentText) params.append('commentText', commentText);
+    if (authorId) params.append('authorId', authorId);
+    return this.request(`/comments?${params.toString()}`, {
+      method: 'POST',
+    });
+  }
+
   async deleteComment(id) {
     console.log("Aún no implementado")
   }

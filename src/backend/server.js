@@ -297,6 +297,16 @@ app.get('/api/comments', authenticateUser, async (req, res) => {
   }
 })
 
+app.post('/api/comments', authenticateUser, async (req, res) => {
+  try {
+    const {targetId, targetType, authorId, commentText} = req.query;
+    const commentId = await db.addComment(targetId, targetType, commentText, authorId)
+    res.json({commentId})
+  } catch (error) {
+    res.status(500).json({error: error.message})
+  }
+})
+
 // Reservations
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {

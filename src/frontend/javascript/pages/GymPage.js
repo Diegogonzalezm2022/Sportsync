@@ -132,7 +132,7 @@ async function loadComments() {
                 let commentContainer = document.createElement('div');
                 commentContainer.classList.add('comment-item');
                 commentContainer.innerHTML = `
-                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${comment.id}" title="Eliminar">✕</button>` : ""}
                 <div class="comment-author">${comment.username || "Usuario"}</div>
                 <div class="comment-text">${comment.text}</div>
                 <div class="comment-date">${date}</div>`;
@@ -162,11 +162,11 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
     if (!text) return;
 
     const btn = document.getElementById("commentSubmitBtn");
-    btn.disabled = true; btn.textContent = "Publicando...";
+    btn.disabled = true;
+    btn.textContent = "Publicando...";
 
     try {
-        // TODO: Implementar en backend
-        alert("Funcionalidad de comentarios pendiente de implementar en el backend.");
+        await api.addComment(ownerId, "gym", text, userId);
         input.value = "";
     } catch (e) {
         console.error(e);
