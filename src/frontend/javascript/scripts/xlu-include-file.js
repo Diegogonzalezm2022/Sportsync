@@ -35,55 +35,66 @@ function xLuIncludeFile() {
 */
 
 async function xLuIncludeFile() {
-    let z = document.getElementsByTagName("*");
+    // Buscamos el primer elemento que tenga el atributo xlu-include-file
+    let el = document.querySelector("[xlu-include-file]");
 
-    for (let i = 0; i < z.length; i++) {
-        if (z[i].getAttribute("xlu-include-file")) {
-            let a = z[i].cloneNode(false);
-            let file = z[i].getAttribute("xlu-include-file");
+    // Si no hay más elementos que incluir, disparamos el evento de finalización
+    if (!el) {
+        window.dispatchEvent(new CustomEvent('xlu-includes-complete'));
+        return;
+    }
 
-            try {
-                let response = await fetch(file);
-                if (response.ok) {
+    // Capturamos el archivo antes de cualquier await para seguridad
+    let file = el.getAttribute("xlu-include-file");
+    let a = el.cloneNode(false);
 
-                    let content = await response.text();
+    try {
+        let response = await fetch(file);
+        if (response.ok) {
+            let content = await response.text();
 
-                    // Si el archivo es una plantilla, reemplazamos los placeholders
-                    if (file === "article-template.html") {
-                        let articleData = {
-                            title: z[i].getAttribute("data-title"),
-                            subtitle: z[i].getAttribute("data-subtitle"),
-                            date: z[i].getAttribute("data-date"),
-                            displayDate: z[i].getAttribute("data-display-date"),
-                            content: z[i].getAttribute("data-content"),
-                            image: z[i].getAttribute("data-image"),
-                            imageCaption: z[i].getAttribute("data-image-caption")
-                        };
+            // Lógica de plantillas (artículos)
+            if (file === "article-template.html") {
+                let articleData = {
+                    title: el.getAttribute("data-title"),
+                    subtitle: el.getAttribute("data-subtitle"),
+                    date: el.getAttribute("data-date"),
+                    displayDate: el.getAttribute("data-display-date"),
+                    content: el.getAttribute("data-content"),
+                    image: el.getAttribute("data-image"),
+                    imageCaption: el.getAttribute("data-image-caption")
+                };
 
-                        content = content.replace(/{{title}}/g, articleData.title)
-                            .replace(/{{subtitle}}/g, articleData.subtitle)
-                            .replace(/{{date}}/g, articleData.date)
-                            .replace(/{{displayDate}}/g, articleData.displayDate)
-                            .replace(/{{content}}/g, articleData.content)
-                            .replace(/{{image}}/g, articleData.image || '')
-                            .replace(/{{imageCaption}}/g, articleData.imageCaption || '');
-                    }
-
-
-                    a.removeAttribute("xlu-include-file");
-                    //a.innerHTML = await response.text();
-                    a.innerHTML = content;
-                    z[i].parentNode.replaceChild(a, z[i]);
-                    await xLuIncludeFile();
-                }
-            } catch (error) {
-                console.error("Error fetching file:", error);
+                content = content.replace(/{{title}}/g, articleData.title || '')
+                    .replace(/{{subtitle}}/g, articleData.subtitle || '')
+                    .replace(/{{date}}/g, articleData.date || '')
+                    .replace(/{{displayDate}}/g, articleData.displayDate || '')
+                    .replace(/{{content}}/g, articleData.content || '')
+                    .replace(/{{image}}/g, articleData.image || '')
+                    .replace(/{{imageCaption}}/g, articleData.imageCaption || '');
             }
 
-            return;
+            // Limpiamos el atributo para que no se vuelva a procesar el mismo elemento
+            a.removeAttribute("xlu-include-file");
+            a.innerHTML = content;
+
+            // Realizamos el reemplazo en el DOM usando la referencia guardada 'el'
+            if (el.parentNode) {
+                el.parentNode.replaceChild(a, el);
+            }
+
+            // Llamada recursiva para procesar el siguiente elemento (o posibles hijos incluidos)
+            await xLuIncludeFile();
+        } else {
+            console.error("Error fetching file:", file, response.status);
+            // Si falla, quitamos el atributo para no entrar en bucle infinito
+            el.removeAttribute("xlu-include-file");
+            await xLuIncludeFile();
         }
+    } catch (error) {
+        console.error("Exception fetching file:", file, error);
+        el.removeAttribute("xlu-include-file");
+        await xLuIncludeFile();
     }
-    // Dispatch custom event when all includes are done
-    window.dispatchEvent(new CustomEvent('xlu-includes-complete'));
 }
 

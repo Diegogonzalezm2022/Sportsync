@@ -92,3 +92,11 @@ function buildMenu() {
 }
 
 window.addEventListener("xlu-includes-complete", buildMenu);
+
+// Intentar construir el menú inmediatamente por si el header ya se cargó
+buildMenu();
+
+// Reconstruir cuando cambie el estado de autenticación
+onAuthStateChanged(auth, () => {
+    buildMenu();
+});
