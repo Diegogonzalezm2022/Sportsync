@@ -77,10 +77,21 @@
 
         <div class="info-block">
             <div class="info-row info-row--top">
+
                 <div class="info-field">
                     <span class="info-label">Nombre del gimnasio:</span>
-                    <div class="info-value info-value--name" id="profileName">—</div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="info-value info-value--name" id="profileName">—</div>
+                        <button class="icon-btn share-icon" id="shareProfileBtn" title="Compartir perfil">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
+
                 <div class="rating-block">
                     <span class="info-label">Puntuación media:</span>
                     <div class="stars" id="starsContainer">
@@ -92,7 +103,9 @@
                     </div>
                     <span class="rating-hint" id="ratingHint">Valora este gimnasio</span>
                 </div>
-            </div>
+
+            </div><!-- /.info-row--top -->
+
             <div class="info-field">
                 <span class="info-label">Descripción:</span>
                 <div class="info-value info-value--desc" id="profileDesc">—</div>
@@ -105,7 +118,8 @@
                 <button class="edit-mode-btn" id="editBtn">✏️ Editar Gimnasio</button>
                 <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
-        </div>
+
+        </div><!-- /.info-block -->
     </section>
 
     <section class="gallery-section">
@@ -165,7 +179,6 @@
 <script>xLuIncludeFile();</script>
 <script type="module" src="../javascript/scripts/Header.js"></script>
 <script type="module" src="../javascript/pages/GymPage.js"></script>
-
 
 </body>
 </html>

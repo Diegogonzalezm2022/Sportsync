@@ -98,6 +98,23 @@ async function loadData() {
             const myRes = await api.getUserReservations(userId);
             myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
         }
+        // ── Compartir perfil ──────────────────────────────────
+        // ── Compartir perfil ──────────────────────────────────
+        document.getElementById("shareProfileBtn")?.addEventListener("click", () => {
+            const name = document.getElementById("profileName").textContent || "este gimnasio";
+            const shareUrl = window.location.href;
+            const shareData = {
+                title: `${name} en SportSync`,
+                text: `¡Echa un vistazo a ${name} en SportSync!`,
+                url: shareUrl
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(err => console.log("Error al compartir:", err));
+            } else {
+                navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`);
+                alert("Enlace del perfil copiado al portapapeles.");
+            }
+        });
 
         loadActivities();
     } catch (error) {

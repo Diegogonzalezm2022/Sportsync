@@ -28,12 +28,6 @@
     --shadow-md: 0 4px 18px rgba(0,0,0,0.10);
 }
 
-/* Gym variant: swap accent to navy */
-.page--gym {
-    --accent: var(--accent-gym);
-    --accent-light: var(--accent-gym-light);
-}
-
 body {
     background-color: var(--bg);
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -55,15 +49,14 @@ body {
     gap: 18px;
 }
 
-
 /* ---------- Back button ---------- */
 .back-btn {
     background: none;
     border: none;
+    cursor: pointer;
     font-size: 1.5rem;
     color: var(--text-secondary);
-    cursor: pointer;
-    border: black;
+    padding: 10px 0;
     width: fit-content;
     font-family: monospace;
     transition: color 0.2s;
@@ -87,8 +80,12 @@ body {
 }
 
 /* --- Profile photo --- */
+.profile-photo-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
 
-/* Foto de perfil más pequeña */
 .profile-photo {
     width: 150px;
     height: 150px;
@@ -101,35 +98,6 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-}
-
-.profile-photo img {
-    width: 50%;
-    height: 50%;
-    object-fit: cover;
-
-}
-
-.profile-photo svg {
-    width: 50px;
-    height: 50px;
-}
-
-
-
-
-.profile-photo-block {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-
-.photo-x {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
 }
 
 .photo-caption {
@@ -179,6 +147,7 @@ body {
 .schedule-hours {
     font-size: 0.82rem;
     color: var(--text-secondary);
+    display: block;
 }
 
 /* --- Info block --- */
@@ -285,6 +254,34 @@ body {
     color: var(--accent);
 }
 
+/* ── Botón compartir perfil ── */
+.icon-btn.share-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.1s;
+}
+
+.icon-btn.share-icon:hover {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: white;
+    transform: scale(1.08);
+}
+
+.icon-btn.share-icon:active {
+    transform: scale(0.95);
+}
+
 /* ========================================
    GALLERY
    ======================================== */
@@ -314,7 +311,7 @@ body {
     justify-content: center;
     cursor: pointer;
     color: var(--text-secondary);
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .carousel-arrow:hover {
@@ -349,13 +346,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.slot-x {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
 }
 
 .slot-caption {
@@ -496,16 +486,14 @@ body {
     transition: background 0.2s, transform 0.1s;
 }
 
-.signup-btn:hover {
-    background: #2d6a4f;
-}
-
+.signup-btn:hover { background: #2d6a4f; }
 .signup-btn:active { transform: scale(0.97); }
 
 .signup-btn--done {
     background: var(--accent) !important;
     cursor: default;
 }
+
 .activity-owner-badge {
     padding: 7px 16px;
     border-radius: 20px;
@@ -517,9 +505,8 @@ body {
     flex-shrink: 0;
 }
 
-
-
-.edit-mode-btn{
+/* --- Owner buttons --- */
+.edit-mode-btn {
     margin-top: 10px;
     padding: 8px 15px;
     cursor: pointer;
@@ -527,21 +514,16 @@ body {
     border: none;
     background-color: black;
     color: white;
+    transition: background 0.2s;
 }
 
-.edit-mode-btn:hover{
-    margin-top: 10px;
-    padding: 8px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    border: none;
+.edit-mode-btn:hover {
     background: #8bffa6;
     color: white;
     font-weight: bold;
 }
 
-
-.edit-mode-btn-vetar{
+.edit-mode-btn-vetar {
     margin-top: 10px;
     padding: 8px 15px;
     cursor: pointer;
@@ -549,18 +531,15 @@ body {
     border: none;
     background: black;
     color: white;
+    transition: background 0.2s;
 }
 
-.edit-mode-btn-vetar:hover{
-    margin-top: 10px;
-    padding: 8px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    border: none;
+.edit-mode-btn-vetar:hover {
     background: #ff8b8b;
     color: white;
     font-weight: bold;
 }
+
 /* ========================================
    Responsive
    ======================================== */
