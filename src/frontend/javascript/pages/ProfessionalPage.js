@@ -80,16 +80,37 @@ async function loadData() {
         }
 
         if (isOwner) {
-            document.getElementById("ownerControls").style.display   = "block";
+            document.getElementById("ownerControls").style.display       = "block";
             document.getElementById("starsContainer").style.pointerEvents = "none";
-            document.getElementById("ratingHint").textContent        = "Tu perfil";
+            document.getElementById("ratingHint").textContent             = "Tu perfil";
             document.getElementById("editBtn").onclick    = () =>
                 window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
             document.getElementById("editBtnVet").onclick = () =>
                 window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
         } else {
             document.getElementById("starsContainer").style.pointerEvents = "none";
+
+            // Mostrar formulario de comentario solo a usuarios no dueños
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = "flex";
         }
+
+        // ── Compartir perfil ──────────────────────────────────
+        document.getElementById("shareProfileBtn")?.addEventListener("click", () => {
+            const name = document.getElementById("profileName").textContent || "este profesional";
+            const shareUrl = window.location.href;
+            const shareData = {
+                title: `${name} en SportSync`,
+                text: `¡Echa un vistazo a ${name} en SportSync!`,
+                url: shareUrl
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(err => console.log("Error al compartir:", err));
+            } else {
+                navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`);
+                alert("Enlace del perfil copiado al portapapeles.");
+            }
+        });
 
         await loadActivities();
     } catch (error) {
@@ -115,7 +136,6 @@ document.getElementById("commentsToggleBtn").addEventListener("click", async () 
 async function loadComments() {
     const list = document.getElementById("commentList");
     try {
-        // TODO: Crear endpoint en backend para comentarios
         list.innerHTML = `<p class="no-comments">Funcionalidad de comentarios pendiente de implementar en el backend.</p>`;
     } catch (e) {
         console.error(e);
@@ -133,9 +153,8 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
     btn.textContent = "Publicando...";
 
     try {
-        // TODO: Implementar en backend
         alert("Funcionalidad de comentarios pendiente de implementar en el backend.");
-        input.value    = "";
+        input.value = "";
     } catch (e) {
         console.error(e);
         alert("Error al publicar el comentario.");
@@ -204,17 +223,17 @@ function renderActivities(activities) {
                 ${isOwner
             ? `<span class="activity-owner-badge">Tu actividad</span>`
             : `<button class="signup-btn
-                            ${alreadySignedUp ? 'signup-btn--done' : ''}
-                            ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
-                            data-id="${a.id}"
-                            data-name="${a.name}"
-                            data-date="${a.date || ''}"
-                            data-schedule="${a.schedule || ''}"
-                            data-price="${a.price || 0}"
-                            ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
-                            ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
-                       </button>
-                       ${stripeBtn}`
+                                ${alreadySignedUp ? 'signup-btn--done' : ''}
+                                ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+                                data-id="${a.id}"
+                                data-name="${a.name}"
+                                data-date="${a.date || ''}"
+                                data-schedule="${a.schedule || ''}"
+                                data-price="${a.price || 0}"
+                                ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
+                                ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                           </button>
+                           ${stripeBtn}`
         }
             </div>
         </div>`;

@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="../css/components/Footer.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        /* ── Botones de estado de inscripción ── */
         .signup-btn--full { background:#d6d6d6 !important; color:#888 !important; cursor:not-allowed; }
         .star--active     { color: #f1c40f !important; }
 
@@ -58,14 +57,12 @@
 
 <main class="profile-page-main">
 
-    <!-- ── Botón volver ── -->
     <button class="back-btn" onclick="history.back()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
     </button>
 
-    <!-- ── Sección superior: foto + info ── -->
     <section class="top-section">
 
         <div class="profile-photo-block">
@@ -86,10 +83,21 @@
 
         <div class="info-block">
             <div class="info-row info-row--top">
+
                 <div class="info-field">
                     <span class="info-label">Nombre del profesional:</span>
-                    <div class="info-value info-value--name" id="profileName">—</div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="info-value info-value--name" id="profileName">—</div>
+                        <button class="icon-btn share-icon" id="shareProfileBtn" title="Compartir perfil">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
+
                 <div class="rating-block">
                     <span class="info-label">Valoración:</span>
                     <div class="stars" id="starsContainer">
@@ -101,7 +109,9 @@
                     </div>
                     <span class="rating-hint" id="ratingHint">Valora este profesional</span>
                 </div>
-            </div>
+
+            </div><!-- /.info-row--top -->
+
             <div class="info-field">
                 <span class="info-label">Sobre mí / Descripción:</span>
                 <div class="info-value info-value--desc" id="profileDesc">—</div>
@@ -110,16 +120,14 @@
                 <span class="info-label">Contacto:</span>
                 <div class="contact-lines" id="contactLines">—</div>
             </div>
-            <!-- Solo visible si es el dueño -->
             <div id="ownerControls" style="display:none; margin-top:10px;">
-                <button class="edit-mode-btn"     id="editBtn">✏️ Editar Perfil Profesional</button>
+                <button class="edit-mode-btn"       id="editBtn">✏️ Editar Perfil Profesional</button>
                 <button class="edit-mode-btn-vetar" id="editBtnVet">🚫 Vetar Usuarios</button>
             </div>
-        </div>
 
+        </div><!-- /.info-block -->
     </section>
 
-    <!-- ── Galería ── -->
     <section class="gallery-section">
         <div class="gallery-carousel-wrapper">
             <button class="carousel-arrow carousel-arrow--left" id="carouselLeft">
@@ -136,7 +144,6 @@
         </div>
     </section>
 
-    <!-- ── Filtro de fechas ── -->
     <section class="date-filter-section">
         <div class="date-btn-group">
             <button class="date-btn" id="dateFromBtn">
@@ -163,20 +170,17 @@
         </div>
     </section>
 
-    <!-- ── Actividades ── -->
     <section class="activities-section" id="activitiesSection">
         <div class="activities-section-message">
             <p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>
         </div>
     </section>
 
-    <!-- ── Comentarios ── -->
     <section class="comments-section">
         <button class="comments-toggle-btn" id="commentsToggleBtn">
             💬 Ver comentarios
         </button>
         <div class="comments-box" id="commentsBox" style="display:none;">
-            <!-- Solo visible si NO es el dueño; se activa desde JS -->
             <div class="comment-form" id="commentForm" style="display:none;">
                 <textarea class="comment-input" id="commentInput"
                           placeholder="Escribe tu comentario..." rows="2"></textarea>
