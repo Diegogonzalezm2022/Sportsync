@@ -43,8 +43,8 @@ function buildMenu() {
     } else if (role === "gym" || role === "professional") {
         // ── Gimnasio o profesional logueado ──────────────────────────────────
         if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
-        addBtn(nav, "Editar Perfil",  () => window.location.href = "EditProfile.html");
-        addBtn(nav, "Vetar Usuarios", () => window.location.href = "ViewReservation.html");
+        addBtn(nav, "Editar Perfil",  () => window.location.href = `EditProfessionalPage.html?id=${userId}&type=${role}`);
+        addBtn(nav, "Vetar Usuarios", () => window.location.href = `ViewReservation.html?id=${userId}&type=${role}`);
         addBtn(nav, "Sobre Nosotros", () => window.location.href = "AboutUs.html");
         addBtn(nav, "Nuestro Equipo", () => window.location.href = "OurTeam.html");
 
