@@ -99,6 +99,55 @@ app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
   }
 });
 
+// ── Admin routes ──────────────────────────────────────
+const requireAdmin = async (req, res, next) => {
+  try {
+    const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
+    if (!userDoc.exists || userDoc.data().role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Admins only' });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    const users = await db.getAllUsers();
+    res.json(users.map(u => serializeData(u)));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    const user = await db.getUser(req.params.id);
+    res.json(user ? serializeData(user) : {});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    await db.updateUser(req.params.id, req.body);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    await db.deleteUserAccount(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Gyms
 app.get('/api/gyms/:id', async (req, res) => {
   try {

@@ -369,6 +369,18 @@ class FirebaseDb {
         await this.db.collection("activities").doc(activityId).delete();
     }
 
+    async getAllUsers() {
+        const snapshot = await this.db.collection("users").get();
+        const users = [];
+        snapshot.forEach(docSnap => users.push({ id: docSnap.id, ...docSnap.data() }));
+        return users;
+    }
+
+    async deleteUserAccount(uid) {
+        await admin.auth().deleteUser(uid);
+        await this.db.collection("users").doc(uid).delete();
+    }
+
     async findActivitiesByOwner(ownerId) {
         const snapshot = await this.db.collection("activities")
             .where("ownerId", "==", ownerId)
