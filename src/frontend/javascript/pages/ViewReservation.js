@@ -53,6 +53,16 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // ── Carga el dashboard ─────────────────────────────────
 async function loadDashboard() {
     const container = document.getElementById("activities-list");
@@ -119,16 +129,28 @@ async function loadParticipants(activityId, actData) {
                 : "Usuario Anónimo";
             const userEmail = userData?.email || "";
 
+            const userPhoto = userData?.photoURL || "";
+            const userInitial = userName.charAt(0).toUpperCase() || "?";
+
+            const targetUserId = userData?.id || resData.userId;
+
             const row = document.createElement("div");
             row.className = "user-row";
             row.innerHTML = `
-                <span class="user-name">${userName}</span>
+                <div class="user-info-container">
+                    <a href="ProfileUser.html?id=${targetUserId}" class="profile-link" title="Ver perfil de ${escapeHTML(userName)}">
+                        <div class="user-avatar">
+                            ${userPhoto ? `<img src="${userPhoto}" alt="${escapeHTML(userName)}">` : `<span>${userInitial}</span>`}
+                        </div>
+                        <span class="user-name">${escapeHTML(userName)}</span>
+                    </a>
+                </div>
                 <button class="veto-btn"
                     data-res-id="${resData.id}"
                     data-act-id="${activityId}"
                     data-user-email="${userEmail}"
-                    data-user-name="${userName}"
-                    data-act-name="${actData.name}"
+                    data-user-name="${escapeHTML(userName)}"
+                    data-act-name="${escapeHTML(actData.name)}"
                     data-act-date="${actData.date     || '—'}"
                     data-act-schedule="${actData.schedule || '—'}"
                     data-act-price="${actData.price   || '—'}">

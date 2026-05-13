@@ -10,7 +10,13 @@ const firebaseConfig = await response.json();
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Configurar token cuando el usuario esté autenticado
+// Si viene ?id=XXX en la URL carga ese perfil, si no carga el propio
+const params = new URLSearchParams(window.location.search);
+const queryId = params.get("id");
+const profileId = queryId || userId;
+// Solo es perfil propio si NO hay queryId o si el queryId es exactamente igual al userId del usuario logueado
+const isOwnProfile = !queryId || (queryId === userId);
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const token = await user.getIdToken();
@@ -21,7 +27,7 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadProfile() {
     try {
-        const data = await api.getUser(userId);
+        const data = await api.getUser(profileId);
 
         if (data && data.id) {
             document.getElementById("profile-name").textContent  = `${data.name || ""} ${data.surname || ""}`.trim() || "—";
@@ -29,13 +35,11 @@ async function loadProfile() {
             document.getElementById("profile-email").textContent = data.email    || "—";
             document.getElementById("profile-bio").textContent   = data.bio      || "—";
 
-            // Teléfono (solo si existe)
             if (data.phone) {
                 document.getElementById("profile-phone").textContent = data.phone;
                 document.getElementById("phone-group").style.display = "block";
             }
 
-            // Método de pago (solo si existe)
             if (data.paymentMethod) {
                 const labels = { card: "Tarjeta de crédito", paypal: "PayPal", bizum: "Bizum" };
                 const detail = data.paymentDetails ? ` · ${data.paymentDetails}` : "";
@@ -43,15 +47,39 @@ async function loadProfile() {
                 document.getElementById("payment-group").style.display = "block";
             }
 
-            // Foto de perfil (solo si existe)
             if (data.photoURL) {
                 const img = document.getElementById("profile-picture");
                 img.src = data.photoURL;
                 img.style.display = "block";
                 document.getElementById("profile-avatar-svg").style.display = "none";
             }
+
+            // Ocultar botones de edición si estamos viendo el perfil de otro usuario
+            if (!isOwnProfile) {
+                // Ocultar sección de edición
+                const editDiv = document.querySelector(".btn-edit-profile");
+                if (editDiv) editDiv.style.display = "none";
+                
+                // Ocultar sección de reservas
+                const reservDiv = document.querySelector(".profile-reserv");
+                if (reservDiv) reservDiv.style.display = "none";
+                
+                const sharedFiles = document.getElementById("shared-files");
+                if (sharedFiles) sharedFiles.style.display = "none";
+            } else {
+                // Asegurar que se vean si es el perfil propio (por si acaso)
+                const editDiv = document.querySelector(".btn-edit-profile");
+                if (editDiv) editDiv.style.display = "block";
+                
+                const reservDiv = document.querySelector(".profile-reserv");
+                if (reservDiv) reservDiv.style.display = "block";
+                
+                const sharedFiles = document.getElementById("shared-files");
+                if (sharedFiles) sharedFiles.style.display = "block";
+            }
         } else {
-            console.warn("No se encontraron datos del usuario en la base de datos.");
+            console.warn("No se encontraron datos del usuario.");
+            document.getElementById("profile-name").textContent = "Usuario no encontrado";
         }
     } catch (error) {
         console.error("Error cargando perfil:", error);
