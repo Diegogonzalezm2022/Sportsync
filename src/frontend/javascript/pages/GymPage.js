@@ -119,8 +119,33 @@ document.getElementById("commentsToggleBtn").addEventListener("click", async () 
 async function loadComments() {
     const list = document.getElementById("commentList");
     try {
-        // TODO: Crear endpoint en backend para comentarios
-        list.innerHTML = `<p class="no-comments">Funcionalidad de comentarios pendiente de implementar en el backend.</p>`;
+        const comments = await api.getComments(ownerId, "gym");
+        if (comments && comments.length > 0) {
+            list.innerHTML = "";
+            comments.forEach((comment) => {
+                let date = comment.createdAt?.toDate ? comment.toDate().toLocaleDateString("es-ES") : "";
+                const canDelete = (comment.userId === userId) || isOwner;
+                let commentContainer = document.createElement('div');
+                commentContainer.classList.add('comment-item');
+                commentContainer.innerHTML = `
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                <div class="comment-author">${comment.username || "Usuario"}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-date">${date}</div>`;
+                list.appendChild(commentContainer);
+            })
+        } else {
+            list.innerHTML = `<p class="no-comments">No hay comentarios</p>`;
+        }
+        list.querySelectorAll(".comment-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("¿Eliminar este comentario?")) return;
+                await api.deleteComment(btn.dataset.id);
+                btn.closest(".comment-item").remove();
+                if (!list.querySelector(".comment-item"))
+                    list.innerHTML = `<p class="no-comments">Aún no hay comentarios.</p>`;
+            });
+        });
     } catch (e) {
         console.error(e);
         list.innerHTML = `<p class="no-comments">Error al cargar comentarios.</p>`;
