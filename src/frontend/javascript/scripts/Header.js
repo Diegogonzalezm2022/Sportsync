@@ -69,7 +69,7 @@ function buildMenu() {
 
         const authBtn = document.createElement("button");
         authBtn.className = "logout-btn";
-        authBtn.textContent = "Logout";
+        authBtn.textContent = "Cerrar sesión";
         authBtn.onclick = async () => {
             await signOut(auth);
             sessionStorage.clear();
@@ -85,7 +85,7 @@ function buildMenu() {
 
         const authBtn = document.createElement("button");
         authBtn.className = "logout-btn";
-        authBtn.textContent = "Login";
+        authBtn.textContent = "Iniciar sesión";
         authBtn.onclick = () => window.location.href = "Login.html";
         nav.appendChild(authBtn);
     }
