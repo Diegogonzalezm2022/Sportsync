@@ -207,6 +207,9 @@ document.getElementById("addGalleryBtn").onclick = () => {
 };
 
 document.getElementById("saveGalleryBtn").onclick = async () => {
+    const btn = document.getElementById("saveGalleryBtn");
+    btn.disabled = true;
+    btn.textContent = "Guardando...";
     try {
         await api.request(`/${collectionName}/${ownerId}`, {
             method: 'PUT',
@@ -214,8 +217,11 @@ document.getElementById("saveGalleryBtn").onclick = async () => {
         });
         alert("Galería guardada");
     } catch (e) {
-        console.error(e);
-        alert("Error al guardar galería.");
+        console.error("Error al guardar galería:", e);
+        alert("Error al guardar galería: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Guardar Galería";
     }
 };
 
@@ -258,11 +264,28 @@ window.delAct = async (id) => {
 
 document.getElementById("createActBtn").onclick = async () => {
     try {
+        const name = document.getElementById("actName").value;
+        const date = document.getElementById("actDate").value;
+        const schedule = document.getElementById("actTime").value;
+
+        // Check for duplicates
+        const existingActivities = await api.getActivitiesByOwner(ownerId);
+        const isDuplicate = existingActivities.some(act => 
+            act.name === name && 
+            act.date === date && 
+            act.schedule === schedule
+        );
+
+        if (isDuplicate) {
+            alert("Ya existe una actividad con el mismo nombre, fecha y hora.");
+            return;
+        }
+
         const activityData = {
-            name: document.getElementById("actName").value,
-            date: document.getElementById("actDate").value,
+            name,
+            date,
             maxCancelDate: document.getElementById("actMaxCancelDate").value,
-            schedule: document.getElementById("actTime").value,
+            schedule,
             price: document.getElementById("actPrice").value,
             slots: document.getElementById("actSlots").value,
             availableSlots: document.getElementById("actSlots").value,

@@ -93,6 +93,10 @@ async function loadData() {
             } else {
                 document.getElementById("ratingHint").textContent = "Sin valoraciones aún";
             }
+
+            // Cargar mis reservas para evitar duplicados
+            const myRes = await api.getUserReservations(userId);
+            myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
         }
         // ── Compartir perfil ──────────────────────────────────
         // ── Compartir perfil ──────────────────────────────────
@@ -136,8 +140,33 @@ document.getElementById("commentsToggleBtn").addEventListener("click", async () 
 async function loadComments() {
     const list = document.getElementById("commentList");
     try {
-        // TODO: Crear endpoint en backend para comentarios
-        list.innerHTML = `<p class="no-comments">Funcionalidad de comentarios pendiente de implementar en el backend.</p>`;
+        const comments = await api.getComments(ownerId, "gym");
+        if (comments && comments.length > 0) {
+            list.innerHTML = "";
+            comments.forEach((comment) => {
+                let date = comment.createdAt?.toDate ? comment.toDate().toLocaleDateString("es-ES") : "";
+                const canDelete = (comment.userId === userId) || isOwner;
+                let commentContainer = document.createElement('div');
+                commentContainer.classList.add('comment-item');
+                commentContainer.innerHTML = `
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${c.id}" title="Eliminar">✕</button>` : ""}
+                <div class="comment-author">${comment.username || "Usuario"}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-date">${date}</div>`;
+                list.appendChild(commentContainer);
+            })
+        } else {
+            list.innerHTML = `<p class="no-comments">No hay comentarios</p>`;
+        }
+        list.querySelectorAll(".comment-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("¿Eliminar este comentario?")) return;
+                await api.deleteComment(btn.dataset.id);
+                btn.closest(".comment-item").remove();
+                if (!list.querySelector(".comment-item"))
+                    list.innerHTML = `<p class="no-comments">Aún no hay comentarios.</p>`;
+            });
+        });
     } catch (e) {
         console.error(e);
         list.innerHTML = `<p class="no-comments">Error al cargar comentarios.</p>`;
@@ -165,7 +194,7 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
 
 // ── Actividades ───────────────────────────────────────
 let allActivities = [];
-let myActivityIds = new Set();
+let myActivityIds = new Map();
 
 async function loadActivities(fromDate = null, toDate = null) {
     const container = document.getElementById("activitiesSection");
@@ -198,9 +227,18 @@ function renderActivities(activities) {
         return;
     }
     container.innerHTML = activities.map(a => {
-        const alreadySignedUp = myActivityIds.has(a.id);
+        const alreadySignedUp = myActivityIds.get(a.id); // Ahora guardamos el status
         const isVetoed = window.myVetoedIds?.has(a.id);
         const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+        // Comprobar si la actividad ya pasó (basándonos en la fecha máxima si existe)
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const finalDateRaw = a.maxCancelDate || a.date;
+        const actDate = (finalDateRaw && finalDateRaw.seconds) 
+            ? new Date(finalDateRaw.seconds * 1000) 
+            : new Date(finalDateRaw);
+        const isPast = actDate < now;
 
         const stripeBtn = a.stripeLink
             ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
@@ -211,6 +249,32 @@ function renderActivities(activities) {
               💳 Pagar online
            </a>`
             : "";
+
+        let btnText = 'Apuntarme';
+        let btnClass = '';
+        let btnDisabled = false;
+
+        if (alreadySignedUp === 'done') {
+            btnText = '✓ Completada';
+            btnClass = 'signup-btn--done';
+            btnDisabled = true;
+        } else if (alreadySignedUp === 'active') {
+            btnText = '✓ Apuntado';
+            btnClass = 'signup-btn--done';
+            btnDisabled = true;
+        } else if (isVetoed) {
+            btnText = '🚫 Vetado';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        } else if (isPast) {
+            btnText = 'Finalizada';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        } else if (noSlots) {
+            btnText = 'Completo';
+            btnClass = 'signup-btn--full';
+            btnDisabled = true;
+        }
 
         return `
     <div class="activity-card">
@@ -226,11 +290,11 @@ function renderActivities(activities) {
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             ${isOwner
                 ? `<span class="activity-owner-badge">Tu actividad</span>`
-                : `<button class="signup-btn ${alreadySignedUp ? 'signup-btn--done' : ''} ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+                : `<button class="signup-btn ${btnClass}"
                     data-id="${a.id}" data-name="${a.name}" data-date="${a.date || ''}"
                     data-schedule="${a.schedule || ''}" data-price="${a.price || 0}"
-                    ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
-                    ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                    ${btnDisabled ? 'disabled' : ''}>
+                    ${btnText}
                    </button>
                    ${stripeBtn}`
             }

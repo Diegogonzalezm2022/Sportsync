@@ -33,6 +33,31 @@ class FirebaseDb {
             throw new Error("Activity not found");
         }
 
+        const actData = activitySnap.data();
+
+        // 1. Check if activity is in the past (based on max date if available)
+        const finalDateRaw = actData.maxCancelDate || actData.date;
+        if (finalDateRaw) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); 
+            const actDate = (finalDateRaw.toDate) ? finalDateRaw.toDate() : new Date(finalDateRaw);
+            if (actDate < now) {
+                throw new Error("Esta actividad ya ha pasado");
+            }
+        }
+
+        // 2. Check for existing active OR done reservation
+        const existingRes = await this.db.collection("reservations")
+            .where("userId", "==", userId)
+            .where("activityId", "==", activityId)
+            .where("status", "in", ["active", "done"])
+            .get();
+
+        if (!existingRes.empty) {
+            throw new Error("Ya estás apuntado o ya has realizado esta actividad");
+        }
+
+
         const availableSlots = activitySnap.data().availableSlots;
         if (availableSlots <= 0) {
             throw new Error("Activity full");
@@ -344,6 +369,18 @@ class FirebaseDb {
         await this.db.collection("activities").doc(activityId).delete();
     }
 
+    async getAllUsers() {
+        const snapshot = await this.db.collection("users").get();
+        const users = [];
+        snapshot.forEach(docSnap => users.push({ id: docSnap.id, ...docSnap.data() }));
+        return users;
+    }
+
+    async deleteUserAccount(uid) {
+        await admin.auth().deleteUser(uid);
+        await this.db.collection("users").doc(uid).delete();
+    }
+
     async findActivitiesByOwner(ownerId) {
         const snapshot = await this.db.collection("activities")
             .where("ownerId", "==", ownerId)
@@ -430,6 +467,35 @@ class FirebaseDb {
         await targetRef.update({ rating: newRating, ratingCount: newCount });
 
         return { success: true, newRating, newCount };
+    }
+
+    async getComments(ownerId, ownerType) {
+        const gymRef = await this.db.collection(ownerType + 's').doc(ownerId);
+
+        const gym = await gymRef.get();
+
+        const targetId = gym.data().ownerId;
+
+        let comments
+
+        try {
+
+            comments = await this.db.collection("comments")
+                .where("targetType", "==", ownerType)
+                .where("targetId", "==", targetId)
+                .get();
+
+        } catch (error) {
+            console.error(error);
+        }
+
+        const commentList = []
+
+        comments.forEach(comment => {
+            commentList.push({ id: comment.id, ...comment.data() });
+        })
+
+        return commentList;
     }
 }
 
