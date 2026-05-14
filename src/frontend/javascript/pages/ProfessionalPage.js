@@ -169,7 +169,7 @@ document.getElementById("commentSubmitBtn").addEventListener("click", async () =
     btn.textContent = "Publicando...";
 
     try {
-        await api.addComment(ownerId, "gym", text, userId);
+        await api.addComment(ownerId, "professional", text, userId);
         input.value    = "";
     } catch (e) {
         console.error(e);

@@ -207,7 +207,9 @@ class ApiService {
   }
 
   async deleteComment(id) {
-    console.log("Aún no implementado")
+    return this.request(`/comments/${id}`, {
+      method: 'DELETE'
+    })
   }
 
   async getUserReservations(userId, status = null) {

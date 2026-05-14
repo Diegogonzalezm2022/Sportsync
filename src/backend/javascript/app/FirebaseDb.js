@@ -514,6 +514,11 @@ class FirebaseDb {
         );
         return commentRef.id;
     }
+
+    async deleteComment(commentId) {
+        await this.db.collection("comments").doc(commentId).delete();
+    }
+
 }
 
 export default FirebaseDb;

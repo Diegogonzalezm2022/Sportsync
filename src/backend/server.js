@@ -307,6 +307,15 @@ app.post('/api/comments', authenticateUser, async (req, res) => {
   }
 })
 
+app.delete('/api/comments/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.deleteComment(req.params.id);
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({error: error.message})
+  }
+})
+
 // Reservations
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {
