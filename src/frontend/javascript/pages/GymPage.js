@@ -144,7 +144,7 @@ async function loadComments() {
         if (comments && comments.length > 0) {
             list.innerHTML = "";
             comments.forEach((comment) => {
-                let date = comment.createdAt?.toDate ? comment.toDate().toLocaleDateString("es-ES") : "";
+                let date = comment.createdAt ? new Date(comment.createdAt).toLocaleDateString("es-ES") : "";
                 const canDelete = (comment.userId === userId) || isOwner;
                 let commentContainer = document.createElement('div');
                 commentContainer.classList.add('comment-item');
