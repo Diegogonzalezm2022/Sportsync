@@ -146,7 +146,7 @@ function renderActive(reservations) {
                     data-activity-name="${escapeAttr(r.activityName)}"
                     data-activity-schedule="${escapeAttr(r.activitySchedule || '—')}"
                     data-activity-price="${escapeAttr(String(r.activityPrice || '—'))}"
-                    data-activity-date="${escapeAttr(r.activityDate || '—')}"
+                    data-activity-date="${escapeAttr(String(r.activityDate || '—').split('T')[0])}"
                     data-owner-name="${escapeAttr(r.ownerName)}">
                     Cancelar
                 </button>
