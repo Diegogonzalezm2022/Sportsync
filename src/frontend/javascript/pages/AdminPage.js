@@ -10,7 +10,6 @@ const auth = getAuth(app);
 const userId = sessionStorage.getItem("userId");
 const userRole = sessionStorage.getItem("userRole");
 
-// Redirigir si no es admin
 if (!userId || userRole !== 'admin') {
     window.location.href = "Login.html";
 }
@@ -28,7 +27,6 @@ onAuthStateChanged(auth, async (user) => {
 async function loadUsers() {
     try {
         const users = await api.adminGetAllUsers();
-        // Filtrar para que no aparezcan otros administradores
         allUsers = users.filter(u => u.role !== 'admin');
         renderUsers(allUsers);
     } catch (error) {
@@ -69,7 +67,6 @@ function renderUsers(users) {
         </tr>
     `).join("");
 
-    // Eventos de botones
     container.querySelectorAll(".edit-btn").forEach(btn => {
         btn.onclick = () => openEditModal(btn.dataset.id);
     });
@@ -79,7 +76,6 @@ function renderUsers(users) {
     });
 }
 
-// ── Buscador ──────────────────────────────────────────
 document.getElementById("userSearch").oninput = (e) => {
     const q = e.target.value.toLowerCase();
     const filtered = allUsers.filter(u => 
@@ -91,7 +87,6 @@ document.getElementById("userSearch").oninput = (e) => {
     renderUsers(filtered);
 };
 
-// ── Edición ───────────────────────────────────────────
 const modal = document.getElementById("editModal");
 const closeBtn = document.getElementById("closeModal");
 
@@ -101,8 +96,10 @@ function openEditModal(id) {
 
     document.getElementById("editUserId").value = u.id;
     document.getElementById("editName").value = u.name || "";
+    document.getElementById("editSurname").value = u.surname || "";
     document.getElementById("editUsername").value = u.username || "";
     document.getElementById("editEmail").value = u.email || "";
+    document.getElementById("editPhone").value = u.phone || "";
     document.getElementById("editRole").value = u.role || "user";
     document.getElementById("editBio").value = u.bio || "";
 
@@ -115,25 +112,45 @@ window.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; 
 document.getElementById("editUserForm").onsubmit = async (e) => {
     e.preventDefault();
     const id = document.getElementById("editUserId").value;
+    const role = document.getElementById("editRole").value;
     const data = {
         name: document.getElementById("editName").value,
+        surname: document.getElementById("editSurname").value,
         username: document.getElementById("editUsername").value,
-        role: document.getElementById("editRole").value,
+        phone: document.getElementById("editPhone").value,
+        role: role,
         bio: document.getElementById("editBio").value
     };
 
     try {
         await api.adminUpdateUser(id, data);
+
+        if (role === "gym" || role === "professional") {
+            const col = role === "gym" ? "gyms" : "professionals";
+            try {
+                await api.getGym(id);
+            } catch {
+                const createFn = role === "gym" ? api.createGym : api.createProfessional;
+                await createFn({
+                    name: data.name,
+                    description: data.bio || "",
+                    contactInfo: data.phone || "",
+                    photoURL: "",
+                    schedule: "",
+                    ownerId: id
+                }, id);
+            }
+        }
+
         alert("Usuario actualizado con éxito.");
         modal.style.display = "none";
-        loadUsers(); // Recargar lista
+        loadUsers();
     } catch (error) {
         console.error(error);
         alert("Error al actualizar usuario: " + error.message);
     }
 };
 
-// ── Borrado ───────────────────────────────────────────
 async function deleteUser(id) {
     if (id === userId) {
         alert("No puedes borrar tu propia cuenta desde aquí.");

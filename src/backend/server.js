@@ -5,7 +5,6 @@ import fs from 'fs';
 
 import FirebaseDb from './javascript/app/FirebaseDb.js';
 
-// Initialize Firebase Admin SDK
 try {
   const serviceAccountPath = new URL('./serviceAccountKey.json', import.meta.url);
   const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
@@ -27,7 +26,6 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Middleware to verify Firebase ID Token
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -44,7 +42,6 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-// Helper to convert Firestore Timestamps to ISO strings
 const serializeData = (data) => {
   if (!data) return data;
   const serialized = { ...data };
@@ -56,9 +53,6 @@ const serializeData = (data) => {
   return serialized;
 };
 
-// --- ROUTES ---
-
-// Health check
 app.get('/api/health', (req, res) => res.status(200).send('OK'));
 
 // Users
@@ -99,7 +93,6 @@ app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
   }
 });
 
-// ── Admin routes ──────────────────────────────────────
 const requireAdmin = async (req, res, next) => {
   try {
     const userDoc = await admin.firestore().collection('users').doc(req.user.uid).get();
@@ -133,6 +126,26 @@ app.get('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, res)
 app.put('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, res) => {
   try {
     await db.updateUser(req.params.id, req.body);
+
+    const userSnap = await admin.firestore().collection('users').doc(req.params.id).get();
+    const role = userSnap.data()?.role;
+
+    if (role === 'gym' || role === 'professional') {
+      const col = role === 'gym' ? 'gyms' : 'professionals';
+      const syncFields = {};
+      if (req.body.name !== undefined) syncFields.name = req.body.name;
+      if (req.body.bio !== undefined) syncFields.description = req.body.bio;
+      if (req.body.photoURL !== undefined) syncFields.photoURL = req.body.photoURL;
+      if (req.body.phone !== undefined) syncFields.contactInfo = req.body.phone;
+      if (Object.keys(syncFields).length > 0) {
+        const docRef = admin.firestore().collection(col).doc(req.params.id);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          await docRef.update(syncFields);
+        }
+      }
+    }
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -148,7 +161,6 @@ app.delete('/api/admin/users/:id', authenticateUser, requireAdmin, async (req, r
   }
 });
 
-// Gyms
 app.get('/api/gyms/:id', async (req, res) => {
   try {
     const gym = await db.getGym(req.params.id);
@@ -188,7 +200,6 @@ app.put('/api/gyms/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Professionals
 app.get('/api/professionals', async (req, res) => {
   try {
     const { lat, lng, radiusKm } = req.query;
@@ -228,7 +239,6 @@ app.put('/api/professionals/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Activities
 app.get('/api/activities', async (req, res) => {
   try {
     const { ownerId, ownerType } = req.query;
@@ -316,7 +326,6 @@ app.delete('/api/comments/:id', authenticateUser, async (req, res) => {
   }
 })
 
-// Reservations
 app.post('/api/reservations', authenticateUser, async (req, res) => {
   try {
     const { userId, activityId, gymOrProId, ownerType } = req.body;
@@ -382,7 +391,6 @@ app.delete('/api/reservations/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Queries for Reservations
 app.get('/api/users/:id/reservations', authenticateUser, async (req, res) => {
   try {
     const { status } = req.query;
@@ -402,7 +410,6 @@ app.get('/api/activities/:id/reservations', authenticateUser, async (req, res) =
   }
 });
 
-// Ratings
 app.post('/api/rate', authenticateUser, async (req, res) => {
   try {
     const { targetId, targetType, score } = req.body;
@@ -413,7 +420,6 @@ app.post('/api/rate', authenticateUser, async (req, res) => {
   }
 });
 
-// Materials
 app.post('/api/materials', authenticateUser, async (req, res) => {
   try {
     const { materialData } = req.body;
