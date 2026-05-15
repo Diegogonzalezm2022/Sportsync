@@ -47,7 +47,10 @@ function renderUsers(users) {
         <tr>
             <td>
                 <div class="user-info">
-                    <img src="${u.photoURL || '../../assets/imagenes/default-avatar.png'}" class="user-avatar" onerror="this.src='../../assets/imagenes/default-avatar.png'">
+                    ${u.photoURL 
+                        ? `<img src="${u.photoURL}" class="user-avatar" onerror="this.src='../../assets/imagenes/default-avatar.png'">` 
+                        : `<div class="user-avatar" style="display:flex; align-items:center; justify-content:center; background:#f0f0f0; font-size:1.2rem;">👤</div>`
+                    }
                     <div>
                         <div style="font-weight:600;">${u.name || 'Sin nombre'} ${u.surname || ''}</div>
                         <div style="font-size:0.8rem; color:#666;">@${u.username || '—'}</div>
