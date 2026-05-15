@@ -350,7 +350,31 @@ class FirebaseDb {
     }
 
     async updateUser(userId, data) {
-        await this.db.collection("users").doc(userId).update(data);
+        const userRef = this.db.collection("users").doc(userId);
+        await userRef.update(data);
+
+        // Si el rol cambió a gym o professional, asegurar que el perfil exista
+        if (data.role === "gym" || data.role === "professional") {
+            const colName = data.role === "gym" ? "gyms" : "professionals";
+            const profileRef = this.db.collection(colName).doc(userId);
+            const profileSnap = await profileRef.get();
+
+            if (!profileSnap.exists) {
+                const userSnap = await userRef.get();
+                const userData = userSnap.data();
+                const profileData = {
+                    name: `${userData.name || ""} ${userData.surname || ""}`.trim() || userData.username || "Sin nombre",
+                    description: "",
+                    contactInfo: userData.email || "",
+                    schedule: "",
+                    ownerId: userId,
+                    rating: 0,
+                    ratingCount: 0,
+                    createdAt: Timestamp.now()
+                };
+                await profileRef.set(profileData);
+            }
+        }
     }
 
     async updateGym(gymId, data) {
