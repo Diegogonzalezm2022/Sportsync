@@ -237,7 +237,6 @@ class ApiService {
     });
   }
 
-  // ── Admin methods ─────────────────────────────────────
   async adminGetAllUsers() {
     return this.request('/admin/users');
   }
