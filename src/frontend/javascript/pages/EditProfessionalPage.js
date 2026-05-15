@@ -303,3 +303,6 @@ window.delAct = async (id) => {
         }
     }
 };
+
+document.getElementById("actDate").setAttribute("min", new Date().toISOString().split("T")[0]);
+document.getElementById("actMaxCancelDate").setAttribute("min", new Date().toISOString().split("T")[0]);
