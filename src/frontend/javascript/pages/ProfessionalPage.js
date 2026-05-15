@@ -232,6 +232,15 @@ function renderActivities(activities) {
         const isVetoed        = myVetoedIds.has(a.id);
         const noSlots         = (a.availableSlots ?? a.slots ?? 0) <= 0;
 
+        // Comprobar si la actividad ya pasó
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const finalDateRaw = a.maxCancelDate || a.date;
+        const actDate = (finalDateRaw && finalDateRaw.seconds)
+            ? new Date(finalDateRaw.seconds * 1000)
+            : new Date(finalDateRaw);
+        const isPast = actDate < now;
+
         const stripeBtn = a.stripeLink
             ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
                   style="display:inline-block;padding:8px 14px;background:#635bff;
@@ -246,7 +255,7 @@ function renderActivities(activities) {
             <div class="activity-info">
                 <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
                 <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
-                <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date || "—"}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${String(a.date || "—").split('T')[0]}${a.maxCancelDate && a.maxCancelDate !== a.date ? ` - ${String(a.maxCancelDate).split('T')[0]}` : ""}</span></div>
             </div>
             <div class="activity-right">
                 <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
@@ -257,14 +266,14 @@ function renderActivities(activities) {
             ? `<span class="activity-owner-badge">Tu actividad</span>`
             : `<button class="signup-btn
                             ${alreadySignedUp ? 'signup-btn--done' : ''}
-                            ${(noSlots && !alreadySignedUp) || isVetoed ? 'signup-btn--full' : ''}"
+                            ${(noSlots && !alreadySignedUp) || isVetoed || isPast ? 'signup-btn--full' : ''}"
                             data-id="${a.id}"
                             data-name="${a.name}"
                             data-date="${a.date || ''}"
                             data-schedule="${a.schedule || ''}"
                             data-price="${a.price || 0}"
-                            ${alreadySignedUp || noSlots || isVetoed ? 'disabled' : ''}>
-                            ${alreadySignedUp ? '✓ Apuntado' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                            ${alreadySignedUp || noSlots || isVetoed || isPast ? 'disabled' : ''}>
+                            ${alreadySignedUp ? '✓ Apuntado' : isPast ? 'Finalizada' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
                        </button>
                        ${stripeBtn}`
         }

@@ -80,7 +80,7 @@ async function loadReservations() {
                 r.activityPrice         = actData.price         || "—";
                 r.activityDate          = actData.date          || "—";
                 r.activityMaxCancelDate = actData.maxCancelDate || null;
-                r.activityEndDate       = actData.endDate       || actData.date || null;
+                r.activityEndDate       = actData.endDate || actData.maxCancelDate || actData.date || null;
                 availableSlots          = actData.availableSlots ?? actData.slots ?? 0;
             }
         } catch (e) { console.error("Error cargando actividad:", e); }
@@ -90,6 +90,7 @@ async function loadReservations() {
 
     // ── AUTO: si la fecha ya pasó, marcar como done ──────────────────────────
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const toComplete = enriched.filter(r => {
         if (r.status !== "active") return false;
         if (!r.activityEndDate) return false;
@@ -146,7 +147,7 @@ function renderActive(reservations) {
                     data-activity-name="${escapeAttr(r.activityName)}"
                     data-activity-schedule="${escapeAttr(r.activitySchedule || '—')}"
                     data-activity-price="${escapeAttr(String(r.activityPrice || '—'))}"
-                    data-activity-date="${escapeAttr(r.activityDate || '—')}"
+                    data-activity-date="${escapeAttr(String(r.activityDate || '—').split('T')[0])}"
                     data-owner-name="${escapeAttr(r.ownerName)}">
                     Cancelar
                 </button>
