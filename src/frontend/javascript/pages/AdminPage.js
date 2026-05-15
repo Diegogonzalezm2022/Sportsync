@@ -28,7 +28,8 @@ onAuthStateChanged(auth, async (user) => {
 async function loadUsers() {
     try {
         const users = await api.adminGetAllUsers();
-        allUsers = users;
+        // Filtrar para que no aparezcan otros administradores
+        allUsers = users.filter(u => u.role !== 'admin');
         renderUsers(allUsers);
     } catch (error) {
         console.error("Error cargando usuarios:", error);
