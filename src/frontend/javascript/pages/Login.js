@@ -11,7 +11,9 @@ const auth = getAuth(app);
 let loggedUid = null;
 
 function redirectByRole(role, ownId) {
-    if (role === "gym")
+    if (role === "admin")
+        window.location.href = "AdminPage.html";
+    else if (role === "gym")
         window.location.href = `GymPage.html?id=${ownId}`;
     else if (role === "professional")
         window.location.href = `ProfessionalPage.html?id=${ownId}`;
