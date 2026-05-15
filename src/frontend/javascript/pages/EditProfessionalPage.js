@@ -238,7 +238,7 @@ async function loadActivities() {
             return `
         <div style="border-bottom:1px solid #eee; padding:8px; display:flex; justify-content:space-between; align-items:center;">
             <span>
-                <strong>${d.name}</strong> (${d.date})
+                <strong>${d.name}</strong> (${String(d.date).split('T')[0]}${d.maxCancelDate && d.maxCancelDate !== d.date ? ` - ${String(d.maxCancelDate).split('T')[0]}` : ""})
                 ${d.stripeLink ? `<span style="font-size:0.75rem; color:#27ae60; margin-left:6px;">💳 Pago online</span>` : ""}
             </span>
             <button onclick="window.delAct('${d.id}')">Eliminar</button>

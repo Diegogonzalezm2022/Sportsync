@@ -231,9 +231,10 @@ function renderActivities(activities) {
         const isVetoed = window.myVetoedIds?.has(a.id);
         const noSlots = (a.availableSlots ?? a.slots ?? 0) <= 0;
 
-        // Comprobar si la actividad ya pasó (basándonos en la fecha máxima si existe)
+        // Comprobar si la actividad ya pasó
         const now = new Date();
         now.setHours(0, 0, 0, 0);
+        // Usar maxCancelDate para determinar si ya pasó (asumiendo que es la fecha de finalización)
         const finalDateRaw = a.maxCancelDate || a.date;
         const actDate = (finalDateRaw && finalDateRaw.seconds) 
             ? new Date(finalDateRaw.seconds * 1000) 
@@ -281,7 +282,7 @@ function renderActivities(activities) {
         <div class="activity-info">
             <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
             <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
-            <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${a.date || "—"}</span></div>
+            <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${String(a.date || "—").split('T')[0]}${a.maxCancelDate && a.maxCancelDate !== a.date ? ` - ${String(a.maxCancelDate).split('T')[0]}` : ""}</span></div>
         </div>
         <div class="activity-right">
             <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
