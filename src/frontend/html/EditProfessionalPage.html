@@ -73,9 +73,13 @@
         <h3>Actividades</h3>
         <form class="activity-form" id="activityForm" action="">
             <input type="text" id="actName" placeholder="Actividad" required>
-            <input type="date" id="actDate" required>
+            <div style="display:flex; flex-direction: column; align-items:center; gap:10px;">
+                <label for="actDate">Fecha de la actividad</label><input type="date" id="actDate" required>
+            </div>
             <input type="time" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)" required>
-            <input type="date" id="actMaxCancelDate">
+            <div style="display:flex; flex-direction: column; align-items:center; gap:10px;">
+                <label for="actMaxCancelDate">Fecha máxima de cancelación</label><input type="date" id="actMaxCancelDate">
+            </div>
             <input type="number" id="actPrice" placeholder="Precio (€)" min="0" required>
             <input type="number" id="actSlots" placeholder="Cupo" min="1" required>
             <input type="url" id="actStripeLink" placeholder="Link de pago Stripe (opcional) https://buy.stripe.com/...">
