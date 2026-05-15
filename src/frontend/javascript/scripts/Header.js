@@ -50,7 +50,7 @@ function buildMenu() {
 
         const authBtn = document.createElement("button");
         authBtn.className = "logout-btn";
-        authBtn.textContent = "Logout";
+        authBtn.textContent = "Cerrar sesión";
         authBtn.onclick = async () => {
             await signOut(auth);
             sessionStorage.clear();
