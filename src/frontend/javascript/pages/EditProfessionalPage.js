@@ -250,19 +250,9 @@ async function loadActivities() {
     }
 }
 
-window.delAct = async (id) => {
-    if (confirm("¿Borrar?")) {
-        try {
-            await api.deleteActivity(id);
-            loadActivities();
-        } catch (e) {
-            console.error(e);
-            alert("Error al eliminar.");
-        }
-    }
-};
 
-document.getElementById("createActBtn").onclick = async () => {
+document.getElementById("activityForm").addEventListener("submit", async e => {
+    e.preventDefault();
     try {
         const name = document.getElementById("actName").value;
         const date = document.getElementById("actDate").value;
@@ -270,9 +260,9 @@ document.getElementById("createActBtn").onclick = async () => {
 
         // Check for duplicates
         const existingActivities = await api.getActivitiesByOwner(ownerId);
-        const isDuplicate = existingActivities.some(act => 
-            act.name === name && 
-            act.date === date && 
+        const isDuplicate = existingActivities.some(act =>
+            act.name === name &&
+            act.date === date &&
             act.schedule === schedule
         );
 
@@ -294,10 +284,22 @@ document.getElementById("createActBtn").onclick = async () => {
 
         await api.createActivity(ownerId, typeParam, activityData);
 
-        document.getElementById("actStripeLink").value = "";
-        loadActivities();
+        document.getElementById("activityForm").reset();
+        await loadActivities();
     } catch (e) {
         console.error(e);
         alert("Error al crear actividad.");
+    }
+})
+
+window.delAct = async (id) => {
+    if (confirm("¿Borrar?")) {
+        try {
+            await api.deleteActivity(id);
+            await loadActivities();
+        } catch (e) {
+            console.error(e);
+            alert("Error al eliminar.");
+        }
     }
 };

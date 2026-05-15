@@ -71,16 +71,16 @@
 
     <section class="activities-section">
         <h3>Actividades</h3>
-        <div class="activity-form">
-            <input type="text" id="actName" placeholder="Actividad">
-            <input type="date" id="actDate">
-            <input type="text" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)">
+        <form class="activity-form" id="activityForm" action="">
+            <input type="text" id="actName" placeholder="Actividad" required>
+            <input type="date" id="actDate" required>
+            <input type="time" id="actTime" placeholder="Horario (Ej: 10:00 - 11:00)" required>
             <input type="date" id="actMaxCancelDate">
-            <input type="number" id="actPrice" placeholder="Precio (€)" min="0">
-            <input type="number" id="actSlots" placeholder="Cupo" min="1">
+            <input type="number" id="actPrice" placeholder="Precio (€)" min="0" required>
+            <input type="number" id="actSlots" placeholder="Cupo" min="1" required>
             <input type="url" id="actStripeLink" placeholder="Link de pago Stripe (opcional) https://buy.stripe.com/...">
-            <button id="createActBtn">Crear Actividad</button>
-        </div>
+            <input id="createActBtn" type="submit" value="Crear actividad">
+        </form>
         <div id="activitiesList"></div>
     </section>
 </main>
