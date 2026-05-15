@@ -9,6 +9,7 @@ body{
     margin: 0 auto;
     padding: 20px;
     color: #333;
+    min-height: calc(100vh - 200px);
 }
 
 .section-header {

@@ -236,6 +236,28 @@ class ApiService {
       body: JSON.stringify({ materialData })
     });
   }
+
+  // ── Admin methods ─────────────────────────────────────
+  async adminGetAllUsers() {
+    return this.request('/admin/users');
+  }
+
+  async adminGetUser(id) {
+    return this.request(`/admin/users/${id}`);
+  }
+
+  async adminUpdateUser(id, userData) {
+    return this.request(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async adminDeleteUser(id) {
+    return this.request(`/admin/users/${id}`, {
+      method: 'DELETE'
+    });
+  }
 }
 
 const api = new ApiService();
