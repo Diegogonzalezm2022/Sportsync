@@ -97,6 +97,13 @@ async function loadData() {
             // Cargar mis reservas para evitar duplicados
             const myRes = await api.getUserReservations(userId);
             myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
+
+            try {
+                const myEquipRes = await api.getUserEquipmentReservations(userId);
+                window.myReservedEquipIds = new Set(myEquipRes.map(r => r.equipmentId));
+            } catch (e) {
+                window.myReservedEquipIds = new Set();
+            }
         }
         // ── Compartir perfil ──────────────────────────────────
         // ── Compartir perfil ──────────────────────────────────
@@ -368,16 +375,13 @@ async function loadEquipment() {
     if (!container) return;
     container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando equipamiento...</p>`;
     try {
-        const snap = await getDocs(query(
-            collection(db, "equipment"),
-            where("ownerId", "==", ownerId)
-        ));
-        if (snap.empty) {
+        const equipment = await api.getEquipmentByOwner(ownerId);
+        if (equipment.length === 0) {
             container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
             return;
         }
-        container.innerHTML = snap.docs.map(d => {
-            const e = d.data();
+        container.innerHTML = equipment.map(e => {
+            const alreadyReserved = window.myReservedEquipIds?.has(e.id);
             return `
             <div class="activity-card">
                 <div class="activity-info">
@@ -392,52 +396,43 @@ async function loadEquipment() {
                 <div>
                     ${isOwner
                 ? `<span class="activity-owner-badge">Tu equipamiento</span>`
-                : `<button class="signup-btn" 
-                              onclick="reserveEquip('${d.id}', '${e.name}', '${e.date || ''}', '${e.time || ''}', ${e.price || 0})">
-                              Reservar
+                : `<button class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''}"
+                                data-equip-id="${e.id}"
+                                data-name="${e.name}"
+                                data-date="${e.date || ''}"
+                                data-time="${e.time || ''}"
+                                data-price="${e.price || 0}"
+                                ${alreadyReserved ? 'disabled' : ''}>
+                                ${alreadyReserved ? '✓ Reservado' : 'Reservar'}
                            </button>`
             }
                 </div>
             </div>`;
         }).join("");
+
+        if (!isOwner) {
+            container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+                btn.onclick = async () => {
+                    btn.disabled = true;
+                    btn.textContent = "Reservando...";
+                    try {
+                        await api.reserveEquipment(
+                            btn.dataset.equipId, userId, ownerId, "gym",
+                            btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price
+                        );
+                        btn.textContent = "✓ Reservado";
+                        btn.classList.add("signup-btn--done");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error al reservar: " + e.message);
+                        btn.disabled = false;
+                        btn.textContent = "Reservar";
+                    }
+                };
+            });
+        }
     } catch (e) {
         console.error(e);
         container.innerHTML = `<p style="color:red;">Error al cargar equipamiento.</p>`;
     }
 }
-
-window.reserveEquip = async (equipId, name, date, time, price) => {
-    try {
-        const equipRef  = doc(db, "equipment", equipId);
-        const equipSnap = await getDoc(equipRef);
-        if (!equipSnap.exists()) { alert("Equipamiento no encontrado."); return; }
-
-        const cur = parseInt(equipSnap.data().quantity) || 0;
-        if (cur <= 0) { alert("No quedan unidades disponibles."); return; }
-
-        const existSnap = await getDocs(query(
-            collection(db, "equipmentReservations"),
-            where("userId", "==", userId),
-            where("equipmentId", "==", equipId),
-            where("status", "==", "active")
-        ));
-        if (!existSnap.empty) { alert("Ya tienes este equipamiento reservado."); return; }
-
-        await addDoc(collection(db, "equipmentReservations"), {
-            userId,
-            equipmentId: equipId,
-            gymOrProId:  ownerId,
-            ownerType:   "gym",
-            name, date, time, price,
-            status:    "active",
-            createdAt: serverTimestamp()
-        });
-
-        await updateDoc(equipRef, { quantity: cur - 1 });
-        alert(`Reserva de "${name}" confirmada.`);
-        loadEquipment();
-    } catch (e) {
-        console.error(e);
-        alert("Error al reservar el equipamiento.");
-    }
-};
