@@ -11,7 +11,9 @@ const auth = getAuth(app);
 let loggedUid = null;
 
 function redirectByRole(role, ownId) {
-    if (role === "gym")
+    if (role === "admin")
+        window.location.href = "AdminPage.html";
+    else if (role === "gym")
         window.location.href = `GymPage.html?id=${ownId}`;
     else if (role === "professional")
         window.location.href = `ProfessionalPage.html?id=${ownId}`;
@@ -19,7 +21,6 @@ function redirectByRole(role, ownId) {
         window.location.href = "ActivitySearch.html";
 }
 
-// ── Obtener ubicación como promesa ────────────────────
 function getLocationPromise() {
     return new Promise((resolve) => {
         if (!navigator.geolocation) { resolve(null); return; }
@@ -31,7 +32,6 @@ function getLocationPromise() {
     });
 }
 
-// ── Login ─────────────────────────────────────────────
 document.getElementById("loginBtn").addEventListener("click", async () => {
     const email    = document.getElementById("user").value.trim();
     const password = document.getElementById("password").value;
@@ -51,7 +51,6 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
         sessionStorage.setItem("userId", loggedUid);
         sessionStorage.setItem("userEmail", email);
 
-        // Configurar token para el API
         const token = await userCredential.user.getIdToken();
         api.setToken(token);
 
@@ -76,13 +75,11 @@ document.getElementById("password").addEventListener("keydown", e => {
     if (e.key === "Enter") document.getElementById("loginBtn").click();
 });
 
-// ── Selección de rol ──────────────────────────────────
 document.querySelectorAll(".role-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
         const role = btn.dataset.role;
         if (!loggedUid) return;
 
-        // Deshabilitar botones mientras procesa
         document.querySelectorAll(".role-btn").forEach(b => b.disabled = true);
 
         try {
@@ -92,13 +89,11 @@ document.querySelectorAll(".role-btn").forEach(btn => {
             if (role === "gym" || role === "professional") {
                 const userData = await api.getUser(loggedUid);
 
-                // Intentar obtener ubicación antes de crear el documento
-                const location = await getLocationPromise();
-
                 const gymOrProData = {
                     name: `${userData.name || ""} ${userData.surname || ""}`.trim(),
-                    description: "",
-                    contactInfo: "",
+                    description: userData.bio || "",
+                    contactInfo: userData.phone || "",
+                    photoURL: userData.photoURL || "",
                     schedule: "",
                     ownerId: loggedUid,
                 };

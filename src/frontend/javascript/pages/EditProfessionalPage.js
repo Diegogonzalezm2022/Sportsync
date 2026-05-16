@@ -1,350 +1,428 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import api from "../services/api.js";
-console.log("script cargado");
+import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
+
+emailjs.init("bOhMQRr1h4BzhaNUT");
 
 const resp = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await resp.json();
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-const params = new URLSearchParams(window.location.search);
-const typeParam = params.get("type") || "gym";
-const collectionName = typeParam === "gym" ? "gyms" : "professionals";
-const ownerId = sessionStorage.getItem("userId");
+const userId  = sessionStorage.getItem("userId");
+const params  = new URLSearchParams(window.location.search);
+const ownerId = params.get("id") || sessionStorage.getItem("userId");
+const isOwner = (userId === ownerId);
 
-let scheduleData = { days: "", from: "08:00", to: "20:00" };
-let galleryImages = [];
-let profilePhotoBase64 = null;
-let currentLocation = null;
+if (!userId) window.location.href = "Login.html";
 
-function getLocationPromise() {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) { resolve(null); return; }
-        navigator.geolocation.getCurrentPosition(
-            pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            () => resolve(null),
-            { enableHighAccuracy: true, timeout: 8000 }
-        );
-    });
-}
+// ── Variables globales de actividades ────────────────
+let allActivities = [];
+let myActivityIds = new Map();
+let myVetoedIds   = new Set();
 
-function setLocationStatus(location) {
-    const el = document.getElementById("locationStatus");
-    if (location) {
-        el.textContent = `✓ ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
-        el.className = "location-status ok";
-    } else {
-        el.textContent = "Sin ubicación guardada";
-        el.className = "location-status err";
-    }
-}
-
-document.getElementById("updateLocationBtn").addEventListener("click", async () => {
-    const btn = document.getElementById("updateLocationBtn");
-    btn.disabled = true;
-    btn.textContent = "Obteniendo ubicación...";
-    const loc = await getLocationPromise();
-    if (loc) {
-        currentLocation = loc;
-        setLocationStatus(loc);
-        try {
-            await api.request(`/${collectionName}/${ownerId}`, {
-                method: 'PUT',
-                body: JSON.stringify({ location: loc })
-            });
-            btn.textContent = "✓ Ubicación guardada";
-        } catch (e) {
-            console.error(e);
-            btn.textContent = "Error al guardar";
-        }
-    } else {
-        btn.textContent = "No se pudo obtener";
-        document.getElementById("locationStatus").textContent = "Permiso denegado o error";
-        document.getElementById("locationStatus").className = "location-status err";
-    }
-    setTimeout(() => { btn.disabled = false; btn.textContent = "📍 Actualizar mi ubicación"; }, 2500);
-});
-
+// Configurar token cuando el usuario esté autenticado
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const token = await user.getIdToken();
         api.setToken(token);
-        init();
+        loadData();
     }
 });
 
-async function init() {
-    try {
-        const d = typeParam === "gym"
-            ? await api.getGym(ownerId)
-            : await api.getProfessional(ownerId);
 
-        if (d && d.id) {
-            document.getElementById("inputName").value = d.name || "";
-            document.getElementById("inputDesc").value = d.description || "";
-            document.getElementById("inputContact").value = d.contactInfo || "";
-
-            if (d.photoURL) {
-                const p = document.getElementById("profilePhotoPreview");
-                p.src = d.photoURL; p.style.display = "block";
-                document.getElementById("photoPlaceholder").style.display = "none";
-            }
-
-            if (d.schedule && typeof d.schedule === "object") {
-                scheduleData = d.schedule;
-                document.getElementById("scheduleBtn").textContent =
-                    `${d.schedule.days} (${d.schedule.from}-${d.schedule.to})`;
-            }
-
-            if (d.location) {
-                currentLocation = d.location;
-                setLocationStatus(d.location);
-            }
-
-            galleryImages = d.gallery || [];
-            renderGallery();
-        }
-        loadActivities();
-        loadEquipment();
-    } catch (error) {
-        console.error("Error cargando datos:", error);
-    }
-}
-
-document.getElementById("profilePhotoBox").onclick = () =>
-    document.getElementById("profilePhotoInput").click();
-
-document.getElementById("profilePhotoInput").onchange = (e) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        profilePhotoBase64 = ev.target.result;
-        const p = document.getElementById("profilePhotoPreview");
-        p.src = profilePhotoBase64; p.style.display = "block";
-        document.getElementById("photoPlaceholder").style.display = "none";
-    };
-    reader.readAsDataURL(e.target.files[0]);
-};
-
-document.getElementById("saveProfileBtn").onclick = async () => {
-    const btn = document.getElementById("saveProfileBtn");
-    btn.disabled = true; btn.textContent = "Guardando...";
-
-    const upd = {
-        name: document.getElementById("inputName").value,
-        description: document.getElementById("inputDesc").value,
-        contactInfo: document.getElementById("inputContact").value,
-        schedule: scheduleData
-    };
-    if (profilePhotoBase64) upd.photoURL = profilePhotoBase64;
-
-    if (!currentLocation) {
-        const loc = await getLocationPromise();
-        if (loc) {
-            currentLocation = loc;
-            setLocationStatus(loc);
-        }
-    }
-    if (currentLocation) upd.location = currentLocation;
-
-    try {
-        await api.request(`/${collectionName}/${ownerId}`, {
-            method: 'PUT',
-            body: JSON.stringify(upd)
-        });
-        document.getElementById("saveMsg").style.display = "block";
-        setTimeout(() => { document.getElementById("saveMsg").style.display = "none"; }, 2500);
-    } catch (e) {
-        console.error(e);
-        alert("Error al guardar.");
-    }
-
-    btn.disabled = false; btn.textContent = "Guardar Perfil y Horario";
-};
-
-document.getElementById("scheduleBtn").onclick = () =>
-    document.getElementById("scheduleModal").classList.add("active");
-
-document.getElementById("closeScheduleModal").onclick = () => {
-    const days = Array.from(document.querySelectorAll("#dayChecks input:checked"))
-        .map(i => i.value).join("/");
-    scheduleData = {
-        days,
-        from: document.getElementById("timeFrom").value,
-        to: document.getElementById("timeTo").value
-    };
-    document.getElementById("scheduleBtn").textContent =
-        `${days} (${scheduleData.from}-${scheduleData.to})`;
-    document.getElementById("scheduleModal").classList.remove("active");
-};
-
-function renderGallery() {
-    const cont = document.getElementById("galleryCarousel");
-    cont.innerHTML = galleryImages.map((img, i) => `
-        <div class="gallery-slot">
-            <img src="${img}">
-            <button class="del-img" onclick="window.delImg(${i})">X</button>
-        </div>`).join("");
-}
-window.delImg = (i) => { galleryImages.splice(i, 1); renderGallery(); };
-
-document.getElementById("addGalleryBtn").onclick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.onchange = (e) => {
-        const r = new FileReader();
-        r.onload = (ev) => { galleryImages.push(ev.target.result); renderGallery(); };
-        r.readAsDataURL(e.target.files[0]);
-    };
-    input.click();
-};
-
-document.getElementById("saveGalleryBtn").onclick = async () => {
-    const btn = document.getElementById("saveGalleryBtn");
-    btn.disabled = true;
-    btn.textContent = "Guardando...";
-    try {
-        await api.request(`/${collectionName}/${ownerId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ gallery: galleryImages })
-        });
-        alert("Galería guardada");
-    } catch (e) {
-        console.error("Error al guardar galería:", e);
-        alert("Error al guardar galería: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "Guardar Galería";
-    }
-};
-
-// Actividades
-async function loadActivities() {
-    const list = document.getElementById("activitiesList");
-    try {
-        const activities = await api.getActivitiesByOwner(ownerId);
-        if (activities.length === 0) {
-            list.innerHTML = "<p>No tienes actividades creadas aún.</p>";
-            return;
-        }
-        list.innerHTML = activities.map(d => {
-            return `
-        <div style="border-bottom:1px solid #eee; padding:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span>
-                <strong>${d.name}</strong> (${d.date})
-                ${d.stripeLink ? `<span style="font-size:0.75rem; color:#27ae60; margin-left:6px;">💳 Pago online</span>` : ""}
-            </span>
-            <button onclick="window.delAct('${d.id}')">Eliminar</button>
-        </div>`;
-        }).join("");
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = "<p>Error al cargar actividades.</p>";
-    }
-}
-
-window.delAct = async (id) => {
-    if (confirm("¿Borrar?")) {
-        try {
-            await api.deleteActivity(id);
-            loadActivities();
-        } catch (e) {
-            console.error(e);
-            alert("Error al eliminar.");
-        }
-    }
-};
-
-document.getElementById("createActBtn").onclick = async () => {
-    try {
-        const name = document.getElementById("actName").value;
-        const date = document.getElementById("actDate").value;
-        const schedule = document.getElementById("actTime").value;
-
-        const existingActivities = await api.getActivitiesByOwner(ownerId);
-        const isDuplicate = existingActivities.some(act =>
-            act.name === name &&
-            act.date === date &&
-            act.schedule === schedule
-        );
-
-        if (isDuplicate) {
-            alert("Ya existe una actividad con el mismo nombre, fecha y hora.");
-            return;
-        }
-
-        const activityData = {
-            name,
-            date,
-            maxCancelDate: document.getElementById("actMaxCancelDate").value,
-            schedule,
-            price: document.getElementById("actPrice").value,
-            slots: document.getElementById("actSlots").value,
-            availableSlots: document.getElementById("actSlots").value,
-            stripeLink: document.getElementById("actStripeLink").value.trim() || null,
-        };
-
-        await api.createActivity(ownerId, typeParam, activityData);
-        document.getElementById("actStripeLink").value = "";
-        loadActivities();
-    } catch (e) {
-        console.error(e);
-        alert("Error al crear actividad.");
-    }
-};
-
-// Equipamiento
+// ── Equipamiento ──────────────────────────────────────
 async function loadEquipment() {
-    const list = document.getElementById("equipmentList");
+    const container = document.getElementById("equipmentSection");
+    if (!container) return;
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando equipamiento...</p>`;
     try {
         const equipment = await api.getEquipmentByOwner(ownerId);
-        list.innerHTML = equipment.length === 0
-            ? "<p>No hay equipamiento todavía</p>"
-            : equipment.map(e => `
-            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
-                <div>
-                    <strong>${e.name}</strong><br>
-                    ${e.date} · ${e.time}<br>
-                    Cantidad: ${e.quantity} · ${e.price}€
+        if (equipment.length === 0) {
+            container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
+            return;
+        }
+        container.innerHTML = equipment.map(e => {
+            const alreadyReserved = window.myReservedEquipIds?.has(e.id);
+            return `
+            <div class="activity-card">
+                <div class="activity-info">
+                    <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${e.name}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${e.date || "—"}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${e.time || "—"}</span></div>
                 </div>
-                <button onclick="window.delEquip('${e.id}')">Eliminar</button>
-            </div>`).join("");
+                <div class="activity-right">
+                    <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${e.price}€</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Cantidad:</span> <span class="activity-value">${e.quantity}</span></div>
+                </div>
+                <div>
+                    ${isOwner
+                ? `<span class="activity-owner-badge">Tu equipamiento</span>`
+                : `<button class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''}"
+                                data-equip-id="${e.id}"
+                                data-name="${e.name}"
+                                data-date="${e.date || ''}"
+                                data-time="${e.time || ''}"
+                                data-price="${e.price || 0}"
+                                ${alreadyReserved ? 'disabled' : ''}>
+                                ${alreadyReserved ? '✓ Reservado' : 'Reservar'}
+                           </button>`
+            }
+                </div>
+            </div>`;
+        }).join("");
+
+        if (!isOwner) {
+            container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+                btn.onclick = async () => {
+                    btn.disabled = true;
+                    btn.textContent = "Reservando...";
+                    try {
+                        await api.reserveEquipment(
+                            btn.dataset.equipId, userId, ownerId, "professional",
+                            btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price
+                        );
+                        btn.textContent = "✓ Reservado";
+                        btn.classList.add("signup-btn--done");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error al reservar: " + e.message);
+                        btn.disabled = false;
+                        btn.textContent = "Reservar";
+                    }
+                };
+            });
+        }
     } catch (e) {
         console.error(e);
-        list.innerHTML = "<p>Error al cargar equipamiento.</p>";
+        container.innerHTML = `<p style="color:red;">Error al cargar equipamiento.</p>`;
     }
 }
 
-window.delEquip = async (id) => {
-    if (confirm("¿Eliminar equipamiento?")) {
-        await api.deleteEquipment(id);
-        loadEquipment();
-    }
-};
-
-document.getElementById("createEquipBtn").onclick = async () => {
-    console.log("botón pulsado");
+// ── Cargar datos del profesional ──────────────────────
+async function loadData() {
     try {
-        await api.createEquipment(ownerId, typeParam, {
-            name: document.getElementById("equipName").value,
-            date: document.getElementById("equipDate").value,
-            time: document.getElementById("equipTime").value,
-            maxCancelDate: document.getElementById("equipMaxCancelDate").value,
-            price: document.getElementById("equipPrice").value,
-            quantity: document.getElementById("equipQuantity").value,
+        const d = await api.getProfessional(ownerId);
+        if (!d || !d.id) {
+            document.getElementById("profileName").textContent = "Perfil no encontrado";
+            return;
+        }
+
+        document.getElementById("profileName").textContent  = d.name        || "—";
+        document.getElementById("profileDesc").textContent  = d.description || "—";
+        document.getElementById("contactLines").textContent = d.contactInfo  || "—";
+
+        if (d.schedule) {
+            if (typeof d.schedule === "object") {
+                document.getElementById("scheduleDays").textContent  = d.schedule.days || "—";
+                document.getElementById("scheduleHours").textContent =
+                    (d.schedule.from && d.schedule.to) ? `${d.schedule.from}–${d.schedule.to}` : "";
+            } else {
+                document.getElementById("scheduleDays").textContent = d.schedule;
+            }
+        }
+
+        if (d.photoURL) {
+            document.getElementById("profilePhotoImg").src           = d.photoURL;
+            document.getElementById("profilePhotoImg").style.display = "block";
+            document.getElementById("photoCaption").style.display    = "none";
+        }
+
+        if (d.gallery && d.gallery.length > 0) {
+            document.getElementById("galleryCarousel").innerHTML = d.gallery.map(src => `
+                <div class="gallery-slot">
+                    <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                </div>`).join("");
+        }
+
+        if (d.rating) {
+            const rounded = Math.round(d.rating);
+            document.querySelectorAll(".star").forEach(s => {
+                if (+s.dataset.value <= rounded) s.classList.add("star--active");
+            });
+            const count = d.ratingCount || 0;
+            document.getElementById("ratingHint").textContent =
+                `${d.rating.toFixed(1)} / 5 (${count} valoracion${count !== 1 ? "es" : ""})`;
+        } else {
+            document.getElementById("ratingHint").textContent = "Sin valoraciones aún";
+        }
+
+        if (isOwner) {
+            document.getElementById("ownerControls").style.display   = "block";
+            document.getElementById("starsContainer").style.pointerEvents = "none";
+            document.getElementById("ratingHint").textContent        = "Tu perfil";
+            document.getElementById("editBtn").onclick    = () =>
+                window.location.href = `EditProfessionalPage.html?id=${ownerId}&type=professional`;
+            document.getElementById("editBtnVet").onclick = () =>
+                window.location.href = `ViewReservation.html?id=${ownerId}&type=professional`;
+        } else {
+            document.getElementById("starsContainer").style.pointerEvents = "none";
+
+            // Cargar mis reservas para evitar duplicados
+            const myRes = await api.getUserReservations(userId);
+            myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
+
+
+            // Cargar mi Equipamiento
+            try {
+                const myEquipRes = await api.getUserEquipmentReservations(userId);
+                window.myReservedEquipIds = new Set(myEquipRes.map(r => r.equipmentId));
+            } catch (e) {
+                window.myReservedEquipIds = new Set();
+            }
+
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = "flex";
+
+            // Cargar vetos (si los hubiera)
+            const myVetoed = await api.getUserReservations(userId, "vetoed");
+            myVetoedIds = new Set(myVetoed.map(r => r.activityId));
+        }
+
+        await loadActivities();
+        await loadEquipment();
+
+            // ── Compartir perfil ──────────────────────────────────
+            document.getElementById("shareProfileBtn")?.addEventListener("click", () => {
+                const name = document.getElementById("profileName").textContent || "este profesional";
+                const shareUrl = window.location.href;
+                const shareData = {
+                    title: `${name} en SportSync`,
+                    text: `¡Echa un vistazo a ${name} en SportSync!`,
+                    url: shareUrl
+                };
+                if (navigator.share) {
+                    navigator.share(shareData).catch(err => console.log("Error al compartir:", err));
+                } else {
+                    navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`);
+                    alert("Enlace del perfil copiado al portapapeles.");
+                }
+            });
+    } catch (error) {
+        console.error("Error cargando datos del profesional:", error);
+    }
+}
+
+// ── Comentarios ───────────────────────────────────────
+let commentsLoaded = false;
+
+document.getElementById("commentsToggleBtn").addEventListener("click", async () => {
+    const box     = document.getElementById("commentsBox");
+    const btn     = document.getElementById("commentsToggleBtn");
+    const visible = box.style.display !== "none";
+    box.style.display = visible ? "none" : "block";
+    btn.textContent   = visible ? "💬 Ver comentarios" : "💬 Ocultar comentarios";
+    if (!visible && !commentsLoaded) {
+        await loadComments();
+        commentsLoaded = true;
+    }
+});
+
+async function loadComments() {
+    const list = document.getElementById("commentList");
+    try {
+        const comments = await api.getComments(ownerId, "professional");
+        if (comments && comments.length > 0) {
+            list.innerHTML = "";
+            comments.forEach((comment) => {
+                let date = comment.createdAt ? new Date(comment.createdAt).toLocaleDateString("es-ES") : "";
+                const canDelete = (comment.userId === userId) || isOwner;
+                let commentContainer = document.createElement('div');
+                commentContainer.classList.add('comment-item');
+                commentContainer.innerHTML = `
+                ${canDelete ? `<button class="comment-delete-btn" data-id="${comment.id}" title="Eliminar">✕</button>` : ""}
+                <div class="comment-author">${comment.username || "Usuario"}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-date">${date}</div>`;
+                list.appendChild(commentContainer);
+            })
+        } else {
+            list.innerHTML = `<p class="no-comments">No hay comentarios</p>`;
+        }
+        list.querySelectorAll(".comment-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("¿Eliminar este comentario?")) return;
+                await api.deleteComment(btn.dataset.id);
+                btn.closest(".comment-item").remove();
+                if (!list.querySelector(".comment-item"))
+                    list.innerHTML = `<p class="no-comments">Aún no hay comentarios.</p>`;
+            });
         });
-        document.getElementById("equipName").value = "";
-        document.getElementById("equipDate").value = "";
-        document.getElementById("equipTime").value = "";
-        document.getElementById("equipMaxCancelDate").value = "";
-        document.getElementById("equipPrice").value = "";
-        document.getElementById("equipQuantity").value = "";
-        loadEquipment();
     } catch (e) {
         console.error(e);
-        alert("Error al crear equipamiento: " + e.message);
+        list.innerHTML = `<p class="no-comments">Error al cargar comentarios.</p>`;
     }
+}
 
-    console.log("botón equip:", document.getElementById("createEquipBtn"));
+document.getElementById("commentSubmitBtn").addEventListener("click", async () => {
+    const input = document.getElementById("commentInput");
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const btn     = document.getElementById("commentSubmitBtn");
+    btn.disabled  = true;
+    btn.textContent = "Publicando...";
+
+    try {
+        await api.addComment(ownerId, "professional", text, userId);
+        input.value    = "";
+    } catch (e) {
+        console.error(e);
+        alert("Error al publicar el comentario.");
+    }
+    btn.disabled    = false;
+    btn.textContent = "Publicar";
+});
+
+// ── Actividades ───────────────────────────────────────
+async function loadActivities(fromDate = null, toDate = null) {
+    const container = document.getElementById("activitiesSection");
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando actividades...</p>`;
+    try {
+        const activities = await api.getActivitiesByOwner(ownerId);
+        allActivities = activities;
+
+        let filtered = allActivities;
+        if (fromDate || toDate) {
+            filtered = allActivities.filter(a => {
+                if (!a.date) return true;
+                const actDate = new Date(a.date);
+                if (fromDate && actDate < new Date(fromDate)) return false;
+                if (toDate   && actDate > new Date(toDate))   return false;
+                return true;
+            });
+        }
+        renderActivities(filtered);
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style="color:red;">Error al cargar actividades.</p>`;
+    }
+}
+
+function renderActivities(activities) {
+    const container = document.getElementById("activitiesSection");
+    if (activities.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay actividades disponibles.</p>`;
+        return;
+    }
+    container.innerHTML = activities.map(a => {
+        const alreadySignedUp = myActivityIds.has(a.id);
+        const isVetoed        = myVetoedIds.has(a.id);
+        const noSlots         = (a.availableSlots ?? a.slots ?? 0) <= 0;
+
+        // Comprobar si la actividad ya pasó
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        // Marcamos como finalizada cuando el día de la actividad ha pasado
+        const actDateRaw = a.date;
+        const actDateObj = (actDateRaw && actDateRaw.seconds)
+            ? new Date(actDateRaw.seconds * 1000)
+            : new Date(actDateRaw);
+        const isPast = actDateObj < now;
+
+        const stripeBtn = a.stripeLink
+            ? `<a href="${a.stripeLink}" target="_blank" rel="noopener"
+                  style="display:inline-block;padding:8px 14px;background:#635bff;
+                         color:white;border-radius:6px;font-size:0.82rem;
+                         font-weight:600;text-decoration:none;margin-left:6px;">
+                  💳 Pagar online
+               </a>`
+            : "";
+
+        return `
+        <div class="activity-card">
+            <div class="activity-info">
+                <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${a.name}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${a.schedule || "—"}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Fecha Actividad:</span> <span class="activity-value">${String(a.date || "—").split('T')[0]}</span></div>
+                <div class="activity-row"><span class="activity-field-label">Límite Cancelación:</span> <span class="activity-value">${a.maxCancelDate ? String(a.maxCancelDate).split('T')[0] : "—"}</span></div>
+            </div>
+            <div class="activity-right">
+                <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${a.price}€</span></div>
+                <div class="activity-row"><span class="activity-field-label">Cupo:</span> <span class="activity-value">${a.availableSlots ?? a.slots ?? 0}</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${isOwner
+            ? `<span class="activity-owner-badge">Tu actividad</span>`
+            : `<button class="signup-btn
+                            ${alreadySignedUp ? 'signup-btn--done' : ''}
+                            ${(noSlots && !alreadySignedUp) || isVetoed || isPast ? 'signup-btn--full' : ''}"
+                            data-id="${a.id}"
+                            data-name="${a.name}"
+                            data-date="${a.date || ''}"
+                            data-schedule="${a.schedule || ''}"
+                            data-price="${a.price || 0}"
+                            ${alreadySignedUp || noSlots || isVetoed || isPast ? 'disabled' : ''}>
+                            ${alreadySignedUp ? '✓ Apuntado' : isPast ? 'Finalizada' : isVetoed ? '🚫 Vetado' : noSlots ? 'Completo' : 'Apuntarme'}
+                       </button>
+                       ${stripeBtn}`
+        }
+            </div>
+        </div>`;
+    }).join("");
+
+    if (!isOwner) {
+        container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+            btn.onclick = async () => {
+
+                const activityId = btn.dataset.id;
+                btn.disabled = true;
+                btn.textContent = "Reservando...";
+                try {
+                    await api.makeReservation(userId, activityId, ownerId);
+                    btn.textContent = "✓ Apuntado";
+                    btn.classList.add("signup-btn--done");
+                } catch (e) {
+                    console.error(e);
+                    alert(e.message || "Error al hacer la reserva.");
+                    btn.disabled = false;
+                    btn.textContent = "Apuntarme";
+                }
+            };
+        });
+    }
+}
+
+// ── Filtros de fecha ──────────────────────────────────
+document.getElementById("dateFromBtn").onclick = () =>
+    document.getElementById("dateFromInput").showPicker?.() ||
+    document.getElementById("dateFromInput").click();
+
+document.getElementById("dateToBtn").onclick = () =>
+    document.getElementById("dateToInput").showPicker?.() ||
+    document.getElementById("dateToInput").click();
+
+document.getElementById("dateFromInput").onchange = async function () {
+    const toVal = document.getElementById("dateToInput").value;
+    if (toVal && this.value > toVal) {
+        alert("La fecha desde no puede ser mayor que la fecha hasta.");
+        this.value = "";
+        document.getElementById("dateFromLabel").textContent = "Fecha desde";
+        return;
+    }
+    const [y, m, d] = this.value.split("-");
+    if (this.value) document.getElementById("dateFromLabel").textContent = `${d}/${m}/${y}`;
+    await loadActivities(this.value, toVal);
 };
-console.log("botón equip:", document.getElementById("createEquipBtn"));
+
+document.getElementById("dateToInput").onchange = async function () {
+    const fromVal = document.getElementById("dateFromInput").value;
+    if (fromVal && this.value < fromVal) {
+        alert("La fecha hasta no puede ser menor que la fecha desde.");
+        this.value = "";
+        document.getElementById("dateToLabel").textContent = "Fecha hasta";
+        return;
+    }
+    const [y, m, d] = this.value.split("-");
+    if (this.value) document.getElementById("dateToLabel").textContent = `${d}/${m}/${y}`;
+    await loadActivities(fromVal, this.value);
+};
+
+
+
+// ── Carrusel de galería ───────────────────────────────
+document.getElementById("carouselLeft").onclick = () =>
+    document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
+document.getElementById("carouselRight").onclick = () =>
+    document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" });

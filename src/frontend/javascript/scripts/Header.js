@@ -40,6 +40,23 @@ function buildMenu() {
         if (!isLoginPage)    addBtn(nav, "Login",        () => window.location.href = "Login.html", "logout-btn");
         if (!isRegisterPage) addBtn(nav, "Crear cuenta", () => window.location.href = "CreateAnAccount.html", "logout-btn");
 
+    } else if (role === "admin") {
+        // ── Administrador logueado ───────────────────────────────────────────
+        if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
+        addBtn(nav, "Panel Admin",    () => window.location.href = "AdminPage.html");
+        addBtn(nav, "Sobre Nosotros", () => window.location.href = "AboutUs.html");
+        addBtn(nav, "Nuestro Equipo", () => window.location.href = "OurTeam.html");
+
+        const authBtn = document.createElement("button");
+        authBtn.className = "logout-btn";
+        authBtn.textContent = "Cerrar sesión";
+        authBtn.onclick = async () => {
+            await signOut(auth);
+            sessionStorage.clear();
+            window.location.href = "Login.html";
+        };
+        nav.appendChild(authBtn);
+
     } else if (role === "gym" || role === "professional") {
         // ── Gimnasio o profesional logueado ──────────────────────────────────
         if (!isIndexPage) addBtn(nav, "Inicio",         () => window.location.href = "Index.html");
@@ -50,7 +67,7 @@ function buildMenu() {
 
         const authBtn = document.createElement("button");
         authBtn.className = "logout-btn";
-        authBtn.textContent = "Logout";
+        authBtn.textContent = "Cerrar sesión";
         authBtn.onclick = async () => {
             await signOut(auth);
             sessionStorage.clear();

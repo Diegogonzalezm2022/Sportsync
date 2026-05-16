@@ -1,4 +1,3 @@
-// FirebaseDb.js - Backend database layer using Firebase Admin SDK
 import admin from 'firebase-admin';
 
 const { Timestamp } = admin.firestore;
@@ -11,14 +10,12 @@ class FirebaseDb {
 
     static create() {
         const instance = new FirebaseDb();
-        // Asegurar que admin esté inicializado
         if (!admin.apps.length) {
             try {
                 admin.initializeApp({
                     projectId: 'proyecto2026ps'
                 });
             } catch (e) {
-                // Ya está inicializado
             }
         }
         instance.db = admin.firestore();
@@ -35,7 +32,6 @@ class FirebaseDb {
 
         const actData = activitySnap.data();
 
-        // 1. Check if activity is in the past (based on max date if available)
         const finalDateRaw = actData.maxCancelDate || actData.date;
         if (finalDateRaw) {
             const now = new Date();
@@ -46,7 +42,6 @@ class FirebaseDb {
             }
         }
 
-        // 2. Check for existing active OR done reservation
         const existingRes = await this.db.collection("reservations")
             .where("userId", "==", userId)
             .where("activityId", "==", activityId)
@@ -350,7 +345,31 @@ class FirebaseDb {
     }
 
     async updateUser(userId, data) {
-        await this.db.collection("users").doc(userId).update(data);
+        const userRef = this.db.collection("users").doc(userId);
+        await userRef.update(data);
+
+        if (data.role === "gym" || data.role === "professional") {
+            const colName = data.role === "gym" ? "gyms" : "professionals";
+            const profileRef = this.db.collection(colName).doc(userId);
+            const profileSnap = await profileRef.get();
+
+            if (!profileSnap.exists) {
+                const userSnap = await userRef.get();
+                const userData = userSnap.data();
+                const profileData = {
+                    name: `${userData.name || ""} ${userData.surname || ""}`.trim() || userData.username || "Sin nombre",
+                    description: userData.bio || "",
+                    contactInfo: userData.phone || userData.email || "",
+                    photoURL: userData.photoURL || "",
+                    schedule: "",
+                    ownerId: userId,
+                    rating: 0,
+                    ratingCount: 0,
+                    createdAt: Timestamp.now()
+                };
+                await profileRef.set(profileData);
+            }
+        }
     }
 
     async updateGym(gymId, data) {
