@@ -35,6 +35,42 @@ window.shareReservation = function(ownerName, activityName, activityId) {
     }
 };
 
+// ── Reservas de equipamiento (independiente) ──────────
+async function loadEquipmentReservations() {
+    const { getFirestore, collection, getDocs, query, where } = await import(
+        "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
+        );
+    const dbF  = getFirestore(app);
+    const snap = await getDocs(query(
+        collection(dbF, "equipmentReservations"),
+        where("userId", "==", userId),
+        where("status", "==", "active")
+    ));
+
+    console.log("userId buscado:", userId);
+    console.log("equipmentReservations encontradas:", snap.size);
+
+    if (snap.empty) return;
+
+    const activeList = document.getElementById("activeList");
+    snap.forEach(d => {
+        const e   = d.data();
+        const div = document.createElement("article");
+        div.className = "reservation-card";
+        div.innerHTML = `
+            <div class="card-info">
+                <p><strong>Equipamiento:</strong> ${e.name || "—"}</p>
+                <p><strong>Fecha:</strong> ${e.date || "—"}</p>
+                <p><strong>Horario:</strong> ${e.time || "—"}</p>
+                <p><strong>Precio:</strong> ${e.price || "—"}€</p>
+            </div>
+            <div class="card-status">
+                <p>Pago: Pendiente</p>
+            </div>`;
+        activeList.appendChild(div);
+    });
+}
+
 async function loadReservations() {
     document.getElementById("activeList").innerHTML = `<p class="loading-hint">Cargando...</p>`;
     document.getElementById("pastList").innerHTML   = `<p class="loading-hint">Cargando...</p>`;
@@ -110,6 +146,7 @@ async function loadReservations() {
 
     renderActive(active);
     renderPast(past);
+    await loadEquipmentReservations();
 }
 
 function renderActive(reservations) {

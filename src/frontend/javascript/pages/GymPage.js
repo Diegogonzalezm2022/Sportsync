@@ -117,6 +117,7 @@ async function loadData() {
         });
 
         loadActivities();
+        loadEquipment();
     } catch (error) {
         console.error("Error cargando datos del gimnasio:", error);
     }
@@ -358,3 +359,83 @@ document.getElementById("carouselLeft").onclick  = () =>
     document.getElementById("galleryCarousel").scrollBy({ left: -140, behavior: "smooth" });
 document.getElementById("carouselRight").onclick = () =>
     document.getElementById("galleryCarousel").scrollBy({ left: 140, behavior: "smooth" });
+
+// ── Equipamiento ──────────────────────────────────────
+async function loadEquipment() {
+    const container = document.getElementById("equipmentSection");
+    if (!container) return;
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando equipamiento...</p>`;
+    try {
+        const snap = await getDocs(query(
+            collection(db, "equipment"),
+            where("ownerId", "==", ownerId)
+        ));
+        if (snap.empty) {
+            container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
+            return;
+        }
+        container.innerHTML = snap.docs.map(d => {
+            const e = d.data();
+            return `
+            <div class="activity-card">
+                <div class="activity-info">
+                    <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${e.name}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${e.date || "—"}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${e.time || "—"}</span></div>
+                </div>
+                <div class="activity-right">
+                    <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${e.price}€</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Cantidad:</span> <span class="activity-value">${e.quantity}</span></div>
+                </div>
+                <div>
+                    ${isOwner
+                ? `<span class="activity-owner-badge">Tu equipamiento</span>`
+                : `<button class="signup-btn" 
+                              onclick="reserveEquip('${d.id}', '${e.name}', '${e.date || ''}', '${e.time || ''}', ${e.price || 0})">
+                              Reservar
+                           </button>`
+            }
+                </div>
+            </div>`;
+        }).join("");
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style="color:red;">Error al cargar equipamiento.</p>`;
+    }
+}
+
+window.reserveEquip = async (equipId, name, date, time, price) => {
+    try {
+        const equipRef  = doc(db, "equipment", equipId);
+        const equipSnap = await getDoc(equipRef);
+        if (!equipSnap.exists()) { alert("Equipamiento no encontrado."); return; }
+
+        const cur = parseInt(equipSnap.data().quantity) || 0;
+        if (cur <= 0) { alert("No quedan unidades disponibles."); return; }
+
+        const existSnap = await getDocs(query(
+            collection(db, "equipmentReservations"),
+            where("userId", "==", userId),
+            where("equipmentId", "==", equipId),
+            where("status", "==", "active")
+        ));
+        if (!existSnap.empty) { alert("Ya tienes este equipamiento reservado."); return; }
+
+        await addDoc(collection(db, "equipmentReservations"), {
+            userId,
+            equipmentId: equipId,
+            gymOrProId:  ownerId,
+            ownerType:   "gym",
+            name, date, time, price,
+            status:    "active",
+            createdAt: serverTimestamp()
+        });
+
+        await updateDoc(equipRef, { quantity: cur - 1 });
+        alert(`Reserva de "${name}" confirmada.`);
+        loadEquipment();
+    } catch (e) {
+        console.error(e);
+        alert("Error al reservar el equipamiento.");
+    }
+};

@@ -424,6 +424,56 @@ app.post('/api/materials', authenticateUser, async (req, res) => {
   }
 });
 
+// Equipment
+app.get('/api/equipment', authenticateUser, async (req, res) => {
+  try {
+    const { ownerId } = req.query;
+    const equipment = await db.getEquipmentByOwner(ownerId);
+    res.json(equipment.map(e => serializeData(e)));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/equipment', authenticateUser, async (req, res) => {
+  try {
+    const { ownerId, ownerType, equipmentData } = req.body;
+    const id = await db.addEquipment(ownerId, ownerType, equipmentData);
+    res.json({ id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/equipment/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.deleteEquipment(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//Equipamiento
+app.post('/api/equipment/:id/reserve', authenticateUser, async (req, res) => {
+  try {
+    const { userId, gymOrProId, ownerType, name, date, time, price } = req.body;
+    const id = await db.reserveEquipment(userId, req.params.id, gymOrProId, ownerType, name, date, time, price);
+    res.json({ id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/users/:id/equipmentReservations', authenticateUser, async (req, res) => {
+  try {
+    const reservations = await db.getUserEquipmentReservations(req.params.id);
+    res.json(reservations.map(r => serializeData(r)));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend API running on port ${PORT}`);

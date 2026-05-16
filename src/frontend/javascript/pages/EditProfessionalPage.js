@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import api from "../services/api.js";
+console.log("script cargado");
 
 const resp = await fetch("../../assets/firebaseConfig.json");
 const firebaseConfig = await resp.json();
@@ -17,7 +18,6 @@ let galleryImages = [];
 let profilePhotoBase64 = null;
 let currentLocation = null;
 
-// Helper de geolocalización
 function getLocationPromise() {
     return new Promise((resolve) => {
         if (!navigator.geolocation) { resolve(null); return; }
@@ -40,7 +40,6 @@ function setLocationStatus(location) {
     }
 }
 
-// Botón actualizar ubicación
 document.getElementById("updateLocationBtn").addEventListener("click", async () => {
     const btn = document.getElementById("updateLocationBtn");
     btn.disabled = true;
@@ -67,7 +66,6 @@ document.getElementById("updateLocationBtn").addEventListener("click", async () 
     setTimeout(() => { btn.disabled = false; btn.textContent = "📍 Actualizar mi ubicación"; }, 2500);
 });
 
-// Configurar token y cargar datos
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const token = await user.getIdToken();
@@ -76,7 +74,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Cargar datos actuales
 async function init() {
     try {
         const d = typeParam === "gym"
@@ -109,12 +106,12 @@ async function init() {
             renderGallery();
         }
         loadActivities();
+        loadEquipment();
     } catch (error) {
         console.error("Error cargando datos:", error);
     }
 }
 
-// Foto de perfil
 document.getElementById("profilePhotoBox").onclick = () =>
     document.getElementById("profilePhotoInput").click();
 
@@ -129,7 +126,6 @@ document.getElementById("profilePhotoInput").onchange = (e) => {
     reader.readAsDataURL(e.target.files[0]);
 };
 
-// Guardar perfil
 document.getElementById("saveProfileBtn").onclick = async () => {
     const btn = document.getElementById("saveProfileBtn");
     btn.disabled = true; btn.textContent = "Guardando...";
@@ -142,7 +138,6 @@ document.getElementById("saveProfileBtn").onclick = async () => {
     };
     if (profilePhotoBase64) upd.photoURL = profilePhotoBase64;
 
-    // Intentar obtener ubicación al guardar si no hay una ya
     if (!currentLocation) {
         const loc = await getLocationPromise();
         if (loc) {
@@ -167,7 +162,6 @@ document.getElementById("saveProfileBtn").onclick = async () => {
     btn.disabled = false; btn.textContent = "Guardar Perfil y Horario";
 };
 
-// Modal horario
 document.getElementById("scheduleBtn").onclick = () =>
     document.getElementById("scheduleModal").classList.add("active");
 
@@ -184,7 +178,6 @@ document.getElementById("closeScheduleModal").onclick = () => {
     document.getElementById("scheduleModal").classList.remove("active");
 };
 
-// Galería
 function renderGallery() {
     const cont = document.getElementById("galleryCarousel");
     cont.innerHTML = galleryImages.map((img, i) => `
@@ -268,11 +261,10 @@ document.getElementById("createActBtn").onclick = async () => {
         const date = document.getElementById("actDate").value;
         const schedule = document.getElementById("actTime").value;
 
-        // Check for duplicates
         const existingActivities = await api.getActivitiesByOwner(ownerId);
-        const isDuplicate = existingActivities.some(act => 
-            act.name === name && 
-            act.date === date && 
+        const isDuplicate = existingActivities.some(act =>
+            act.name === name &&
+            act.date === date &&
             act.schedule === schedule
         );
 
@@ -293,7 +285,6 @@ document.getElementById("createActBtn").onclick = async () => {
         };
 
         await api.createActivity(ownerId, typeParam, activityData);
-
         document.getElementById("actStripeLink").value = "";
         loadActivities();
     } catch (e) {
@@ -301,3 +292,59 @@ document.getElementById("createActBtn").onclick = async () => {
         alert("Error al crear actividad.");
     }
 };
+
+// Equipamiento
+async function loadEquipment() {
+    const list = document.getElementById("equipmentList");
+    try {
+        const equipment = await api.getEquipmentByOwner(ownerId);
+        list.innerHTML = equipment.length === 0
+            ? "<p>No hay equipamiento todavía</p>"
+            : equipment.map(e => `
+            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
+                <div>
+                    <strong>${e.name}</strong><br>
+                    ${e.date} · ${e.time}<br>
+                    Cantidad: ${e.quantity} · ${e.price}€
+                </div>
+                <button onclick="window.delEquip('${e.id}')">Eliminar</button>
+            </div>`).join("");
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = "<p>Error al cargar equipamiento.</p>";
+    }
+}
+
+window.delEquip = async (id) => {
+    if (confirm("¿Eliminar equipamiento?")) {
+        await api.deleteEquipment(id);
+        loadEquipment();
+    }
+};
+
+document.getElementById("createEquipBtn").onclick = async () => {
+    console.log("botón pulsado");
+    try {
+        await api.createEquipment(ownerId, typeParam, {
+            name: document.getElementById("equipName").value,
+            date: document.getElementById("equipDate").value,
+            time: document.getElementById("equipTime").value,
+            maxCancelDate: document.getElementById("equipMaxCancelDate").value,
+            price: document.getElementById("equipPrice").value,
+            quantity: document.getElementById("equipQuantity").value,
+        });
+        document.getElementById("equipName").value = "";
+        document.getElementById("equipDate").value = "";
+        document.getElementById("equipTime").value = "";
+        document.getElementById("equipMaxCancelDate").value = "";
+        document.getElementById("equipPrice").value = "";
+        document.getElementById("equipQuantity").value = "";
+        loadEquipment();
+    } catch (e) {
+        console.error(e);
+        alert("Error al crear equipamiento: " + e.message);
+    }
+
+    console.log("botón equip:", document.getElementById("createEquipBtn"));
+};
+console.log("botón equip:", document.getElementById("createEquipBtn"));

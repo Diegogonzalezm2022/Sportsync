@@ -519,6 +519,71 @@ class FirebaseDb {
         await this.db.collection("comments").doc(commentId).delete();
     }
 
+    async addEquipment(ownerId, ownerType, equipmentData) {
+        const data = {
+            ownerId,
+            ownerType,
+            name: equipmentData.name,
+            date: equipmentData.date,
+            time: equipmentData.time,
+            maxCancelDate: equipmentData.maxCancelDate,
+            price: equipmentData.price,
+            quantity: equipmentData.quantity,
+            createdAt: Timestamp.now()
+        };
+        const docRef = await this.db.collection("equipment").add(data);
+        return docRef.id;
+    }
+
+    async getEquipmentByOwner(ownerId) {
+        const snapshot = await this.db.collection("equipment")
+            .where("ownerId", "==", ownerId)
+            .get();
+        const equipment = [];
+        snapshot.forEach(docSnap => equipment.push({ id: docSnap.id, ...docSnap.data() }));
+        return equipment;
+    }
+
+    async deleteEquipment(equipmentId) {
+        await this.db.collection("equipment").doc(equipmentId).delete();
+    }
+
+    async reserveEquipment(userId, equipmentId, gymOrProId, ownerType, name, date, time, price) {
+        const equipRef = this.db.collection("equipment").doc(equipmentId);
+        const equipSnap = await equipRef.get();
+        if (!equipSnap.exists) throw new Error("Equipamiento no encontrado");
+
+        const cur = parseInt(equipSnap.data().quantity) || 0;
+        if (cur <= 0) throw new Error("No quedan unidades disponibles");
+
+        const existing = await this.db.collection("equipmentReservations")
+            .where("userId", "==", userId)
+            .where("equipmentId", "==", equipmentId)
+            .where("status", "==", "active")
+            .get();
+        if (!existing.empty) throw new Error("Ya tienes este equipamiento reservado");
+
+        const resRef = await this.db.collection("equipmentReservations").add({
+            userId, equipmentId, gymOrProId, ownerType,
+            name, date, time, price,
+            status: "active",
+            createdAt: Timestamp.now()
+        });
+
+        await equipRef.update({ quantity: cur - 1 });
+        return resRef.id;
+    }
+
+    async getUserEquipmentReservations(userId) {
+        const snapshot = await this.db.collection("equipmentReservations")
+            .where("userId", "==", userId)
+            .where("status", "==", "active")
+            .get();
+        const reservations = [];
+        snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
+        return reservations;
+    }
+
 }
 
 export default FirebaseDb;

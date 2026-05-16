@@ -31,6 +31,75 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+
+// ── Equipamiento ──────────────────────────────────────
+async function loadEquipment() {
+    const container = document.getElementById("equipmentSection");
+    if (!container) return;
+    container.innerHTML = `<p style="font-size:0.85rem;color:#999;">Cargando equipamiento...</p>`;
+    try {
+        const equipment = await api.getEquipmentByOwner(ownerId);
+        if (equipment.length === 0) {
+            container.innerHTML = `<p style="font-size:0.85rem;color:#999;">No hay equipamiento disponible.</p>`;
+            return;
+        }
+        container.innerHTML = equipment.map(e => {
+            const alreadyReserved = window.myReservedEquipIds?.has(e.id);
+            return `
+            <div class="activity-card">
+                <div class="activity-info">
+                    <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${e.name}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${e.date || "—"}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${e.time || "—"}</span></div>
+                </div>
+                <div class="activity-right">
+                    <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${e.price}€</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Cantidad:</span> <span class="activity-value">${e.quantity}</span></div>
+                </div>
+                <div>
+                    ${isOwner
+                ? `<span class="activity-owner-badge">Tu equipamiento</span>`
+                : `<button class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''}"
+                                data-equip-id="${e.id}"
+                                data-name="${e.name}"
+                                data-date="${e.date || ''}"
+                                data-time="${e.time || ''}"
+                                data-price="${e.price || 0}"
+                                ${alreadyReserved ? 'disabled' : ''}>
+                                ${alreadyReserved ? '✓ Reservado' : 'Reservar'}
+                           </button>`
+            }
+                </div>
+            </div>`;
+        }).join("");
+
+        if (!isOwner) {
+            container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
+                btn.onclick = async () => {
+                    btn.disabled = true;
+                    btn.textContent = "Reservando...";
+                    try {
+                        await api.reserveEquipment(
+                            btn.dataset.equipId, userId, ownerId, "professional",
+                            btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price
+                        );
+                        btn.textContent = "✓ Reservado";
+                        btn.classList.add("signup-btn--done");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error al reservar: " + e.message);
+                        btn.disabled = false;
+                        btn.textContent = "Reservar";
+                    }
+                };
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style="color:red;">Error al cargar equipamiento.</p>`;
+    }
+}
+
 // ── Cargar datos del profesional ──────────────────────
 async function loadData() {
     try {
@@ -94,6 +163,15 @@ async function loadData() {
             const myRes = await api.getUserReservations(userId);
             myActivityIds = new Map(myRes.map(r => [r.activityId, r.status]));
 
+
+            // Cargar mi Equipamiento
+            try {
+                const myEquipRes = await api.getUserEquipmentReservations(userId);
+                window.myReservedEquipIds = new Set(myEquipRes.map(r => r.equipmentId));
+            } catch (e) {
+                window.myReservedEquipIds = new Set();
+            }
+
             const commentForm = document.getElementById("commentForm");
             if (commentForm) commentForm.style.display = "flex";
 
@@ -103,6 +181,7 @@ async function loadData() {
         }
 
         await loadActivities();
+        await loadEquipment();
     } catch (error) {
         console.error("Error cargando datos del profesional:", error);
     }
@@ -258,6 +337,7 @@ function renderActivities(activities) {
     if (!isOwner) {
         container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
             btn.onclick = async () => {
+
                 const activityId = btn.dataset.id;
                 btn.disabled = true;
                 btn.textContent = "Reservando...";
@@ -310,6 +390,8 @@ document.getElementById("dateToInput").onchange = async function () {
     if (this.value) document.getElementById("dateToLabel").textContent = `${d}/${m}/${y}`;
     await loadActivities(fromVal, this.value);
 };
+
+
 
 // ── Carrusel de galería ───────────────────────────────
 document.getElementById("carouselLeft").onclick = () =>

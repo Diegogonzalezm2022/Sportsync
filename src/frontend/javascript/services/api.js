@@ -236,6 +236,35 @@ class ApiService {
       body: JSON.stringify({ materialData })
     });
   }
+
+  async getEquipmentByOwner(ownerId) {
+    return this.request(`/equipment?ownerId=${ownerId}`);
+  }
+
+  async createEquipment(ownerId, ownerType, equipmentData) {
+    return this.request('/equipment', {
+      method: 'POST',
+      body: JSON.stringify({ ownerId, ownerType, equipmentData })
+    });
+  }
+
+  async deleteEquipment(id) {
+    return this.request(`/equipment/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async reserveEquipment(equipmentId, userId, gymOrProId, ownerType, name, date, time, price) {
+    return this.request(`/equipment/${equipmentId}/reserve`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, gymOrProId, ownerType, name, date, time, price })
+    });
+  }
+
+  async getUserEquipmentReservations(userId) {
+    return this.request(`/users/${userId}/equipmentReservations`);
+  }
+
 }
 
 const api = new ApiService();
