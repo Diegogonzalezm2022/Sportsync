@@ -53,16 +53,31 @@ async function loadEquipmentReservations() {
     if (snap.empty) return;
 
     const activeList = document.getElementById("activeList");
-    snap.forEach(d => {
+    snap.forEach(async d => {
         const e   = d.data();
+
+        let ownerName = "";
+        try {
+            if (e.ownerType === "gym") {
+                const gym = await api.getGym(e.gymOrProId);
+                ownerName = gym?.name || "Gimnasio";
+            } else {
+                const pro = await api.getProfessional(e.gymOrProId);
+                ownerName = pro?.name || "Profesional";
+            }
+        } catch (err) {
+            console.error("Error obteniendo ownerName:", err);
+            ownerName = "Desconocido";
+        }
+
         const div = document.createElement("article");
         div.className = "reservation-card";
         div.innerHTML = `
             <div class="card-info">
-                <p><strong>Equipamiento:</strong> ${e.name || "—"}</p>
-                <p><strong>Fecha:</strong> ${e.date || "—"}</p>
+                <p><strong>${e.ownerType === "gym" ? "Gym" : "Profesional"}:</strong> ${ownerName}</p>
+                <p><strong>Equipamiento:</strong> ${e.equipmentId}</p>
                 <p><strong>Horario:</strong> ${e.time || "—"}</p>
-                <p><strong>Precio:</strong> ${e.price || "—"}€</p>
+
             </div>
             <div class="card-status">
                 <p>Pago: Pendiente</p>
