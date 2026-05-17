@@ -49,8 +49,10 @@ async function loadEquipment() {
             <div class="activity-card">
                 <div class="activity-info">
                     <div class="activity-row"><span class="activity-field-label">Nombre:</span> <span class="activity-value">${e.name}</span></div>
-                    <div class="activity-row"><span class="activity-field-label">Fecha:</span> <span class="activity-value">${e.date || "—"}</span></div>
                     <div class="activity-row"><span class="activity-field-label">Horario:</span> <span class="activity-value">${e.time || "—"}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Fecha Actividad:</span> <span class="activity-value">${e.date || "—"}</span></div>
+                    <div class="activity-row"><span class="activity-field-label">Límite Cancelación:</span> <span class="activity-value">${e.maxCancelDate ? String(e.maxCancelDate).split('T')[0] : "—"}</span></div>
+                    
                 </div>
                 <div class="activity-right">
                     <div class="activity-row"><span class="activity-field-label">Precio:</span> <span class="activity-value">${e.price}€</span></div>

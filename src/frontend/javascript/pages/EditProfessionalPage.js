@@ -312,12 +312,12 @@ window.delAct = async (id) => {
         list.innerHTML = equipment.length === 0
             ? "<p>No hay equipamiento todavía</p>"
             : equipment.map(e => `
-            <div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;">
-                <div>
+            <div style="border-bottom:1px solid #eee; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span>
                     <strong>${e.name}</strong><br>
-                    ${e.date} · ${e.time}<br>
-                    Cantidad: ${e.quantity} · ${e.price}€
-                </div>
+                    <small>Fecha: ${String(e.date || "—").split('T')[0]}</small> | 
+                    <small>Límite Cancelación: ${e.maxCancelDate ? String(e.maxCancelDate).split('T')[0] : "No definida"}</small>
+                </span>
                 <button onclick="window.delEquip('${e.id}')">Eliminar</button>
             </div>`).join("");
     } catch (e) {
