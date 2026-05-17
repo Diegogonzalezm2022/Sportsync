@@ -275,10 +275,10 @@ class ApiService {
     });
   }
 
-  async reserveEquipment(equipmentId, userId, gymOrProId, ownerType, name, date, time, price) {
+  async reserveEquipment(equipmentId, userId, gymOrProId, ownerType, name, date, time, price, amount) {
     return this.request(`/equipment/${equipmentId}/reserve`, {
       method: 'POST',
-      body: JSON.stringify({ userId, gymOrProId, ownerType, name, date, time, price })
+      body: JSON.stringify({ userId, gymOrProId, ownerType, name, date, time, price, amount })
     });
   }
 

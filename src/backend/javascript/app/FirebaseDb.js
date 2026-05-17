@@ -567,7 +567,7 @@ class FirebaseDb {
         await this.db.collection("equipment").doc(equipmentId).delete();
     }
 
-    async reserveEquipment(userId, equipmentId, gymOrProId, ownerType, name, date, time, price) {
+    async reserveEquipment(userId, equipmentId, gymOrProId, ownerType, name, date, time, price, amount) {
         const equipRef = this.db.collection("equipment").doc(equipmentId);
         const equipSnap = await equipRef.get();
         if (!equipSnap.exists) throw new Error("Equipamiento no encontrado");
@@ -582,14 +582,16 @@ class FirebaseDb {
             .get();
         if (!existing.empty) throw new Error("Ya tienes este equipamiento reservado");
 
+        let totalPrice = amount * price;
+
         const resRef = await this.db.collection("equipmentReservations").add({
             userId, equipmentId, gymOrProId, ownerType,
-            name, date, time, price,
+            name, date, time, price: totalPrice, amount,
             status: "active",
             createdAt: Timestamp.now()
         });
 
-        await equipRef.update({ quantity: cur - 1 });
+        await equipRef.update({ quantity: cur - amount });
         return resRef.id;
     }
 

@@ -463,8 +463,8 @@ app.delete('/api/equipment/:id', authenticateUser, async (req, res) => {
 //Equipamiento
 app.post('/api/equipment/:id/reserve', authenticateUser, async (req, res) => {
   try {
-    const { userId, gymOrProId, ownerType, name, date, time, price } = req.body;
-    const id = await db.reserveEquipment(userId, req.params.id, gymOrProId, ownerType, name, date, time, price);
+    const { userId, gymOrProId, ownerType, name, date, time, price, amount } = req.body;
+    const id = await db.reserveEquipment(userId, req.params.id, gymOrProId, ownerType, name, date, time, price, amount);
     res.json({ id });
   } catch (error) {
     res.status(500).json({ error: error.message });

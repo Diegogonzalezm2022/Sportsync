@@ -428,7 +428,7 @@ async function loadEquipment() {
                     try {
                         await api.reserveEquipment(
                             btn.dataset.equipId, userId, ownerId, "gym",
-                            btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price
+                            btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price, form.querySelector("#reservedAmount").value
                         );
                         btn.value = "✓ Reservado";
                         btn.classList.add("signup-btn--done");
