@@ -91,15 +91,19 @@
     <section class="activity-section">
         <h3>Equipamiento</h3>
 
-        <div class="activity-form">
-            <input type="text" id="equipName" placeholder="Nombre del equipamiento">
-            <input type="date" id="equipDate">
-            <input type="text" id="equipTime" placeholder="Horario (Ej: 10:00 - 11:00)">
-            <input type="date" id="equipMaxCancelDate">
-            <input type="number" id="equipPrice" placeholder="Precio (€)">
-            <input type="number" id="equipQuantity" placeholder="Cantidad">
-            <button id="createEquipBtn">Añadir Equipamiento</button>
-        </div>
+        <form class="activity-form" id="equipmentForm" action="">
+            <input type="text" id="equipName" placeholder="Nombre del equipamiento" required>
+            <div style="display:flex; flex-direction: column; align-items:center; gap:10px;">
+                <label for="equipDate">Fecha de reserva del material</label><input type="date" id="equipDate" required>
+            </div>
+            <input type="time" id="equipTime" placeholder="Horario (Ej: 10:00 - 11:00)" required>
+            <div style="display:flex; flex-direction: column; align-items:center; gap:10px;">
+                <label for="equipMaxCancelDate">Fecha máxima de cancelación</label><input type="date" id="equipMaxCancelDate">
+            </div>
+            <input type="number" id="equipPrice" placeholder="Precio (€)" min="0" required>
+            <input type="number" id="equipQuantity" placeholder="Cantidad" min="1" required>
+            <input id="createEquipBtn" type="submit" value="Añadir equipamiento">
+        </form>
         <div id="equipmentList"></div>
     </section>
 </main>

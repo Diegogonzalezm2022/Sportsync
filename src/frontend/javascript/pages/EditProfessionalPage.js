@@ -333,8 +333,9 @@ window.delEquip = async (id) => {
     }
 };
 
-document.getElementById("createEquipBtn").onclick = async () => {
+document.getElementById("equipmentForm").addEventListener("submit", async e => {
     console.log("botón pulsado");
+    e.preventDefault()
     try {
         await api.createEquipment(ownerId, typeParam, {
             name: document.getElementById("equipName").value,
@@ -357,8 +358,10 @@ document.getElementById("createEquipBtn").onclick = async () => {
     }
 
     console.log("botón equip:", document.getElementById("createEquipBtn"));
-};
+});
 console.log("botón equip:", document.getElementById("createEquipBtn"));
     document.getElementById("actDate").setAttribute("min", new Date().toISOString().split("T")[0]);
 document.getElementById("actMaxCancelDate").setAttribute("min", new Date().toISOString().split("T")[0]);
+document.getElementById("equipDate").setAttribute("min", new Date().toISOString().split("T")[0]);
+document.getElementById("equipMaxCancelDate").setAttribute("min", new Date().toISOString().split("T")[0]);
 
