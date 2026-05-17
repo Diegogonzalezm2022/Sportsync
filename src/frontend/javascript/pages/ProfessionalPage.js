@@ -61,31 +61,41 @@ async function loadEquipment() {
                 <div>
                     ${isOwner
                 ? `<span class="activity-owner-badge">Tu equipamiento</span>`
-                : `<button class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''}"
+                : `<form class="equipmentReservationForm ${alreadyReserved ? 'eReservationFormDone':''}" action=''
                                 data-equip-id="${e.id}"
                                 data-name="${e.name}"
                                 data-date="${e.date || ''}"
                                 data-time="${e.time || ''}"
                                 data-price="${e.price || 0}"
-                                ${alreadyReserved ? 'disabled' : ''}>
-                                ${alreadyReserved ? '✓ Reservado' : 'Reservar'}
-                           </button>`
+                                >
+                    <input type="number" id="reservedAmount" min="1" max="${e.quantity}" data-equip-id="${e.id}" required>
+                    <input type="submit" class="signup-btn ${alreadyReserved ? 'signup-btn--done' : ''}"
+                                data-equip-id="${e.id}"
+                                data-name="${e.name}"
+                                data-date="${e.date || ''}"
+                                data-time="${e.time || ''}"
+                                data-price="${e.price || 0}"
+                                ${alreadyReserved ? 'disabled' : ''}
+                                value="${alreadyReserved ? '✓ Reservado' : 'Reservar'}">
+                           </form>`
             }
                 </div>
             </div>`;
         }).join("");
 
         if (!isOwner) {
-            container.querySelectorAll(".signup-btn:not([disabled])").forEach(btn => {
-                btn.onclick = async () => {
+            container.querySelectorAll(".equipmentReservationForm:not(.ReservationFormDone)").forEach(form => {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    let btn = form.querySelector(".signup-btn");
                     btn.disabled = true;
-                    btn.textContent = "Reservando...";
+                    btn.value = "Reservando...";
                     try {
                         await api.reserveEquipment(
                             btn.dataset.equipId, userId, ownerId, "professional",
                             btn.dataset.name, btn.dataset.date, btn.dataset.time, btn.dataset.price
                         );
-                        btn.textContent = "✓ Reservado";
+                        btn.value = "✓ Reservado";
                         btn.classList.add("signup-btn--done");
                     } catch (e) {
                         console.error(e);
@@ -93,7 +103,7 @@ async function loadEquipment() {
                         btn.disabled = false;
                         btn.textContent = "Reservar";
                     }
-                };
+                });
             });
         }
     } catch (e) {
