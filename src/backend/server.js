@@ -473,12 +473,42 @@ app.post('/api/equipment/:id/reserve', authenticateUser, async (req, res) => {
 
 app.get('/api/users/:id/equipmentReservations', authenticateUser, async (req, res) => {
   try {
-    const reservations = await db.getUserEquipmentReservations(req.params.id);
+    const { status } = req.query;
+    const reservations = await db.getUserEquipmentReservations(req.params.id, status);
     res.json(reservations.map(r => serializeData(r)));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.post('/api/equipmentReservations/:id/complete', authenticateUser, async (req, res) => {
+  try {
+    await db.completeEquipmentReservation(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/equipmentReservations/:id/cancel', authenticateUser, async (req, res) => {
+  try {
+    await db.cancelEquipmentReservation(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/equipmentReservations/:id', authenticateUser, async (req, res) => {
+  try {
+    await db.deleteEquipmentReservation(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

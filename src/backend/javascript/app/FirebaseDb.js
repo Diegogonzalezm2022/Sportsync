@@ -462,8 +462,13 @@ class FirebaseDb {
     async rateReservation(reservationId, score) {
         if (score < 1 || score > 5) throw new Error("La puntuación debe estar entre 1 y 5");
 
-        const reservationRef = this.db.collection("reservations").doc(reservationId);
-        const reservationSnap = await reservationRef.get();
+        let reservationRef = this.db.collection("reservations").doc(reservationId);
+        let reservationSnap = await reservationRef.get();
+
+        if (!reservationSnap.exists) {
+            reservationRef = this.db.collection("equipmentReservations").doc(reservationId);
+            reservationSnap = await reservationRef.get();
+        }
 
         if (!reservationSnap.exists) throw new Error("Reserva no encontrada");
 
@@ -472,7 +477,23 @@ class FirebaseDb {
         if (resData.userRating != null) throw new Error("Ya has valorado esta reserva");
 
         const { gymOrProId, ownerType } = resData;
-        const colName = ownerType === "gym" ? "gyms" : "professionals";
+
+        let actualOwnerType = ownerType;
+        if (!actualOwnerType) {
+            const gymSnap = await this.db.collection("gyms").doc(gymOrProId).get();
+            if (gymSnap.exists) {
+                actualOwnerType = "gym";
+            } else {
+                const proSnap = await this.db.collection("professionals").doc(gymOrProId).get();
+                if (proSnap.exists) {
+                    actualOwnerType = "professional";
+                }
+            }
+        }
+
+        if (!actualOwnerType) throw new Error("Entidad no encontrada");
+
+        const colName = actualOwnerType === "gym" ? "gyms" : "professionals";
         const targetRef = this.db.collection(colName).doc(gymOrProId);
         const targetSnap = await targetRef.get();
 
@@ -595,16 +616,55 @@ class FirebaseDb {
         return resRef.id;
     }
 
-    async getUserEquipmentReservations(userId) {
-        const snapshot = await this.db.collection("equipmentReservations")
-            .where("userId", "==", userId)
-            .where("status", "==", "active")
-            .get();
+    async getUserEquipmentReservations(userId, status = "active") {
+        let query = this.db.collection("equipmentReservations").where("userId", "==", userId);
+        if (status) {
+            query = query.where("status", "==", status);
+        }
+        const snapshot = await query.get();
         const reservations = [];
         snapshot.forEach(docSnap => reservations.push({ id: docSnap.id, ...docSnap.data() }));
         return reservations;
     }
 
+    async deleteEquipmentReservation(reservationId) {
+        await this.db.collection("equipmentReservations").doc(reservationId).delete();
+    }
+
+
+    async completeEquipmentReservation(reservationId) {
+        const reservationRef = this.db.collection("equipmentReservations").doc(reservationId);
+        await reservationRef.update({ status: "done" });
+        return { success: true };
+    }
+
+    async cancelEquipmentReservation(reservationId) {
+        const reservationRef = this.db.collection("equipmentReservations").doc(reservationId);
+        const reservationSnap = await reservationRef.get();
+
+        if (!reservationSnap.exists) {
+            throw new Error("Reservation not found");
+        }
+
+        const resData = reservationSnap.data();
+        const amount = parseInt(resData.amount) || 0;
+        const equipmentId = resData.equipmentId;
+        const equipRef = this.db.collection("equipment").doc(equipmentId);
+        const equipSnap = await equipRef.get();
+
+        if (equipSnap.exists) {
+            const cur = parseInt(equipSnap.data().quantity) || 0;
+            await equipRef.update({ quantity: cur + amount });
+        }
+
+        await reservationRef.update({
+            status: "cancelled"
+        });
+
+        return { success: true };
+    }
+
 }
 
 export default FirebaseDb;
+

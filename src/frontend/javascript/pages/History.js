@@ -37,25 +37,18 @@ window.shareReservation = function(ownerName, activityName, activityId) {
 
 // ── Reservas de equipamiento (independiente) ──────────
 async function loadEquipmentReservations() {
-    const { getFirestore, collection, getDocs, query, where } = await import(
-        "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
-        );
-    const dbF  = getFirestore(app);
-    const snap = await getDocs(query(
-        collection(dbF, "equipmentReservations"),
-        where("userId", "==", userId),
-        where("status", "==", "active")
-    ));
+    let equipmentReservations;
+    try {
+        equipmentReservations = await api.getUserEquipmentReservations(userId);
+    } catch (e) {
+        console.error("Error loading equipment reservations:", e);
+        return;
+    }
 
-    console.log("userId buscado:", userId);
-    console.log("equipmentReservations encontradas:", snap.size);
-
-    if (snap.empty) return;
+    if (!equipmentReservations || equipmentReservations.length === 0) return;
 
     const activeList = document.getElementById("activeList");
-    snap.forEach(async d => {
-        const e   = d.data();
-
+    for (const e of equipmentReservations) {
         let ownerName = "";
         try {
             if (e.ownerType === "gym") {
@@ -75,14 +68,181 @@ async function loadEquipmentReservations() {
         div.innerHTML = `
             <div class="card-info">
                 <p><strong>${e.ownerType === "gym" ? "Gym" : "Profesional"}:</strong> ${ownerName}</p>
-                <p><strong>Equipamiento:</strong> ${e.equipmentId}</p>
+                <p><strong>Equipamiento:</strong> ${e.name || e.equipmentId}</p>
                 <p><strong>Horario:</strong> ${e.time || "—"}</p>
-
             </div>
             <div class="card-status">
                 <p>Pago: Pendiente</p>
+            </div>
+            <div class="card-actions">
+                <button class="action-btn complete-equip-btn" data-id="${e.id}">
+                    ✓ Completada
+                </button>
+                <button class="action-btn cancel-equip-btn" data-id="${e.id}">
+                    Cancelar
+                </button>
             </div>`;
         activeList.appendChild(div);
+    }
+
+    // Add event listeners for complete
+    activeList.querySelectorAll(".complete-equip-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("¿Marcar esta reserva de equipamiento como completada?")) return;
+            btn.disabled = true;
+            btn.textContent = "Completando...";
+            try {
+                await api.completeEquipmentReservation(btn.dataset.id);
+                await loadReservations();
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = "✓ Completada";
+                alert("Error al completar la reserva de equipamiento.");
+            }
+        });
+    });
+
+    // Add event listeners for cancel
+    activeList.querySelectorAll(".cancel-equip-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("¿Seguro que quieres cancelar esta reserva de equipamiento?")) return;
+            btn.disabled = true;
+            btn.textContent = "Cancelando...";
+            try {
+                await api.cancelEquipmentReservation(btn.dataset.id);
+                alert("Reserva de equipamiento cancelada.");
+                await loadReservations();
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = "Cancelar";
+                alert("Error al cancelar la reserva de equipamiento.");
+            }
+        });
+    });
+}
+
+async function loadPastEquipmentReservations() {
+    let doneEquip, cancelledEquip;
+    try {
+        doneEquip = await api.getUserEquipmentReservations(userId, "done");
+        cancelledEquip = await api.getUserEquipmentReservations(userId, "cancelled");
+    } catch (e) {
+        console.error("Error loading past equipment reservations:", e);
+        return;
+    }
+
+    const pastReservations = [...doneEquip, ...cancelledEquip];
+    if (pastReservations.length === 0) return;
+
+    const pastList = document.getElementById("pastList");
+    const hint = pastList.querySelector(".loading-hint");
+    if (hint && (hint.textContent.includes("No tienes reservas pasadas") || hint.textContent.includes("Cargando"))) {
+        pastList.innerHTML = "";
+    }
+
+    for (const r of pastReservations) {
+        let ownerName = "";
+        try {
+            if (r.ownerType === "gym") {
+                const gym = await api.getGym(r.gymOrProId);
+                ownerName = gym?.name || "Gimnasio";
+            } else {
+                const pro = await api.getProfessional(r.gymOrProId);
+                ownerName = pro?.name || "Profesional";
+            }
+        } catch (err) {
+            console.error("Error obteniendo ownerName:", err);
+            ownerName = "Desconocido";
+        }
+
+        const div = document.createElement("article");
+        div.className = "reservation-card past-card";
+        div.setAttribute("data-id", r.id);
+
+        let ratingWidget = "";
+        if (r.status === "done") {
+            if (r.userRating != null) {
+                ratingWidget = `
+                <div class="rating-widget rating-widget--done">
+                    <span class="rating-widget-label">⭐ Tu valoración: ${r.userRating}/5</span>
+                </div>`;
+            } else {
+                ratingWidget = `
+                <div class="rating-widget" data-reservation-id="${r.id}">
+                    <span class="rating-widget-label">Valora tu experiencia:</span>
+                    <div class="rating-stars">
+                        <span class="rating-star" data-value="1">★</span>
+                        <span class="rating-star" data-value="2">★</span>
+                        <span class="rating-star" data-value="3">★</span>
+                        <span class="rating-star" data-value="4">★</span>
+                        <span class="rating-star" data-value="5">★</span>
+                    </div>
+                </div>`;
+            }
+        }
+
+        div.innerHTML = `
+            <button class="delete-card-btn" data-id="${r.id}" title="Eliminar del historial">✕</button>
+            <div class="card-info">
+                <p><strong>${r.ownerType === "gym" ? "Gym" : "Profesional"}:</strong> ${ownerName}</p>
+                <p><strong>Equipamiento:</strong> ${r.name || r.equipmentId}</p>
+                <p><strong>Estado:</strong> ${r.status === "done" ? "✅ Completada" : "❌ Cancelada"}</p>
+            </div>
+            ${ratingWidget}
+            <div class="card-actions past-actions">
+            </div>`;
+        pastList.appendChild(div);
+    }
+
+    // Set up delete listener for equipment past reservations
+    pastList.querySelectorAll(".past-card[data-id] .delete-card-btn").forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm("¿Eliminar del historial?")) return;
+            try {
+                await api.deleteEquipmentReservation(btn.dataset.id);
+                btn.closest(".reservation-card").remove();
+                if (pastList.querySelectorAll(".reservation-card").length === 0) {
+                    pastList.innerHTML = `<p class="loading-hint">No tienes reservas pasadas.</p>`;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error al eliminar.");
+            }
+        };
+    });
+
+    // Set up rating widget listeners for equipment past reservations
+    pastList.querySelectorAll(".past-card[data-id] .rating-widget:not(.rating-widget--done)").forEach(widget => {
+        const reservationId = widget.dataset.reservationId;
+        const stars         = widget.querySelectorAll(".rating-star");
+
+        stars.forEach(star => {
+            star.addEventListener("mouseover", () => {
+                stars.forEach(s =>
+                    s.classList.toggle("rating-star--active", +s.dataset.value <= +star.dataset.value));
+            });
+            star.addEventListener("mouseout", () => {
+                stars.forEach(s => s.classList.remove("rating-star--active"));
+            });
+            star.addEventListener("click", async () => {
+                const score = +star.dataset.value;
+                stars.forEach(s => s.style.pointerEvents = "none");
+                widget.querySelector(".rating-widget-label").textContent = "Guardando...";
+                try {
+                    await api.rateReservation(reservationId, score);
+                    widget.classList.add("rating-widget--done");
+                    widget.innerHTML =
+                        `<span class="rating-widget-label">⭐ ¡Gracias! Tu valoración: ${score}/5</span>`;
+                } catch (e) {
+                    console.error(e);
+                    stars.forEach(s => s.style.pointerEvents = "auto");
+                    widget.querySelector(".rating-widget-label").textContent = "Valora tu experiencia:";
+                    alert(e.message || "Error al guardar la valoración.");
+                }
+            });
+        });
     });
 }
 
@@ -163,6 +323,7 @@ async function loadReservations() {
     renderActive(active);
     renderPast(past);
     await loadEquipmentReservations();
+    await loadPastEquipmentReservations();
 }
 
 function renderActive(reservations) {

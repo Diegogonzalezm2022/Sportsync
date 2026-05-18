@@ -384,7 +384,7 @@ function renderActivities(activities) {
                 btn.disabled = true;
                 btn.textContent = "Reservando...";
                 try {
-                    await api.makeReservation(userId, activityId, ownerId);
+                    await api.makeReservation(userId, activityId, ownerId, "professional");
                     btn.textContent = "✓ Apuntado";
                     btn.classList.add("signup-btn--done");
                 } catch (e) {

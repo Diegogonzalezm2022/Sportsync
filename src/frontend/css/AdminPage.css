@@ -151,3 +151,7 @@ td {
     font-weight: 600;
     margin-top: 10px;
 }
+.avatar-circle:hover {
+    transform: scale(1.05);
+    border-color: #008b8b;
+}

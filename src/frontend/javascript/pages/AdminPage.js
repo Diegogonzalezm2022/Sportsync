@@ -87,12 +87,47 @@ document.getElementById("userSearch").oninput = (e) => {
     renderUsers(filtered);
 };
 
+let editPhotoBase64 = null;
+
 const modal = document.getElementById("editModal");
 const closeBtn = document.getElementById("closeModal");
+
+// Foto de perfil clicable — preview local
+document.getElementById("editAvatarCircle").addEventListener("click", () => {
+    document.getElementById("editPhotoInput").click();
+});
+
+document.getElementById("editPhotoInput").addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        editPhotoBase64 = e.target.result; // base64
+        const preview = document.getElementById("editAvatarPreview");
+        preview.src = editPhotoBase64;
+        preview.style.display = "block";
+        document.getElementById("editAvatarSvg").style.display = "none";
+    };
+    reader.readAsDataURL(file);
+});
 
 function openEditModal(id) {
     const u = allUsers.find(x => x.id === id);
     if (!u) return;
+
+    editPhotoBase64 = null;
+    const preview = document.getElementById("editAvatarPreview");
+    const svgIcon = document.getElementById("editAvatarSvg");
+
+    if (u.photoURL) {
+        preview.src = u.photoURL;
+        preview.style.display = "block";
+        svgIcon.style.display = "none";
+    } else {
+        preview.src = "";
+        preview.style.display = "none";
+        svgIcon.style.display = "block";
+    }
 
     document.getElementById("editUserId").value = u.id;
     document.getElementById("editName").value = u.name || "";
@@ -113,6 +148,10 @@ document.getElementById("editUserForm").onsubmit = async (e) => {
     e.preventDefault();
     const id = document.getElementById("editUserId").value;
     const role = document.getElementById("editRole").value;
+
+    const originalUser = allUsers.find(x => x.id === id);
+    const currentPhoto = editPhotoBase64 || originalUser?.photoURL || "";
+
     const data = {
         name: document.getElementById("editName").value,
         surname: document.getElementById("editSurname").value,
@@ -122,20 +161,28 @@ document.getElementById("editUserForm").onsubmit = async (e) => {
         bio: document.getElementById("editBio").value
     };
 
+    if (editPhotoBase64) {
+        data.photoURL = editPhotoBase64;
+    }
+
     try {
         await api.adminUpdateUser(id, data);
 
         if (role === "gym" || role === "professional") {
             const col = role === "gym" ? "gyms" : "professionals";
             try {
-                await api.getGym(id);
+                if (role === "gym") {
+                    await api.getGym(id);
+                } else {
+                    await api.getProfessional(id);
+                }
             } catch {
                 const createFn = role === "gym" ? api.createGym : api.createProfessional;
                 await createFn({
                     name: data.name,
                     description: data.bio || "",
                     contactInfo: data.phone || "",
-                    photoURL: "",
+                    photoURL: currentPhoto,
                     schedule: "",
                     ownerId: id
                 }, id);

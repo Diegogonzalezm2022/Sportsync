@@ -282,8 +282,29 @@ class ApiService {
     });
   }
 
-  async getUserEquipmentReservations(userId) {
-    return this.request(`/users/${userId}/equipmentReservations`);
+  async getUserEquipmentReservations(userId, status = null) {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`/users/${userId}/equipmentReservations${query}`);
+  }
+
+  async completeEquipmentReservation(id) {
+    return this.request(`/equipmentReservations/${id}/complete`, {
+      method: 'POST'
+    });
+  }
+
+  async cancelEquipmentReservation(id) {
+    return this.request(`/equipmentReservations/${id}/cancel`, {
+      method: 'POST'
+    });
+  }
+
+  async deleteEquipmentReservation(id) {
+    return this.request(`/equipmentReservations/${id}`, {
+      method: 'DELETE'
+    });
   }
 
 }
